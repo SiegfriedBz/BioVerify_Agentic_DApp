@@ -1,0 +1,16 @@
+{
+	"name": "bio_verify",
+	"version": "1.0.0",
+	"description": "",
+	"private": true,
+	"scripts": {
+		"dev:fe": "pnpm --filter fe dev",
+		"build:fe": "pnpm --filter fe build",
+		"compile:be": "cd be && forge build",
+		"test:be": "cd be && forge test"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.23.0"
+}
