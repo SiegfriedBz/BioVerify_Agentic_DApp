@@ -5,31 +5,32 @@ pragma solidity ^0.8.13;
 error BioVerify_MustPayToSubmit();
 
 // events
-event BioVerify_SubmittedProject(address publisher, uint256 id, string cid);
+event BioVerify_SubmittedPublication(address publisher, uint256 id, string cid);
 
 contract BioVerify {
     // storage
-    uint256 nextProjectId;
-    mapping(address publisher => uint256[] projectIds) public publisherToProjectIds;
-    mapping(uint256 projectId => mapping(address staker => uint256 stake)) public projectStakes;
-    mapping(uint256 projectId => uint256 totalStake) public totalProjectStake;
+    uint256 nextPublicationId;
+    mapping(uint256 publicationId => string cid) public publicationCurrentCid;
+    mapping(address publisher => uint256[] publicationIds) public publisherToPublicationIds;
+    mapping(uint256 publicationId => mapping(address staker => uint256 stake)) public publicationStakes;
+    mapping(uint256 publicationId => uint256 totalStake) public publicationTotalStake;
+    Publication[] public Publications;
 
     // immutable
     uint256 public immutable I_SUBMISSION_FEE;
     uint256 public immutable I_MIN_STAKE;
 
     // custom types
-    struct Project {
+    struct Publication {
         uint256 id;
         address publisher;
         address[] reviewers;
         string[] cids;
-        ProjectStatus status;
+        PublicationStatus status;
     }
-    Project[] public projects;
 
     // enums
-    enum ProjectStatus {
+    enum PublicationStatus {
         SUBMITTED,
         IN_REVIEW,
         PUBLISHED,
@@ -49,21 +50,22 @@ contract BioVerify {
             revert BioVerify_MustPayToSubmit();
         }
         // 2. Effect
-        uint256 projectId = nextProjectId;
+        uint256 publicationId = nextPublicationId;
         uint256 stake = msg.value - I_SUBMISSION_FEE;
 
-        Project storage newProject = projects.push();
-        newProject.id = projectId;
-        newProject.publisher = msg.sender;
-        newProject.cids.push(_cid);
-        newProject.status = ProjectStatus.SUBMITTED;
+        Publication storage newPublication = Publications.push();
+        newPublication.id = publicationId;
+        newPublication.publisher = msg.sender;
+        newPublication.cids.push(_cid);
+        newPublication.status = PublicationStatus.SUBMITTED;
 
-        publisherToProjectIds[msg.sender].push(nextProjectId);
-        projectStakes[projectId][msg.sender] = stake;
-        totalProjectStake[projectId] = stake;
+        publicationCurrentCid[publicationId] = _cid;
+        publisherToPublicationIds[msg.sender].push(nextPublicationId);
+        publicationStakes[publicationId][msg.sender] = stake;
+        publicationTotalStake[publicationId] = stake;
 
-        nextProjectId++;
+        nextPublicationId++;
 
-        emit BioVerify_SubmittedProject(msg.sender, projectId, _cid);
+        emit BioVerify_SubmittedPublication(msg.sender, publicationId, _cid);
     }
 }

@@ -8,14 +8,18 @@ import {
     BioVerify,
 
     // events
-    BioVerify_SubmittedProject
+    BioVerify_SubmittedPublication,
+
+    // errors
+    BioVerify_MustPayToSubmit
 } from "../src/BioVerify.sol";
 
 contract BioVerifyTest is Test, Constants {
     BioVerifyScript public deployer;
     BioVerify public bioVerify;
 
-    address scientist = makeAddr("scientist");
+    address publisher = makeAddr(" publisher");
+    string constant FAKE_CID = "ipfs://test-hash";
 
     function setUp() public {
         deployer = new BioVerifyScript();
@@ -27,25 +31,67 @@ contract BioVerifyTest is Test, Constants {
         assertEq(bioVerify.I_MIN_STAKE(), MIN_STAKE);
     }
 
-    function test_SubmitPublication() public {
-        string memory cid = "ipfs://test-hash";
+    /**
+     * SubmitPublication
+     */
+    // SubmitPublication - happy path
+    function test_SubmitPublication_EmitsCorrectEvent() public {
         uint256 totalToSend = SUBMISSION_FEE + MIN_STAKE + 50 wei; // Sending extra to test stake logic
 
-        // 1. Give the scientist some money
-        vm.deal(scientist, 1 ether);
+        // 1. Give the  publisher some money
+        vm.deal(publisher, 1 ether);
 
         // 2. Expect the event to be emitted
         // [checkTopic1, checkTopic2, checkTopic3, checkData]
         vm.expectEmit(true, false, false, true);
-        emit BioVerify_SubmittedProject(scientist, 0, cid);
+        emit BioVerify_SubmittedPublication(publisher, 0, FAKE_CID);
 
         // 3. Perform the call
-        vm.prank(scientist);
-        bioVerify.submitPublication{value: totalToSend}(cid);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: totalToSend}(FAKE_CID);
+    }
 
-        // 4. Assertions
-        uint256 expectedStake = totalToSend - SUBMISSION_FEE;
-        assertEq(bioVerify.totalProjectStake(0), expectedStake);
+    function test_SubmitPublication_RecordsCorrectAmountOnContract() public {
+        uint256 totalToSend = SUBMISSION_FEE + MIN_STAKE + 50 wei; // Sending extra to test stake logic
+
+        // 1. Give the  publisher some money
+        vm.deal(publisher, 1 ether);
+
+        // 2. Perform the call
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: totalToSend}(FAKE_CID);
+
+        // 3. Assertions
         assertEq(address(bioVerify).balance, totalToSend);
+    }
+
+    function test_SubmitPublication_StekesCorrectAmountOnPublication() public {
+        uint256 totalToSend = SUBMISSION_FEE + MIN_STAKE + 50 wei; // Sending extra to test stake logic
+
+        // 1. Give the  publisher some money
+        vm.deal(publisher, 1 ether);
+
+        // 2. Perform the call
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: totalToSend}(FAKE_CID);
+
+        // 3. Assertions
+        uint256 expectedStake = totalToSend - SUBMISSION_FEE;
+        assertEq(bioVerify.publicationTotalStake(0), expectedStake);
+    }
+
+    // SubmitPublication - unhappy path
+    function test_SubmitPublication_RevertIfZeroValueSent() public {
+        uint256 totalToSend = 0;
+
+        // 1. Give the  publisher some money
+        vm.deal(publisher, 1 ether);
+
+        // 2. Expect revert
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayToSubmit.selector));
+
+        // 3. Perform the call
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: totalToSend}(FAKE_CID);
     }
 }
