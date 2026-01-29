@@ -1,0 +1,26 @@
+import { z } from "zod";
+import { AuthorSchema } from "../../_schemas/author";
+
+export const FileTypeSchema = z.enum(["image", "data", "code"]);
+
+// The Form Schema
+export const PublicationFormSchema = z.object({
+	title: z.string().min(10),
+	abstract: z.string().min(50),
+	authors: z.array(AuthorSchema).min(1),
+	license: z.string(),
+	manuscript: z.string().min(100),
+
+	// Files are handled as Blobs/Files in the browser before upload
+	files: z
+		.array(
+			z.object({
+				name: z.string(),
+				type: FileTypeSchema,
+				file: z.any(), // File object from <input type="file">
+			}),
+		)
+		.optional(),
+});
+
+export type PublicationFormT = z.infer<typeof PublicationFormSchema>;
