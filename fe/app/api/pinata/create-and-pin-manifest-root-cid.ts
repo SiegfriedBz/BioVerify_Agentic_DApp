@@ -1,6 +1,6 @@
 "use server";
 
-import type { CreateAndPinManifestRootCid } from "@/app/_schemas/publication-form-schema";
+import type { CreateAndPinManifestRootCid } from "@/app/_components/publication/form/publication-form-schema";
 
 const PINATA_JWT = process.env.PINATA_API_JWT;
 
