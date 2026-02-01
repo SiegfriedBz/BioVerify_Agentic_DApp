@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import type { BaseError } from "wagmi";
 import { useSubmitPublication } from "@/app/_hooks/use-submit-publication";
 import { AuthorRoleSchema } from "@/app/_schemas/author";
+import { NetworkSchema } from "@/app/_schemas/wallet";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -45,6 +46,10 @@ const DEFAULT_VALUES = {
 		{
 			name: "",
 			role: AuthorRoleSchema.enum.First_Author,
+			wallet: {
+				address: "0x...",
+				network: NetworkSchema.enum.sepolia,
+			},
 		},
 	],
 	files: [],
