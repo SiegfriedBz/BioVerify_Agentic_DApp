@@ -24,19 +24,19 @@ import {
 } from "@/components/ui/card";
 import { FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
+import { AbstractInput } from "../inputs/abstract-input";
+import { AddAuthorButton } from "../inputs/author-add-button";
+import { AuthorInput } from "../inputs/author-input";
+import { AddFileButton } from "../inputs/file-add-button";
+import { FileInput } from "../inputs/file-input";
+import { LicenseInput } from "../inputs/license-input";
+import { ManuscriptInput } from "../inputs/manuscript-input";
+import { SendValueInput } from "../inputs/send-value-input";
+import { TitleInput } from "../inputs/title-input";
 import {
 	PublicationFormSchema,
 	type PublicationFormT,
-} from "../../_schemas/publication-form-schema";
-import { AbstractInput } from "./inputs/abstract-input";
-import { AddAuthorButton } from "./inputs/author-add-button";
-import { AuthorInput } from "./inputs/author-input";
-import { AddFileButton } from "./inputs/file-add-button";
-import { FileInput } from "./inputs/file-input";
-import { LicenseInput } from "./inputs/license-input";
-import { ManuscriptInput } from "./inputs/manuscript-input";
-import { SendValueInput } from "./inputs/send-value-input";
-import { TitleInput } from "./inputs/title-input";
+} from "./publication-form-schema";
 
 const DEFAULT_VALUES = {
 	title: "",
