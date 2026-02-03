@@ -1,3 +1,6 @@
 [submodule "be/lib/openzeppelin-contracts"]
 	path = be/lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "be/lib/chainlink-brownie-contracts"]
+	path = be/lib/chainlink-brownie-contracts
+	url = https://github.com/smartcontractkit/chainlink-brownie-contracts
