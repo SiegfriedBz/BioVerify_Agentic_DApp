@@ -10,15 +10,21 @@ import {
     // events
     BioVerify_SubmittedPublication,
     BioVerify_SlashedPublisher,
-    BioVerify_TransferTotalSlashed,
+    BioVerify_AgentTransferTotalSlashed,
+    BioVerify_JoinReviewerPool,
+    BioVerify_AgentSetMemberReputationScore,
 
     // errors
     BioVerify_MustPayToSubmit,
     BioVerify_OnlyAgent,
     BioVerify_InvalidPublicationId,
     BioVerify_AlreadySlashed,
-    BioVerify_ZeroValueToTransfer
-} from "../src/BioVerify.sol";
+    BioVerify_ZeroValueToTransfer,
+    BioVerify_InsufficientReviewerStake,
+    BioVerify_AlreadyReviewer
+} from 
+
+"../src/BioVerify.sol";
 
 contract BioVerifyTest is Test, Constants {
     BioVerifyScript public deployer;
@@ -35,19 +41,19 @@ contract BioVerifyTest is Test, Constants {
         bioVerify = deployer.run();
     }
 
+    // ============= deployment
     function test_Deployment() public view {
         assertEq(bioVerify.I_AI_AGENT_ADDRESS(), aiAgentAddress);
         assertEq(bioVerify.I_TREASURY_ADDRESS(), treasuryAddress);
         assertEq(bioVerify.I_SUBMISSION_FEE(), SUBMISSION_FEE);
-        assertEq(bioVerify.I_MIN_STAKE(), MIN_STAKE);
+        assertEq(bioVerify.I_PUBLISHER_MIN_STAKE(), PUBLISHER_MIN_STAKE);
+        assertEq(bioVerify.I_REVIEWER_MIN_STAKE(), REVIEWER_MIN_STAKE);
     }
 
-    /**
-     * SubmitPublication
-     */
+    // ============= SubmitPublication
     // SubmitPublication - happy path
     function test_SubmitPublication_EmitsCorrectEvent() public {
-        uint256 totalToSend = SUBMISSION_FEE + MIN_STAKE + 50 wei; // Sending extra to test stake logic
+        uint256 totalToSend = SUBMISSION_FEE + PUBLISHER_MIN_STAKE + 50 wei; // Sending extra to test stake logic
 
         // 1. Give the  publisher some money
         vm.deal(publisher, 1 ether);
@@ -63,7 +69,7 @@ contract BioVerifyTest is Test, Constants {
     }
 
     function test_SubmitPublication_RecordsCorrectAmountOnContract() public {
-        uint256 totalToSend = SUBMISSION_FEE + MIN_STAKE + 50 wei; // Sending extra to test stake logic
+        uint256 totalToSend = SUBMISSION_FEE + PUBLISHER_MIN_STAKE + 50 wei; // Sending extra to test stake logic
 
         // 1. Give the  publisher some money
         vm.deal(publisher, 1 ether);
@@ -77,7 +83,7 @@ contract BioVerifyTest is Test, Constants {
     }
 
     function test_SubmitPublication_StekesCorrectAmountOnPublication() public {
-        uint256 totalToSend = SUBMISSION_FEE + MIN_STAKE + 50 wei; // Sending extra to test stake logic
+        uint256 totalToSend = SUBMISSION_FEE + PUBLISHER_MIN_STAKE + 50 wei; // Sending extra to test stake logic
 
         // 1. Give the  publisher some money
         vm.deal(publisher, 1 ether);
@@ -89,6 +95,24 @@ contract BioVerifyTest is Test, Constants {
         // 3. Assertions
         uint256 expectedStake = totalToSend - SUBMISSION_FEE;
         assertEq(bioVerify.publicationTotalStake(0), expectedStake);
+    }
+
+    function test_SlashPublisher_ResetsReputation() public {
+        // Set a fake high reputation score first
+        vm.prank(aiAgentAddress);
+        bioVerify.setMemberReputationScore(publisher, 100);
+
+        // Submit a publication
+        uint256 totalToSend = SUBMISSION_FEE + PUBLISHER_MIN_STAKE + 50 wei;
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: totalToSend}(FAKE_CID);
+
+        // Slash publisher
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublisher(0);
+
+        assertEq(bioVerify.getMemberReputationScore(publisher), 0);
     }
 
     // SubmitPublication - unhappy path
@@ -106,12 +130,10 @@ contract BioVerifyTest is Test, Constants {
         bioVerify.submitPublication{value: totalToSend}(FAKE_CID);
     }
 
-    /**
-     * slashPublisher
-     */
+    // ============= slashPublisher
     // slashPublisher - happy path
     function test_SlashPublisher_ClearsStakeAndIncrementsTotalSlashed() public {
-        uint256 stakeAmount = MIN_STAKE + 20 wei;
+        uint256 stakeAmount = PUBLISHER_MIN_STAKE + 20 wei;
         uint256 totalToSend = SUBMISSION_FEE + stakeAmount;
         vm.deal(publisher, 1 ether);
 
@@ -134,7 +156,7 @@ contract BioVerifyTest is Test, Constants {
     }
 
     function test_SlashPublisher__EmitsCorrectEvent() public {
-        uint256 stakeAmount = MIN_STAKE + 20 wei;
+        uint256 stakeAmount = PUBLISHER_MIN_STAKE + 20 wei;
         uint256 totalToSend = SUBMISSION_FEE + stakeAmount;
         vm.deal(publisher, 1 ether);
 
@@ -155,7 +177,7 @@ contract BioVerifyTest is Test, Constants {
 
     // slashPublisher - unhappy path
     function test_SlashPublisher_RevertIfNotAgentCall() public {
-        uint256 stakeAmount = MIN_STAKE + 20 wei;
+        uint256 stakeAmount = PUBLISHER_MIN_STAKE + 20 wei;
         uint256 totalToSend = SUBMISSION_FEE + stakeAmount;
         vm.deal(publisher, 1 ether);
 
@@ -173,7 +195,7 @@ contract BioVerifyTest is Test, Constants {
 
     function test_SlashPublisher_RevertIfPublicationIdNotValid() public {
         uint256 invalidPublicationId = 1;
-        uint256 stakeAmount = MIN_STAKE + 20 wei;
+        uint256 stakeAmount = PUBLISHER_MIN_STAKE + 20 wei;
         uint256 totalToSend = SUBMISSION_FEE + stakeAmount;
         vm.deal(publisher, 1 ether);
 
@@ -190,7 +212,7 @@ contract BioVerifyTest is Test, Constants {
     }
 
     function test_SlashPublisher_RevertIfAlreadySlashed() public {
-        uint256 stakeAmount = MIN_STAKE + 20 wei;
+        uint256 stakeAmount = PUBLISHER_MIN_STAKE + 20 wei;
         uint256 totalToSend = SUBMISSION_FEE + stakeAmount;
         vm.deal(publisher, 1 ether);
 
@@ -210,9 +232,7 @@ contract BioVerifyTest is Test, Constants {
         bioVerify.slashPublisher(0);
     }
 
-    /**
-     * transferTotalSlashed
-     */
+    // ============= transferTotalSlashed
     // transferTotalSlashed - happy path
     function test_TransferTotalSlashed_MovesFundsToTreasury() public {
         // 1. Setup a slashed amount
@@ -249,8 +269,8 @@ contract BioVerifyTest is Test, Constants {
         // 2. Expect the event to be emitted
         // [checkTopic1, checkTopic2, checkTopic3, checkData]
         vm.expectEmit(true, false, false, true);
-        //  BioVerify_TransferTotalSlashed(I_TREASURY_ADDRESS, value);
-        emit BioVerify_TransferTotalSlashed(treasuryAddress, stakeAmount);
+        //  BioVerify_AgentTransferTotalSlashed(I_TREASURY_ADDRESS, value);
+        emit BioVerify_AgentTransferTotalSlashed(treasuryAddress, stakeAmount);
 
         // 3. Perform the call - Trigger transfer as Agent
         vm.prank(aiAgentAddress);
@@ -280,6 +300,101 @@ contract BioVerifyTest is Test, Constants {
         // 2. Perform the call - Trigger transfer as Agent
         vm.prank(aiAgentAddress);
         bioVerify.transferTotalSlashed();
+    }
+
+    // ============= setMemberReputationScore
+    // setMemberReputationScore - happy path
+    function test_SetMemberReputationScore_Success() public {
+        uint256 newScore = 85;
+
+        vm.prank(aiAgentAddress);
+        vm.expectEmit(true, false, false, true);
+        emit BioVerify_AgentSetMemberReputationScore(user, newScore);
+
+        bioVerify.setMemberReputationScore(user, newScore);
+
+        assertEq(bioVerify.getMemberReputationScore(user), newScore);
+    }
+
+    // setMemberReputationScore - unhappy path
+    function test_SetMemberReputationScore_RevertIfNotAgent() public {
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_OnlyAgent.selector));
+        vm.prank(user);
+        bioVerify.setMemberReputationScore(user, 100);
+    }
+
+    // ============= joinReviewerPool
+    // joinReviewerPool - path
+    function test_JoinReviewerPool_Success() public {
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        bioVerify.joinReviewerPool{value: REVIEWER_MIN_STAKE}();
+
+        assertTrue(bioVerify.isReviewer(user));
+        assertEq(bioVerify.reviewerPool(0), user);
+        assertEq(bioVerify.reviewerTotalStake(user), REVIEWER_MIN_STAKE);
+    }
+
+    function test_JoinReviewerPool_Success_EmitsCorrectEvent() public {
+        vm.deal(user, 1 ether);
+
+        // 1. Expect the event to be emitted
+        // [checkTopic1, checkTopic2, checkTopic3, checkData]
+        vm.expectEmit(true, false, false, true);
+        //  BioVerify_JoinReviewerPool(address reviewer);
+        emit BioVerify_JoinReviewerPool(user);
+
+        // 2. Perform the call
+        vm.prank(user);
+        bioVerify.joinReviewerPool{value: REVIEWER_MIN_STAKE}();
+    }
+
+    function test_JoinReviewerPool_RecordsHigherStake() public {
+        // Test that if a reviewer sends more than the min, it's recorded
+        uint256 highStake = REVIEWER_MIN_STAKE + 0.5 ether;
+        vm.deal(user, 1 ether);
+
+        vm.prank(user);
+        bioVerify.joinReviewerPool{value: highStake}();
+
+        assertEq(bioVerify.reviewerTotalStake(user), highStake);
+    }
+
+    // joinReviewerPool - unhappy path
+    function test_JoinReviewerPool_RevertIfZeroStake() public {
+        // Expect revert
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_InsufficientReviewerStake.selector));
+
+        // Perform the call
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        bioVerify.joinReviewerPool{value: 0}();
+    }
+
+    function test_JoinReviewerPool_RevertIfStakeTooLow() public {
+        uint256 lowStake = REVIEWER_MIN_STAKE - 1 wei;
+        vm.deal(user, 1 ether);
+
+        // Expect revert
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_InsufficientReviewerStake.selector));
+
+        // Perform the call
+        vm.prank(user);
+        bioVerify.joinReviewerPool{value: lowStake}();
+    }
+
+    function test_JoinReviewerPool_RevertIfAlreadyReviewer() public {
+        // 1. joinReviewerPool
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        bioVerify.joinReviewerPool{value: REVIEWER_MIN_STAKE}();
+
+        // 2. Expect revert
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_AlreadyReviewer.selector));
+
+        // 2. Perform the call - joinReviewerPool 2nd time
+        vm.prank(user);
+        bioVerify.joinReviewerPool{value: REVIEWER_MIN_STAKE}();
     }
 }
 
