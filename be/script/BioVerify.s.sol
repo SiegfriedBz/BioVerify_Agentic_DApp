@@ -15,8 +15,9 @@ contract BioVerifyScript is Script, Constants {
     function run() public returns (BioVerify) {
         vm.startBroadcast();
 
-        // constructor(address _aiAgentAddress, address _slashedToAddress, uint256 _submissionFee, uint256 _minStake) {
-        bioVerify = new BioVerify(aiAgentAddress, treasuryAddress, SUBMISSION_FEE, MIN_STAKE);
+        // constructor(address _aiAgentAddress, address _slashedToAddress, uint256 _submissionFee, uint256 _publisherMinStake, uint256 _reviewerMinStake) {
+        bioVerify =
+            new BioVerify(aiAgentAddress, treasuryAddress, SUBMISSION_FEE, PUBLISHER_MIN_STAKE, REVIEWER_MIN_STAKE);
 
         vm.stopBroadcast();
 
