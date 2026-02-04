@@ -13,31 +13,30 @@ import { Controller, useFormContext } from "react-hook-form"
 import { formatEther } from "viem"
 import { useReadContract } from "wagmi"
 
-export const SendValueInput: FC = () => {
-	const { control } = useFormContext()
+type Props = {
+	effectiveSubmissionFeeWei: bigint
+}
 
+export const SendValueInput: FC<Props> = (props) => {
+	const { effectiveSubmissionFeeWei } = props
+
+	const { control } = useFormContext()
 	const contractConfig = useContractConfig()
 
-	// Fetch Publication Submission Fee
-	const { data: submissionFeeWei } = useReadContract({
-		...contractConfig,
-		functionName: "I_SUBMISSION_FEE",
-	})
-
-	// Fetch Publication Submission Minimum Stake
+	// 2. Fetch Publication Submission Minimum Stake
 	const { data: minStakeWei } = useReadContract({
 		...contractConfig,
 		functionName: "I_PUBLISHER_MIN_STAKE",
 	})
 
-	const submissionFee = useMemo(
-		() => (submissionFeeWei ? formatEther(submissionFeeWei as bigint) : ""),
-		[submissionFeeWei],
-	)
-
 	const minStake = useMemo(
 		() => (minStakeWei ? formatEther(minStakeWei as bigint) : ""),
 		[minStakeWei],
+	)
+
+	const submissionFee = useMemo(
+		() => (effectiveSubmissionFeeWei ? formatEther(effectiveSubmissionFeeWei as bigint) : ""),
+		[effectiveSubmissionFeeWei],
 	)
 
 	return (
@@ -57,7 +56,7 @@ export const SendValueInput: FC = () => {
 					<FieldDescription className="flex flex-col gap-y-1">
 						<span>Required Staking Amount (adding to Submission Fee).</span>
 						<span className="text-sm italic">
-							Flat Submission Fee: {submissionFee} ETH
+							Dynamic Submission Fee based on network congestion: {submissionFee} ETH
 						</span>
 					</FieldDescription>
 					{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -66,3 +65,4 @@ export const SendValueInput: FC = () => {
 		/>
 	)
 }
+

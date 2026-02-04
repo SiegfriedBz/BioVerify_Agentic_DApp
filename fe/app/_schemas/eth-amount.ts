@@ -1,5 +1,5 @@
-import { parseEther } from "viem";
-import { z } from "zod";
+import { parseEther } from "viem"
+import { z } from "zod"
 
 export const EthAmountSchema = z
 	.string()
@@ -7,15 +7,15 @@ export const EthAmountSchema = z
 	.refine(
 		(val) => {
 			try {
-				parseEther(val);
-				return parseEther(val) > 0n;
+				parseEther(val)
+				return parseEther(val) > 0n
 			} catch {
-				return false;
+				return false
 			}
 		},
 		{
 			message: "Invalid ETH amount",
 		},
-	);
+	)
 
-export type EthAmount = z.infer<typeof EthAmountSchema>;
+export type EthAmount = z.infer<typeof EthAmountSchema>

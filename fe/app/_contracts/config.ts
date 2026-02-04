@@ -51,7 +51,7 @@ const bioVerifyConfigSeoplia: ContractConfig = {
 		},
 		{
 			inputs: [],
-			name: "I_SUBMISSION_FEE",
+			name: "I_MIN_SUBMISSION_FEE",
 			outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
 			stateMutability: "view",
 			type: "function",
@@ -165,7 +165,7 @@ const bioVerifyConfigSeiTestNet: ContractConfig = {
 		},
 		{
 			inputs: [],
-			name: "I_SUBMISSION_FEE",
+			name: "I_MIN_SUBMISSION_FEE",
 			outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
 			stateMutability: "view",
 			type: "function",
