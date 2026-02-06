@@ -41,7 +41,7 @@ export const SendValueInput: FC<Props> = (props) => {
 
 	return (
 		<Controller
-			name="ethAmount"
+			name="stakeAmount"
 			control={control}
 			render={({ field, fieldState }) => (
 				<Field data-invalid={fieldState.invalid}>
@@ -50,7 +50,7 @@ export const SendValueInput: FC<Props> = (props) => {
 						{...field}
 						type="text"
 						inputMode="decimal"
-						min={minStake?.toString()}
+						// min={minStake?.toString()}
 						placeholder={minStake?.toString()}
 					/>
 					<FieldDescription className="flex flex-col gap-y-1">

@@ -105,8 +105,6 @@ export const PublicationForm: FC = () => {
 				return
 			}
 
-			console.log("rootCid", rootCid)
-
 			toast.success("Files uploaded & pinned successfully to IPFS.")
 
 			// 3. Submit to BioVerify
@@ -121,7 +119,7 @@ export const PublicationForm: FC = () => {
 		if (error) {
 			toast.error(
 				<div>
-					<span>Failed to pblish on chain.</span>
+					<span>Failed to publish on chain.</span>
 					<span>
 						Error: {(error as BaseError).shortMessage || error.message}
 					</span>
@@ -242,7 +240,7 @@ export const PublicationForm: FC = () => {
 					<Button
 						type="submit"
 						form="publication-form"
-						className="bg-primary text-primary-foreground"
+						className="bg-primary text-primary-foreground cursor-pointer"
 						disabled={isPending || isConfirming}
 					>
 						{isPending ? (
