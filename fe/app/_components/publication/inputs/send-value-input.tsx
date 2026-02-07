@@ -1,48 +1,47 @@
-"use client";
+"use client"
 
-import { type FC, useMemo } from "react";
-import { Controller, useFormContext } from "react-hook-form";
-import { formatEther } from "viem";
-import { useReadContract } from "wagmi";
-import { useContractConfig } from "@/app/_hooks/use-contract-config";
+import { useContractConfig } from "@/app/_hooks/use-contract-config"
 import {
 	Field,
 	FieldDescription,
 	FieldError,
 	FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { type FC, useMemo } from "react"
+import { Controller, useFormContext } from "react-hook-form"
+import { formatEther } from "viem"
+import { useReadContract } from "wagmi"
 
-export const SendValueInput: FC = () => {
-	const { control } = useFormContext();
+type Props = {
+	effectiveSubmissionFeeWei: bigint
+}
 
-	const contractConfig = useContractConfig();
+export const SendValueInput: FC<Props> = (props) => {
+	const { effectiveSubmissionFeeWei } = props
 
-	// Fetch Publication Submission Fee
-	const { data: submissionFeeWei } = useReadContract({
-		...contractConfig,
-		functionName: "I_SUBMISSION_FEE",
-	});
+	const { control } = useFormContext()
+	const contractConfig = useContractConfig()
 
-	// Fetch Publication Submission Minimum Stake
+	// 2. Fetch Publication Submission Minimum Stake
 	const { data: minStakeWei } = useReadContract({
 		...contractConfig,
-		functionName: "I_MIN_STAKE",
-	});
-
-	const submissionFee = useMemo(
-		() => (submissionFeeWei ? formatEther(submissionFeeWei as bigint) : ""),
-		[submissionFeeWei],
-	);
+		functionName: "I_PUBLISHER_MIN_STAKE",
+	})
 
 	const minStake = useMemo(
 		() => (minStakeWei ? formatEther(minStakeWei as bigint) : ""),
 		[minStakeWei],
-	);
+	)
+
+	const submissionFee = useMemo(
+		() => (effectiveSubmissionFeeWei ? formatEther(effectiveSubmissionFeeWei as bigint) : ""),
+		[effectiveSubmissionFeeWei],
+	)
 
 	return (
 		<Controller
-			name="ethAmount"
+			name="stakeAmount"
 			control={control}
 			render={({ field, fieldState }) => (
 				<Field data-invalid={fieldState.invalid}>
@@ -51,18 +50,19 @@ export const SendValueInput: FC = () => {
 						{...field}
 						type="text"
 						inputMode="decimal"
-						min={minStake?.toString()}
+						// min={minStake?.toString()}
 						placeholder={minStake?.toString()}
 					/>
 					<FieldDescription className="flex flex-col gap-y-1">
 						<span>Required Staking Amount (adding to Submission Fee).</span>
 						<span className="text-sm italic">
-							Flat Submission Fee: {submissionFee} ETH
+							Dynamic Submission Fee based on network congestion: {submissionFee} ETH
 						</span>
 					</FieldDescription>
 					{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 				</Field>
 			)}
 		/>
-	);
-};
+	)
+}
+

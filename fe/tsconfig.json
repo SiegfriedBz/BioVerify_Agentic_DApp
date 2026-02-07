@@ -29,6 +29,6 @@
 		".next/types/**/*.ts",
 		".next/dev/types/**/*.ts",
 		"**/*.mts"
-	],
+, "app/_schemas/publication-schema ts"	],
 	"exclude": ["node_modules"]
 }

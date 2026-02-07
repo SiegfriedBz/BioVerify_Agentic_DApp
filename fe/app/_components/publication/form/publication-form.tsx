@@ -1,18 +1,10 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useCallback, useEffect } from "react";
-import {
-	FormProvider,
-	type SubmitHandler,
-	useFieldArray,
-	useForm,
-} from "react-hook-form";
-import { toast } from "sonner";
-import type { BaseError } from "wagmi";
-import { useSubmitPublication } from "@/app/_hooks/use-submit-publication";
-import { AuthorRoleSchema } from "@/app/_schemas/author";
-import { Button } from "@/components/ui/button";
+import { useEffectiveSubmissionFee } from "@/app/_hooks/use-effective-submission-fee"
+import { useSubmitPublication } from "@/app/_hooks/use-submit-publication"
+import { AuthorRoleSchema } from "@/app/_schemas/author"
+import { NetworkSchema } from "@/app/_schemas/wallet"
+import { Button } from "@/components/ui/button"
 import {
 	Card,
 	CardContent,
@@ -20,22 +12,33 @@ import {
 	CardFooter,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card";
-import { FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Spinner } from "@/components/ui/spinner";
+} from "@/components/ui/card"
+import { FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Spinner } from "@/components/ui/spinner"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { type FC, useCallback, useEffect } from "react"
+import {
+	FormProvider,
+	type SubmitHandler,
+	useFieldArray,
+	useForm,
+} from "react-hook-form"
+import { toast } from "sonner"
+import { parseEther } from "viem"
+import type { BaseError } from "wagmi"
+import { AbstractInput } from "../inputs/abstract-input"
+import { AddAuthorButton } from "../inputs/author-add-button"
+import { AuthorInput } from "../inputs/author-input"
+import { AddFileButton } from "../inputs/file-add-button"
+import { FileInput } from "../inputs/file-input"
+import { LicenseInput } from "../inputs/license-input"
+import { ManuscriptInput } from "../inputs/manuscript-input"
+import { SendValueInput } from "../inputs/send-value-input"
+import { TitleInput } from "../inputs/title-input"
 import {
 	PublicationFormSchema,
 	type PublicationFormT,
-} from "../../_schemas/publication-form-schema";
-import { AbstractInput } from "./inputs/abstract-input";
-import { AddAuthorButton } from "./inputs/author-add-button";
-import { AuthorInput } from "./inputs/author-input";
-import { AddFileButton } from "./inputs/file-add-button";
-import { FileInput } from "./inputs/file-input";
-import { LicenseInput } from "./inputs/license-input";
-import { ManuscriptInput } from "./inputs/manuscript-input";
-import { SendValueInput } from "./inputs/send-value-input";
-import { TitleInput } from "./inputs/title-input";
+} from "./publication-form-schema"
 
 const DEFAULT_VALUES = {
 	title: "",
@@ -45,17 +48,25 @@ const DEFAULT_VALUES = {
 		{
 			name: "",
 			role: AuthorRoleSchema.enum.First_Author,
+			wallet: {
+				address: "0x...",
+				network: NetworkSchema.enum.sepolia,
+			},
 		},
 	],
 	files: [],
-	ethAmount: "",
-};
+	stakeAmount: "",
+}
 
 export const PublicationForm: FC = () => {
+
+	// TODO Add refresh effectiveSubmissionFee button
+	const { effectiveSubmissionFeeWei } = useEffectiveSubmissionFee()
+
 	const form = useForm<PublicationFormT>({
 		resolver: zodResolver(PublicationFormSchema),
 		defaultValues: DEFAULT_VALUES,
-	});
+	})
 
 	// 1. Array for Authors
 	const {
@@ -65,7 +76,7 @@ export const PublicationForm: FC = () => {
 	} = useFieldArray({
 		control: form.control,
 		name: "authors",
-	});
+	})
 
 	// 2. Array for Files
 	const {
@@ -75,66 +86,65 @@ export const PublicationForm: FC = () => {
 	} = useFieldArray({
 		control: form.control,
 		name: "files",
-	});
+	})
 
 	const { submitPublication, error, isPending, isConfirming, isConfirmed } =
-		useSubmitPublication();
+		useSubmitPublication()
 
 	const onSubmit: SubmitHandler<PublicationFormT> = useCallback(
 		async (data) => {
 			// 1. Submit to IPFS
 			const { createAndPinManifestRootCid } = await import(
 				"@/app/api/pinata/create-and-pin-manifest-root-cid"
-			);
+			)
 
-			const rootCid = await createAndPinManifestRootCid(data);
+			const rootCid = await createAndPinManifestRootCid(data)
 
 			if (!rootCid) {
-				toast.error("Something went wrong while uploading files to IPFS.");
-				return;
+				toast.error("Something went wrong while uploading files to IPFS.")
+				return
 			}
 
-			console.log("rootCid", rootCid);
-
-			toast.success("Files uploaded & pinned successfully to IPFS.");
+			toast.success("Files uploaded & pinned successfully to IPFS.")
 
 			// 3. Submit to BioVerify
-			console.log("Submitting to BioVerify:", data);
-			submitPublication({ cid: rootCid, ethValue: data.ethAmount });
+			console.log("Submitting to BioVerify:", data)
+			const totalWeiValueSent = parseEther(data.stakeAmount) + effectiveSubmissionFeeWei
+			submitPublication({ cid: rootCid, totalWeiValue: totalWeiValueSent, submissionFeeWeiValue: effectiveSubmissionFeeWei })
 		},
-		[submitPublication],
-	);
+		[submitPublication, effectiveSubmissionFeeWei],
+	)
 
 	useEffect(() => {
 		if (error) {
 			toast.error(
 				<div>
-					<span>Failed to pblish on chain.</span>
+					<span>Failed to publish on chain.</span>
 					<span>
 						Error: {(error as BaseError).shortMessage || error.message}
 					</span>
 					<span>Please try again</span>
 				</div>,
-			);
-			return;
+			)
+			return
 		}
 
 		if (isPending) {
-			toast.info("Publishing on chain...");
-			return;
+			toast.info("Publishing on chain...")
+			return
 		}
 
 		if (isConfirming) {
-			toast.info("Waiting for transaction confirmation...");
-			return;
+			toast.info("Waiting for transaction confirmation...")
+			return
 		}
 
 		if (isConfirmed) {
 			// form.reset();
-			toast.success("Transaction confirmed.");
-			return;
+			toast.success("Transaction confirmed.")
+			return
 		}
-	}, [error, isPending, isConfirming, isConfirmed]);
+	}, [error, isPending, isConfirming, isConfirmed])
 
 	return (
 		<div className="flex flex-col gap-4 w-full max-w-3xl mx-auto my-10">
@@ -211,13 +221,13 @@ export const PublicationForm: FC = () => {
 													index={index}
 													onRemoveFile={() => removeFile(index)}
 												/>
-											);
+											)
 										})}
 									</div>
 								</div>
 
 								{/* Staking Amount */}
-								<SendValueInput />
+								<SendValueInput effectiveSubmissionFeeWei={effectiveSubmissionFeeWei} />
 							</FieldGroup>
 						</form>
 					</FormProvider>
@@ -230,7 +240,7 @@ export const PublicationForm: FC = () => {
 					<Button
 						type="submit"
 						form="publication-form"
-						className="bg-primary text-primary-foreground"
+						className="bg-primary text-primary-foreground cursor-pointer"
 						disabled={isPending || isConfirming}
 					>
 						{isPending ? (
@@ -248,5 +258,5 @@ export const PublicationForm: FC = () => {
 				</CardFooter>
 			</Card>
 		</div>
-	);
-};
+	)
+}

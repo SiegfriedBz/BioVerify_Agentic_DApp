@@ -1,25 +1,26 @@
-"use client";
+"use client"
 
-import { useMemo } from "react";
+import { useMemo } from "react"
 import {
 	bioVerifyContractConfig,
-	ContractChain,
 	type ContractConfig,
-} from "../_contracts/config";
-import { useCurrentChain } from "./use-current-chain";
+} from "../_contracts/config"
+import { NetworkSchema } from "../_schemas/wallet"
+import { useCurrentChain } from "./use-current-chain"
 
 /**
  * @returns ContractConfig - BioVerify contract address & abi for current chain
  */
 export const useContractConfig = (): ContractConfig => {
-	const currentChain = useCurrentChain();
+	const currentChain = useCurrentChain()
 
 	return useMemo(() => {
 		const isSepolia =
-			currentChain?.name?.toUpperCase() === ContractChain.SEPOLIA;
+			currentChain?.name?.toLowerCase() === NetworkSchema.enum.sepolia
 
 		return bioVerifyContractConfig[
-			isSepolia ? ContractChain.SEPOLIA : ContractChain.SEI_TESNET
-		];
-	}, [currentChain]);
-};
+			isSepolia ? NetworkSchema.enum.sepolia : NetworkSchema.enum.sei_testnet
+		]
+	}, [currentChain])
+}
+

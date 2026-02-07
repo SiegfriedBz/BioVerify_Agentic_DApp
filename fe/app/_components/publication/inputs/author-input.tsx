@@ -42,7 +42,11 @@ export const AuthorInput: FC<AuthorInputProps> = (props) => {
 					control={control}
 					render={({ field, fieldState }) => (
 						<Field data-invalid={fieldState.invalid}>
-							<Input {...field} placeholder="Full Name" />
+							<Input
+								{...field}
+								value={field.value ?? ""}
+								placeholder="Full Name"
+							/>
 							{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 						</Field>
 					)}
@@ -77,7 +81,11 @@ export const AuthorInput: FC<AuthorInputProps> = (props) => {
 					name={`authors.${index}.wallet.address`}
 					control={control}
 					render={({ field }) => (
-						<Input {...field} placeholder="Wallet (0x... or sei1...)" />
+						<Input
+							{...field}
+							value={field.value ?? ""}
+							placeholder="Wallet (0x... or sei1...)"
+						/>
 					)}
 				/>
 			</div>

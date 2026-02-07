@@ -1,22 +1,22 @@
-"use client";
+"use client"
 
-import { FileUpIcon, Trash2Icon } from "lucide-react";
-import type { FC } from "react";
-import { Controller, useFormContext } from "react-hook-form";
-import { FileTypeSchema } from "@/app/_schemas/publication-form-schema";
-import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FileTypeSchema } from "@/app/_schemas/publication"
+import { Button } from "@/components/ui/button"
+import { Field } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { FileUpIcon, Trash2Icon } from "lucide-react"
+import type { FC } from "react"
+import { Controller, useFormContext } from "react-hook-form"
 
 type FileInputProps = {
-	index: number;
-	onRemoveFile: () => void;
-};
+	index: number
+	onRemoveFile: () => void
+}
 
 export const FileInput: FC<FileInputProps> = (props) => {
-	const { index, onRemoveFile } = props;
+	const { index, onRemoveFile } = props
 
-	const { control } = useFormContext();
+	const { control } = useFormContext()
 
 	return (
 		<div className="grid grid-cols-12 gap-3 p-4 bg-muted/20 rounded-lg border items-center">
@@ -75,5 +75,5 @@ export const FileInput: FC<FileInputProps> = (props) => {
 				<Trash2Icon className="h-4 w-4" />
 			</Button>
 		</div>
-	);
-};
+	)
+}

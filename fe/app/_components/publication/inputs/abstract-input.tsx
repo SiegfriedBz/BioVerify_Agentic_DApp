@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import type { FC } from "react";
-import { Controller, useFormContext } from "react-hook-form";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field"
+import { Textarea } from "@/components/ui/textarea"
+import type { FC } from "react"
+import { Controller, useFormContext } from "react-hook-form"
 
 export const AbstractInput: FC = () => {
-	const { control } = useFormContext();
+	const { control } = useFormContext()
 
 	return (
 		<Controller
@@ -20,5 +20,5 @@ export const AbstractInput: FC = () => {
 				</Field>
 			)}
 		/>
-	);
-};
+	)
+}

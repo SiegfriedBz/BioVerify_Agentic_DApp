@@ -1,4 +1,4 @@
-import { PublicationForm } from "./_components/publication/publication-form";
+import { PublicationForm } from "./_components/publication/form/publication-form";
 
 export default function Home() {
 	return (
