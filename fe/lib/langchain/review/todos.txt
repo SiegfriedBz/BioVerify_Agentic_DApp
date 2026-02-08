@@ -1,0 +1,42 @@
+TODOs
+
+===
+
+update EVENT BioVerify_SubmittedPublication TO USE INDEX (IN SOLIDITY AND ALCHEMY NOTIFY)
+===> 	"event BioVerify_SubmittedPublication(address indexed publisher, uint256 indexed publicationId, string cid)",
+
+===
+
+1. Pick "senior reviewer" in fulffilrandomwords
+The "Reputation-Weighted" Random Pick
+Since we have memberReputationScore, the ideal decentralized way is to pick the Senior Reviewer from the top $X\%$ of the community.How it works: When fulfillRandomWords runs, it doesn't just pick 5 reviewers; it picks 5 + 1. The 6th person is the one with the highest reputation among those picked, or is picked from a separate pool of "Elders."The Alchemy Payload: Alchemy will send a list: reviewers: ["0x1...", "0x2...", "0x3..."] and a separate field seniorReviewer: "0xSenior...".
+
+2. change event BioVerify_Agent_PickedReviewers
+- remove requestId and replace with rootCid
+- add address seniorReviewer
+
+(IN SOLIDITY AND ALCHEMY NOTIFY)
+===> 	"event BioVerify_Agent_PickedReviewers(uint256 indexed publicationId, string rootCid, address[] reviewers, address seniorReviewer, uint256 minValidReviewsCount)",
+
+
+3. 
+MIN_REVIEWS_COUNT
+- add immutable variable on BioVerify
+- fetch its value with viem in startReviewersAgent
+- add it to the graph state (constant for a threadId = pubId-rootCid)
+
+4. add solidity
+- settleReviewPass
+- settleReviewFail
+
+5. add tests + fix tests
+6. redeploy contract 
+7. add contract as vrf consumer
+8. update contract address and ani in FE
+9. update alchemy notify webhook "reviewers" 
+10. update api webhook "reviewers" to parse updated BioVerify_Agent_PickedReviewers
+11. startReviewersAgent: add viem fetch MIN_REVIEWS_COUNT and initilize minValidReviewsCount graph state
+12. add persistent checkpointers in both graphs (submission and review) 
+13. test all flow locally with ngrok
+14. PR and test in staging/preview 
+
