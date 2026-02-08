@@ -36,12 +36,18 @@ error BioVerify_FailedToTransferTo(address to);
 
 // --- Events ---
 event BioVerify_JoinReviewerPool(address reviewer);
-event BioVerify_SubmittedPublication(address publisher, uint256 id, string cid);
+event BioVerify_SubmittedPublication(address indexed publisher, uint256 indexed publicationId, string cid);
 event BioVerify_SlashedPublisher(uint256 publicationId, address publisher);
 event BioVerify_Agent_TransferTotalSlashed(address to, uint256 value);
 event BioVerify_Agent_SetMemberReputationScore(address member, uint256 score);
 event BioVerify_Agent_RequestedVRF(uint256 publicationId, uint256 requestId);
-event BioVerify_Agent_PickedReviewers(uint256 publicationId, address[] reviewers, uint256 requestId);
+event BioVerify_Agent_PickedReviewers(
+    uint256 indexed publicationId,
+    string rootCid,
+    address[] reviewers,
+    address seniorReviewer,
+    uint256 minValidReviewsCount
+);
 
 /**
  * @title BioVerify Protocol
@@ -225,7 +231,9 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
     }
 
     /**
-     * @notice Internal callback for Chainlink VRF to populate reviewers.
+     * @notice Internal callback for Chainlink VRF.
+     * Picks I_VRF_NUM_WORDS candidates, promotes the one with highest reputation
+     * to Senior Reviewer, and assigns the rest as Peer Reviewers.
      */
     function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
         uint256 publicationId = vrfRequestIdToPublicationId[requestId];
@@ -234,18 +242,44 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         uint256 poolSize = reviewerPool.length;
         address publisher = publication.publisher;
 
+        // 1. Pick I_VRF_NUM_WORDS unique candidates from the reviewer pool
+        address[] memory candidates = new address[](I_VRF_NUM_WORDS);
+
         for (uint32 i = 0; i < I_VRF_NUM_WORDS; ++i) {
             uint256 index = randomWords[i] % poolSize;
             address candidate = reviewerPool[index];
 
-            while (_isAlreadySelected(publication.reviewers, candidate) || candidate == publisher) {
+            while (_isAlreadySelected(candidates, candidate, i) || candidate == publisher) {
                 index = (index + 1) % poolSize;
                 candidate = reviewerPool[index];
             }
-            publication.reviewers.push(candidate);
+            candidates[i] = candidate;
         }
 
-        emit BioVerify_Agent_PickedReviewers(publicationId, publication.reviewers, requestId);
+        // 2. Identify the most reputable one as Senior
+        uint256 seniorIndex = 0;
+        uint256 highestRep = memberReputationScore[candidates[0]];
+
+        for (uint32 i = 1; i < I_VRF_NUM_WORDS; i++) {
+            uint256 reviewerRep = memberReputationScore[candidates[i]];
+            if (reviewerRep > highestRep) {
+                seniorIndex = i;
+                highestRep = reviewerRep;
+            }
+        }
+
+        address senior = candidates[seniorIndex];
+
+        // 3. The others become the peer reviewers
+        for (uint256 i = 0; i < I_VRF_NUM_WORDS; ++i) {
+            if (i != seniorIndex) {
+                publication.reviewers.push(candidates[i]);
+            }
+        }
+
+        string memory cid = publicationCurrentCid[publicationId];
+
+        emit BioVerify_Agent_PickedReviewers(publicationId, cid, publication.reviewers, senior, I_MIN_REVIEWS_COUNT);
     }
 
     /**
@@ -287,8 +321,13 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         if (msg.sender != I_AI_AGENT_ADDRESS) revert BioVerify_OnlyAgent();
     }
 
-    function _isAlreadySelected(address[] memory selected, address candidate) internal pure returns (bool) {
-        for (uint256 i = 0; i < selected.length; i++) {
+    function _isAlreadySelected(address[] memory selected, address candidate, uint32 limit)
+        internal
+        pure
+        returns (bool)
+    {
+        for (uint32 i = 0; i < limit; i++) {
+            // Only check up to 'limit' so we don't compare against the 0x0 padding
             if (selected[i] == candidate) return true;
         }
         return false;
