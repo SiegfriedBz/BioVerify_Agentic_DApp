@@ -4,7 +4,7 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? ""
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? ""
 
 export const sendTelegramNotification = async (message: string) => {
-  console.log(`[STUB - TELEGRAM] 📱 Broadcasting: ${message}`)
+  console.log(`TELEGRAM 📱 Broadcasting: ${message}`)
 
   if (!BOT_TOKEN || !CHAT_ID) {
     console.warn("⚠️ Telegram credentials missing. Check your .env")

@@ -1,0 +1,17 @@
+TODOs
+
+1.
+remove requestId and replace with rootCid
+add address seniorReviewer
+event BioVerify_Agent_PickedReviewers(uint256 publicationId,address[] reviewers,uint256 requestId)
+required in webhook and graph 
+
+2. 
+MIN_REVIEWS_COUNT
+- add immutable variable on BioVerify
+- fetch its value with viem in startReviewersAgent
+- add it to the graph state (constant for a threadId = pubId-rootCid)
+
+3. fulfillRandomWords MUST ALSO PICK A RANDOM SENIOR REVIEWER 
+The "Reputation-Weighted" Random Pick
+Since you have memberReputationScore, the ideal decentralized way is to pick the Senior Reviewer from the top $X\%$ of the community.How it works: When fulfillRandomWords runs, it doesn't just pick 5 reviewers; it picks 5 + 1. The 6th person is the one with the highest reputation among those picked, or is picked from a separate pool of "Elders."The Alchemy Payload: Alchemy will send a list: reviewers: ["0x1...", "0x2...", "0x3..."] and a separate field seniorReviewer: "0xSenior...".

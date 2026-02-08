@@ -2,10 +2,10 @@
 
 import { NetworkT } from "@/app/_schemas/wallet"
 import { sendTelegramNotification } from "../notifications/telegram"
-import { agentAccount, getClient, getContractConfig } from "./viem-client"
+import { getContractConfig } from "../utils/get-contract-config"
+import { agentAccount, getClient } from "./viem-client"
 
 const PINATA_IPFS_URL = process.env.NEXT_PUBLIC_PINATA_IPFS_URL ?? ""
-
 
 type BaseParams = {
   network: NetworkT
@@ -39,7 +39,7 @@ export const slashPublisher = async (params: slashPublisherParams) => {
     `🚨 *BioVerify Alert: Slash Executed*\n\n` +
     `Publication: #${publicationId}\n` +
     `Verdict: Plagiarism Detected\n` +
-    `Evidence: ${reason.slice(0, 1000)}...` +
+    `Evidence: ${reason.slice(0, 1000)}...\n` +
     `IPFS Manifest Link: ${PINATA_IPFS_URL}/${rootCid}`
   )
 
@@ -66,8 +66,8 @@ export const pickReviewers = async (params: BaseParams) => {
   await sendTelegramNotification(
     `✅ *BioVerify Alert: Review Phase Started*\n\n` +
     `Publication: #${publicationId} passed AI validation.\n` +
-    `Status: Selecting 3 random reviewers via Chainlink VRF.` +
-    `IPFS Manifest Link: ${PINATA_IPFS_URL}/${rootCid}` +
+    `Status: Selecting 3 random reviewers via Chainlink VRF.\n` +
+    `IPFS Manifest Link: ${PINATA_IPFS_URL}/${rootCid}\n` +
     `🧪 _Awaiting VRF callback..._`
   )
 
