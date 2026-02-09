@@ -66,6 +66,7 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         uint256 id;
         address publisher;
         address[] reviewers;
+        address seniorReviewer;
         string[] cids;
         PublicationStatus status;
         uint256 paidSubmissionFee;
@@ -268,7 +269,7 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
             }
         }
 
-        address senior = candidates[seniorIndex];
+        publication.seniorReviewer = candidates[seniorIndex];
 
         // 3. The others become the peer reviewers
         for (uint256 i = 0; i < I_VRF_NUM_WORDS; ++i) {
@@ -279,7 +280,9 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
 
         string memory cid = publicationCurrentCid[publicationId];
 
-        emit BioVerify_Agent_PickedReviewers(publicationId, cid, publication.reviewers, senior, I_MIN_REVIEWS_COUNT);
+        emit BioVerify_Agent_PickedReviewers(
+            publicationId, cid, publication.reviewers, publication.seniorReviewer, I_MIN_REVIEWS_COUNT
+        );
     }
 
     /**

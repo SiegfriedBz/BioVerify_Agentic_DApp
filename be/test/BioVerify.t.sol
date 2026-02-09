@@ -476,21 +476,22 @@ contract BioVerifyTest is Test, Constants {
     // ============= pickReviewers
     // pickReviewers - path
     function test_FullVRFReviewerSelectionFlow() public {
-        // 1. Setup Reviewer Pool (Need at least 4 for 3 words)
-        address r1 = makeAddr("r1");
-        address r2 = makeAddr("r2");
-        address r3 = makeAddr("r3");
-        address r4 = makeAddr("r4");
-        address[] memory reviewers = new address[](4);
-        reviewers[0] = r1;
-        reviewers[1] = r2;
-        reviewers[2] = r3;
-        reviewers[3] = r4;
+        // 1. Setup: Pool size must be VRF_NUM_WORDS + 1 (7)
+        uint256 poolSize = VRF_NUM_WORDS + 1;
+        uint32 highRepReviewerIndex = 1;
 
-        for (uint256 i = 0; i < 4; i++) {
+        address[] memory reviewers = new address[](poolSize);
+        for (uint32 i = 0; i < poolSize; ++i) {
+            reviewers[i] = makeAddr(string(abi.encodePacked("r", i)));
             vm.deal(reviewers[i], 1 ether);
             vm.prank(reviewers[i]);
             bioVerify.joinReviewerPool{value: REVIEWER_MIN_STAKE}();
+
+            // Give one reviewer high rep to test Senior selection later
+            if (i == highRepReviewerIndex) {
+                vm.prank(aiAgentAddress);
+                bioVerify.setMemberReputationScore(reviewers[i], 500);
+            }
         }
 
         // 2. Submit Publication
@@ -499,7 +500,6 @@ contract BioVerifyTest is Test, Constants {
         bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
 
         // 3. Agent triggers pickReviewers
-
         vm.prank(aiAgentAddress);
         uint256 requestId = bioVerify.pickReviewers(0);
 
@@ -513,30 +513,33 @@ contract BioVerifyTest is Test, Constants {
 
         // 5. Assertions
         pub = bioVerify.getFullPublication(0);
-        assertEq(pub.reviewers.length, bioVerify.I_VRF_NUM_WORDS());
+        // Total picked is 6 (1 Senior + 5 Peers)
+        assertEq(pub.reviewers.length, VRF_NUM_WORDS - 1);
+        assertEq(pub.seniorReviewer, reviewers[highRepReviewerIndex]);
 
         // Ensure publisher is NOT in the reviewer list (Self-Review Protection)
         for (uint256 i = 0; i < pub.reviewers.length; i++) {
             assertTrue(pub.reviewers[i] != publisher, "Publisher selected as reviewer!");
         }
+
+        // Ensure publisher is NOT the seniorReviewer (Self-Review Protection)
+        assertTrue(pub.seniorReviewer != publisher, "Publisher selected as seniorReviewer!");
     }
 
     // "Publisher Collision" Test
     // This forces the VRF to pick the publisher, proving the contract correctly increments the index to find a valid reviewer instead.
     function test_VRF_SkipsPublisherIfSelected() public {
-        // 1. Setup: Pool of 4. Make r1 (index 0) the publisher.
-        address r1 = publisher; // Publisher is also a reviewer
-        address r2 = makeAddr("r2");
-        address r3 = makeAddr("r3");
-        address r4 = makeAddr("r4");
+        // 1. Setup: Pool size must be VRF_NUM_WORDS + 1 (7)
+        uint256 poolSize = VRF_NUM_WORDS + 1;
+        address[] memory users = new address[](poolSize);
 
-        address[] memory users = new address[](4);
-        users[0] = r1;
-        users[1] = r2;
-        users[2] = r3;
-        users[3] = r4;
+        // Make index 0 the publisher
+        users[0] = publisher;
+        for (uint256 i = 1; i < poolSize; i++) {
+            users[i] = makeAddr(string(abi.encodePacked("r", i)));
+        }
 
-        for (uint256 i = 0; i < 4; i++) {
+        for (uint256 i = 0; i < poolSize; i++) {
             vm.deal(users[i], 1 ether);
             vm.prank(users[i]);
             bioVerify.joinReviewerPool{value: REVIEWER_MIN_STAKE}();
@@ -551,29 +554,38 @@ contract BioVerifyTest is Test, Constants {
         vm.prank(aiAgentAddress);
         uint256 requestId = bioVerify.pickReviewers(0);
 
-        // 4. Force Mock to return [0, 1, 2]
-        // Index 0 is the publisher. The contract should skip 0 and pick 1, 2, 3.
-        uint256[] memory words = new uint256[](3);
-        words[0] = 0;
-        words[1] = 1;
-        words[2] = 2;
+        // 4. Force Mock to return indices starting with 0 (the publisher)
+        uint256[] memory words = new uint256[](VRF_NUM_WORDS);
+        for (uint256 i = 0; i < VRF_NUM_WORDS; i++) {
+            words[i] = i;
+        }
 
         vrfCoordinatorMock.fulfillRandomWordsWithOverride(requestId, address(bioVerify), words);
 
         // 5. Assertions
         BioVerify.Publication memory pub = bioVerify.getFullPublication(0);
+
+        // Senior should not be publisher
+        assertTrue(pub.seniorReviewer != publisher, "Senior Reviewer is publisher!");
+
+        // Peers should not be publisher
         for (uint256 i = 0; i < pub.reviewers.length; i++) {
-            assertTrue(pub.reviewers[i] != publisher, "Publisher was not skipped!");
+            assertTrue(pub.reviewers[i] != publisher, "Publisher was selected in peer reviewers!");
         }
-        assertEq(pub.reviewers.length, 3);
+
+        // Total picked is 6 (1 Senior + 5 Peers)
+        assertEq(pub.reviewers.length, VRF_NUM_WORDS - 1);
+        // seniorReviewer should have been picked
+        assertTrue(pub.seniorReviewer != address(0));
     }
 
     // "Duplicate Selection" Test
     // This forces the VRF to pick the same index twice, triggering the branch that checks _isAlreadySelected.
     function test_VRF_HandlesDuplicateIndices() public {
-        // 1. Setup Pool of 5 (indices 0-4)
-        address[] memory r = new address[](5);
-        for (uint256 i = 0; i < 5; i++) {
+        // 1. Setup Pool of 7
+        uint256 poolSize = VRF_NUM_WORDS + 1;
+        address[] memory r = new address[](poolSize);
+        for (uint256 i = 0; i < poolSize; i++) {
             r[i] = makeAddr(string(abi.encodePacked("rev", i)));
             vm.deal(r[i], 1 ether);
             vm.prank(r[i]);
@@ -587,23 +599,27 @@ contract BioVerifyTest is Test, Constants {
         vm.prank(aiAgentAddress);
         uint256 requestId = bioVerify.pickReviewers(0);
 
-        // 2. Force Mock to return duplicates: [1, 1, 2]
-        // The contract must detect the second '1' is a duplicate and move to next available
-        uint256[] memory words = new uint256[](3);
-        words[0] = 1;
-        words[1] = 1;
-        words[2] = 2;
+        // 2. Force Mock to return duplicates: [1, 1, 1, 1, 1, 1]
+        // The contract must increment each time to find unique reviewers
+        uint256[] memory words = new uint256[](VRF_NUM_WORDS);
+        for (uint256 i = 0; i < VRF_NUM_WORDS; i++) {
+            words[i] = 1;
+        }
 
         vrfCoordinatorMock.fulfillRandomWordsWithOverride(requestId, address(bioVerify), words);
 
         // 3. Assertions
         BioVerify.Publication memory pub = bioVerify.getFullPublication(0);
-        assertEq(pub.reviewers.length, 3);
 
-        // Ensure all reviewers are unique
-        assertTrue(pub.reviewers[0] != pub.reviewers[1]);
-        assertTrue(pub.reviewers[1] != pub.reviewers[2]);
-        assertTrue(pub.reviewers[0] != pub.reviewers[2]);
+        // Total picked is 6 (1 Senior + 5 Peers)
+        assertEq(pub.reviewers.length, VRF_NUM_WORDS - 1);
+        // seniorReviewer should have been picked
+        assertTrue(pub.seniorReviewer != address(0));
+
+        // Verify uniqueness (Basic check: Senior is not in Peer array)
+        for (uint256 i = 0; i < pub.reviewers.length; i++) {
+            assertTrue(pub.reviewers[i] != pub.seniorReviewer, "Senior found in peer list!");
+        }
     }
 
     // pickReviewers - unhappy path
