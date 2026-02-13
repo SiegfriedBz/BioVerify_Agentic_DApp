@@ -16,7 +16,7 @@ import { SubmissionStateSchema } from "./state"
  * 1. IPFS Ingestion: Resolution of the multi-layer manifest (Metadata -> Abstract).
  * 2. Forensic Search: Multi-source web crawling via Tavily to detect existing literature.
  * 3. AI Verdict: LLM-driven plagiarism analysis and "Slashing" decision logic.
- * * @triggered-by Alchemy Webhooks (On-Chain BioVerify_SubmittedPublication event)
+ * * @triggered-by Alchemy Webhooks (On-Chain BioVerify_SubmitPublication event)
  * @outcomes "pass" (proceed to VRF selection) | "fail" (immediate protocol slash)
  */
 
