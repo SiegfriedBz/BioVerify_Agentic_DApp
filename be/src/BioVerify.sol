@@ -5,6 +5,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
+// TODO REFACTOR functions, extract sandwich modifiers
+// TODO ADD A REVIEW CID to publication ? (needs 1. reviewsAgent => IPFS => contract)
+
 /**
  * @title BioVerifyConfig
  * @notice Configuration struct for protocol deployment parameters.
@@ -51,7 +54,7 @@ error BioVerify_InSufficientContractBalance(uint256 balance);
 event BioVerify_SubmitPublication(address indexed publisher, uint256 indexed pubId, string indexed cid);
 event BioVerify_PayReviewerMinStake(address indexed reviewer);
 event BioVerify_Claimed(address indexed member, uint256 indexed pubId, uint256 indexed amount);
-event BioVerify_Agent_TransferTotalSlashed(address indexed to, uint256 indexed value);
+event BioVerify_Agent_SlashPublisher(uint256 indexed pubId, address indexed publisher);
 event BioVerify_Agent_RequestVRF(uint256 indexed pubId, uint256 indexed requestId);
 event BioVerify_Agent_PickReviewers(
     uint256 indexed pubId,
@@ -62,8 +65,10 @@ event BioVerify_Agent_PickReviewers(
 );
 event BioVerify_Agent_RewardReviewer(address indexed member, uint256 indexed newReputation, uint256 indexed pubId);
 event BioVerify_Agent_SlashMember(address indexed member, uint256 indexed newReputation, uint256 indexed pubId);
+event BioVerify_Agent_SetMemberReputation(address indexed member, uint256 indexed newReputation);
 event BioVerify_Agent_PublishPublication(uint256 indexed pubId);
 event BioVerify_Agent_SlashPublication(uint256 indexed pubId);
+event BioVerify_Agent_TransferSlashedPool(address indexed to, uint256 indexed value);
 
 /**
  * @title BioVerify Protocol
@@ -306,13 +311,15 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         onlyValidPubId(_pubId)
     {
         Publication storage pub = idToPublication[_pubId];
+
         // Check
         if (pub.status != PublicationStatus.IN_REVIEW) revert BioVerify_MustBeInReviewToSettle(_pubId);
 
-        // Effect
+        // 1. Update Status & Reputation
         pub.status = PublicationStatus.PUBLISHED;
         addressToMember[pub.publisher].reputation += I_REPUTATION_BOOST;
 
+        // 2. Process Rewards and Slashes
         for (uint256 i = 0; i < _honest.length; ++i) {
             _rewardReviewer(_honest[i], _pubId);
         }
@@ -320,13 +327,40 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
             _slashMember(_negligent[i], _pubId);
         }
 
-        uint256 totalRewardsAdded = I_REVIEWER_REWARD * _honest.length;
-        uint256 totalSlashed = I_REVIEWER_MIN_STAKE * _negligent.length;
+        // 3. DECLARATIVE ACCOUNTING
+        // The pool must equal: (Publisher's original stake) + (Honest Reviewers' total payout)
+        uint256 publisherStake = memberStakeOnPubId[pub.publisher][_pubId];
+        uint256 totalHonestPayout = _honest.length * (I_REVIEWER_MIN_STAKE + I_REVIEWER_REWARD);
 
-        pub.stakes = pub.stakes + totalRewardsAdded - totalSlashed;
-        slashedPool += totalSlashed;
+        pub.stakes = publisherStake + totalHonestPayout;
+
+        // 4. Update Treasury
+        uint256 totalSlashedFromReviewers = _negligent.length * I_REVIEWER_MIN_STAKE;
+        slashedPool += totalSlashedFromReviewers;
 
         emit BioVerify_Agent_PublishPublication(_pubId);
+    }
+
+    /**
+     * @notice Finalizes a publication as fraudulent.
+     * @notice Slashes the publisher.
+     * @dev Restricted to AI Agent. Triggered before reviewing process.
+     * @param _pubId The ID of the fraudulent publication.
+     */
+    function slashPublisher(uint256 _pubId) external onlyAgent onlyValidPubId(_pubId) {
+        Publication storage pub = idToPublication[_pubId];
+        // Check
+        if (pub.status == PublicationStatus.SLASHED) revert BioVerify_AlreadySlashed(_pubId);
+
+        // Effect
+        uint256 stakes = pub.stakes;
+        pub.status = PublicationStatus.SLASHED;
+        _slashMember(pub.publisher, _pubId);
+
+        pub.stakes = 0;
+        slashedPool += stakes;
+
+        emit BioVerify_Agent_SlashPublisher(_pubId, pub.publisher);
     }
 
     /**
@@ -344,10 +378,16 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         onlyValidPubId(_pubId)
     {
         Publication storage pub = idToPublication[_pubId];
+
         // Check
         if (pub.status != PublicationStatus.IN_REVIEW) revert BioVerify_MustBeInReviewToSettle(_pubId);
 
         // Effect
+        // 1. Capture what is being removed for the treasury
+        uint256 slashedFromPublisher = memberStakeOnPubId[pub.publisher][_pubId];
+        uint256 totalSlashedFromReviewers = _negligent.length * I_REVIEWER_MIN_STAKE;
+
+        // 2. Perform the state changes
         pub.status = PublicationStatus.SLASHED;
         _slashMember(pub.publisher, _pubId);
 
@@ -358,11 +398,12 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
             _slashMember(_negligent[i], _pubId);
         }
 
-        uint256 totalRewardsAdded = I_REVIEWER_REWARD * _honest.length;
-        uint256 totalSlashedFromReviewers = I_REVIEWER_MIN_STAKE * _negligent.length;
+        // 3. SET THE STAKES TO THE ACTUAL DEBT
+        // The only people left with money in this publication are the honest reviewers.
+        pub.stakes = _honest.length * (I_REVIEWER_MIN_STAKE + I_REVIEWER_REWARD);
 
-        pub.stakes = pub.stakes + totalRewardsAdded - totalSlashedFromReviewers;
-        slashedPool += totalSlashedFromReviewers;
+        // 4. Update Treasury
+        slashedPool += (slashedFromPublisher + totalSlashedFromReviewers);
 
         emit BioVerify_Agent_SlashPublication(_pubId);
     }
@@ -383,7 +424,21 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         (bool sent,) = I_TREASURY_ADDRESS.call{value: value}("");
         if (!sent) revert BioVerify_FailedToTransferTo(I_TREASURY_ADDRESS);
 
-        emit BioVerify_Agent_TransferTotalSlashed(I_TREASURY_ADDRESS, value);
+        emit BioVerify_Agent_TransferSlashedPool(I_TREASURY_ADDRESS, value);
+    }
+
+    /**
+     *
+     * @notice Updates a member's reputation
+     * @dev Restricted to the AI Agent.
+     * @param _member The member address.
+     * @param _reputation The new reuptation.
+     */
+    function setMemberReputation(address _member, uint256 _reputation) external onlyAgent {
+        Member storage member = addressToMember[_member];
+        member.reputation = _reputation;
+
+        emit BioVerify_Agent_SetMemberReputation(_member, _reputation);
     }
 
     /**
