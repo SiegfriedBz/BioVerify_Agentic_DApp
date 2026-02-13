@@ -26,15 +26,15 @@ import {
 import { toast } from "sonner"
 import { parseEther } from "viem"
 import type { BaseError } from "wagmi"
-import { AbstractInput } from "../inputs/abstract-input"
-import { AddAuthorButton } from "../inputs/author-add-button"
-import { AuthorInput } from "../inputs/author-input"
-import { AddFileButton } from "../inputs/file-add-button"
-import { FileInput } from "../inputs/file-input"
-import { LicenseInput } from "../inputs/license-input"
-import { ManuscriptInput } from "../inputs/manuscript-input"
-import { SendValueInput } from "../inputs/send-value-input"
-import { TitleInput } from "../inputs/title-input"
+import { AbstractInput } from "./inputs/abstract-input"
+import { AddAuthorButton } from "./inputs/author-add-button"
+import { AuthorInput } from "./inputs/author-input"
+import { AddFileButton } from "./inputs/file-add-button"
+import { FileInput } from "./inputs/file-input"
+import { LicenseInput } from "./inputs/license-input"
+import { ManuscriptInput } from "./inputs/manuscript-input"
+import { SendValueInput } from "./inputs/send-value-input"
+import { TitleInput } from "./inputs/title-input"
 import {
 	PublicationFormSchema,
 	type PublicationFormT,
@@ -58,7 +58,7 @@ const DEFAULT_VALUES = {
 	stakeAmount: "",
 }
 
-export const PublicationForm: FC = () => {
+export const SubmitPublicationForm: FC = () => {
 
 	// TODO Add refresh effectiveSubmissionFee button
 	const { effectiveSubmissionFeeWei } = useEffectiveSubmissionFee()

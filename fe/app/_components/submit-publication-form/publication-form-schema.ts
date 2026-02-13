@@ -1,6 +1,6 @@
 import type { z } from "zod"
-import { EthAmountSchema } from "../../../_schemas/eth-amount"
-import { PublicationSchema } from "../../../_schemas/publication"
+import { EthAmountSchema } from "../../_schemas/eth-amount"
+import { PublicationSchema } from "../../_schemas/publication"
 
 // Publication Form Schema
 export const PublicationFormSchema = PublicationSchema.extend({
