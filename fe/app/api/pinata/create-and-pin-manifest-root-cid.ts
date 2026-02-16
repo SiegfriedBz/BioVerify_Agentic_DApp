@@ -1,8 +1,13 @@
 "use server"
 
-import type { CreateAndPinManifestRootCid } from "@/app/_components/submit-publication-form/publication-form-schema"
+import { IpfsPublicationSchema } from "@/app/_schemas/ipfs-publication"
+import z from "zod"
 
 const PINATA_JWT = process.env.PINATA_API_JWT
+
+export type Params = z.infer<
+	typeof IpfsPublicationSchema
+>
 
 /**
  * Helper to pin a simple string as a text file to get a unique CID
@@ -25,12 +30,12 @@ const pinText = async (text: string, fileName: string) => {
 }
 
 export const createAndPinManifestRootCid = async (
-	data: CreateAndPinManifestRootCid,
+	params: Params,
 ) => {
 	try {
 		// 1. Upload Attachments (Binary Files)
 		const attachments = await Promise.all(
-			(data.files || []).map(async (fileObj) => {
+			(params.files || []).map(async (fileObj: any) => {
 				const formData = new FormData()
 				formData.append("file", fileObj.file)
 
@@ -55,16 +60,16 @@ export const createAndPinManifestRootCid = async (
 		// 2. Upload Title, Abstract, and Manuscript as individual files
 		// This gives us the specific CIDs for the Payload
 		const [titleCid, abstractCid, manuscriptCid] = await Promise.all([
-			pinText(data.title, "title.txt"),
-			pinText(data.abstract, "abstract.txt"),
-			pinText(data.manuscript, "manuscript.txt"),
+			pinText(params.title, "title.txt"),
+			pinText(params.abstract, "abstract.txt"),
+			pinText(params.manuscript, "manuscript.txt"),
 		])
 
 		// 3. Build the Manifest object to match the ManifestSchema
 		const manifestData = {
 			metadata: {
-				authors: data.authors,
-				license: data.license || "",
+				authors: params.authors,
+				license: params.license || "",
 			},
 			payload: {
 				titleCid,
