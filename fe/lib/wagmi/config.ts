@@ -1,5 +1,3 @@
-"use client"
-
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi"
 import { seiTestnet, sepolia } from "@reown/appkit/networks"
 import { cookieStorage, createStorage } from "@wagmi/core"
@@ -27,3 +25,5 @@ export const wagmiAdapter = new WagmiAdapter({
 })
 
 export const reownConfig = wagmiAdapter.wagmiConfig
+
+
