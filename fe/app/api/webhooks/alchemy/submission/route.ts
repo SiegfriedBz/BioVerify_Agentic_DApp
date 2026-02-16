@@ -1,4 +1,3 @@
-import { NetworkSchema } from "@/app/_schemas/wallet"
 import { startSubmissionAgent } from "@/lib/langchain/submission/agent"
 import { waitUntil } from "@vercel/functions"
 import { createHmac } from "node:crypto"
@@ -58,19 +57,10 @@ export async function POST(req: Request) {
 
 		const publicationIdString = publicationId.toString()
 
-		console.log(
-			`🚀 [${isSepolia ? "SEPOLIA" : "SEI Testnet"}] New Submission:`,
-			{
-				publicationId: publicationIdString,
-				cid,
-			},
-		)
-
 		// 4. Schedule LANGGRAPH Submission Agent as background work
 		// => Keep the lambda alive until this promise resolves
 		waitUntil(
 			startSubmissionAgent({
-				network: isSepolia ? NetworkSchema.enum.sepolia : NetworkSchema.enum.sei_testnet,
 				publicationId: publicationIdString,
 				rootCid: cid,
 			}).then(() => {

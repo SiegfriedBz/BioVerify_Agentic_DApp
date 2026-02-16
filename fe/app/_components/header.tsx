@@ -1,8 +1,8 @@
-import type { FC } from "react";
-import { ChangeChainButtons } from "./change-chain-buttons";
-import { ConnectButton } from "./connect-button";
-import { ToggleModeButton } from "./toggle-mode-button";
-import { UserAvatar } from "./user-avatar";
+import type { FC } from "react"
+import { ChangeChainButtons } from "./sidebar/change-chain-buttons"
+import { ConnectButton } from "./sidebar/connect-button"
+import { ToggleModeButton } from "./toggle-mode-button"
+import { UserAvatar } from "./user-avatar"
 
 export const Header: FC = () => {
 	return (
@@ -16,5 +16,5 @@ export const Header: FC = () => {
 				<ToggleModeButton />
 			</div>
 		</header>
-	);
-};
+	)
+}

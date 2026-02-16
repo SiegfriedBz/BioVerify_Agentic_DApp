@@ -1,4 +1,6 @@
+import { TooltipProvider } from "@/components/ui/tooltip"
 import type { FC, PropsWithChildren } from "react"
+import { AppSideBarProvider } from "./app-side-bar-provider"
 import { ThemeProvider } from "./theme-provider"
 import { CustomWagmiProvider } from "./wagmi-provider"
 
@@ -15,8 +17,12 @@ export const Providers: FC<PropsWithChildren<Props>> = (props) => {
 			defaultTheme="dark"
 			enableSystem
 			disableTransitionOnChange
-		>
-			<CustomWagmiProvider cookies={cookies}>{children}</CustomWagmiProvider>
+		><CustomWagmiProvider cookies={cookies}>
+				<TooltipProvider>
+					{/* <Header /> */}
+					<AppSideBarProvider>{children}</AppSideBarProvider>
+				</TooltipProvider>
+			</CustomWagmiProvider>
 		</ThemeProvider>
 	)
 }
