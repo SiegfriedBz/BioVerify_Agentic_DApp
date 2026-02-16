@@ -1,20 +1,20 @@
 "use client"
 
-import React from "react"
-import { cn } from "@/lib/utils"
-import { useDataTable } from "./data-table-context"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
-  TableHeader,
-  TableRow,
-  TableHead,
   TableBody,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 import { flexRender } from "@tanstack/react-table"
-import { Skeleton } from "@/components/ui/skeleton"
-import { DataTableEmptyState } from "../components/data-table-empty-state"
+import React from "react"
 import { DataTableColumnHeaderRoot } from "../components/data-table-column-header"
+import { DataTableEmptyState } from "../components/data-table-empty-state"
 import { getCommonPinningStyles } from "../lib/styles"
+import { useDataTable } from "./data-table-context"
 
 // ============================================================================
 // ScrollEvent Type
@@ -60,7 +60,7 @@ export const DataTableHeader = React.memo(function DataTableHeader({
         sticky && "sticky top-0 z-10 bg-background",
         // Ensure border is visible when sticky using pseudo-element
         sticky &&
-          "after:absolute after:right-0 after:bottom-0 after:left-0 after:h-px after:bg-border",
+        "after:absolute after:right-0 after:bottom-0 after:left-0 after:h-px after:bg-border",
         className,
       )}
     >
@@ -196,88 +196,88 @@ export function DataTableBody<TData>({
       {/* Only show rows when not loading */}
       {!isLoading && rows?.length
         ? rows.map(row => {
-            const isClickable = !!onRowClick
-            const isExpanded = row.getIsExpanded()
+          const isClickable = !!onRowClick
+          const isExpanded = row.getIsExpanded()
 
-            // Find if any column has expandedContent meta
-            const expandColumn = row
-              .getAllCells()
-              .find(cell => cell.column.columnDef.meta?.expandedContent)
+          // Find if any column has expandedContent meta
+          const expandColumn = row
+            .getAllCells()
+            .find(cell => cell.column.columnDef.meta?.expandedContent)
 
-            return (
-              <React.Fragment key={row.id}>
-                <TableRow
-                  data-row-index={row?.index}
-                  data-row-id={row?.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  onClick={event => {
-                    // Check if the click originated from an interactive element
-                    const target = event.target as HTMLElement
-                    const isInteractiveElement =
-                      // Check for buttons, inputs, links
-                      target.closest("button") ||
-                      target.closest("input") ||
-                      target.closest("a") ||
-                      // Check for elements with interactive roles
-                      target.closest('[role="button"]') ||
-                      target.closest('[role="checkbox"]') ||
-                      // Check for Radix UI components
-                      target.closest("[data-radix-collection-item]") ||
-                      // Check for checkbox (Radix checkbox uses button with data-slot="checkbox")
-                      target.closest('[data-slot="checkbox"]') ||
-                      // Direct tag checks
-                      target.tagName === "INPUT" ||
-                      target.tagName === "BUTTON" ||
-                      target.tagName === "A"
+          return (
+            <React.Fragment key={row.id}>
+              <TableRow
+                data-row-index={row?.index}
+                data-row-id={row?.id}
+                data-state={row.getIsSelected() && "selected"}
+                onClick={event => {
+                  // Check if the click originated from an interactive element
+                  const target = event.target as HTMLElement
+                  const isInteractiveElement =
+                    // Check for buttons, inputs, links
+                    target.closest("button") ||
+                    target.closest("input") ||
+                    target.closest("a") ||
+                    // Check for elements with interactive roles
+                    target.closest('[role="button"]') ||
+                    target.closest('[role="checkbox"]') ||
+                    // Check for Radix UI components
+                    target.closest("[data-radix-collection-item]") ||
+                    // Check for checkbox (Radix checkbox uses button with data-slot="checkbox")
+                    target.closest('[data-slot="checkbox"]') ||
+                    // Direct tag checks
+                    target.tagName === "INPUT" ||
+                    target.tagName === "BUTTON" ||
+                    target.tagName === "A"
 
-                    // Only call onRowClick if not clicking on an interactive element
-                    if (!isInteractiveElement) {
-                      onRowClick?.(row.original)
-                    }
-                  }}
-                  className={cn(isClickable && "cursor-pointer", "group")}
-                >
-                  {row.getVisibleCells().map(cell => {
-                    const size = cell.column.columnDef.size
-                    const cellStyle = {
-                      width: size ? `${size}px` : undefined,
-                      ...getCommonPinningStyles(cell.column, false),
-                    }
+                  // Only call onRowClick if not clicking on an interactive element
+                  if (!isInteractiveElement) {
+                    onRowClick?.(row.original)
+                  }
+                }}
+                className={cn(isClickable && "cursor-pointer", "group")}
+              >
+                {row.getVisibleCells().map(cell => {
+                  const size = cell.column.columnDef.size
+                  const cellStyle = {
+                    width: size ? `${size}px` : undefined,
+                    ...getCommonPinningStyles(cell.column, false),
+                  }
 
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        style={cellStyle}
-                        className={cn(
-                          cell.column.getIsPinned() &&
-                            "bg-background group-hover:bg-muted/50 group-data-[state=selected]:bg-muted",
-                        )}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-
-                {/* Expanded content row */}
-                {isExpanded && expandColumn && (
-                  <TableRow>
+                  return (
                     <TableCell
-                      colSpan={row.getVisibleCells().length}
-                      className="p-0"
+                      key={cell.id}
+                      style={cellStyle}
+                      className={cn(
+                        cell.column.getIsPinned() &&
+                        "bg-background group-hover:bg-muted/50 group-data-[state=selected]:bg-muted",
+                      )}
                     >
-                      {expandColumn.column.columnDef.meta?.expandedContent?.(
-                        row.original,
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
                       )}
                     </TableCell>
-                  </TableRow>
-                )}
-              </React.Fragment>
-            )
-          })
+                  )
+                })}
+              </TableRow>
+
+              {/* Expanded content row */}
+              {isExpanded && expandColumn && (
+                <TableRow>
+                  <TableCell
+                    colSpan={row.getVisibleCells().length}
+                    className="p-0"
+                  >
+                    {expandColumn.column.columnDef.meta?.expandedContent?.(
+                      row.original,
+                    )}
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
+          )
+        })
         : null}
 
       {children}
