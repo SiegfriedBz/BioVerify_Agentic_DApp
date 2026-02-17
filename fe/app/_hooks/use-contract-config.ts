@@ -5,7 +5,8 @@ import {
 	bioVerifyContractConfig,
 	type ContractConfig,
 } from "../_contracts/config"
-import { NetworkSchema } from "../_schemas/wallet"
+
+import { NetworkSchema } from "../_schemas/network"
 import { useCurrentChain } from "./use-current-chain"
 
 /**

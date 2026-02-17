@@ -1,6 +1,5 @@
 import type { Abi } from "viem"
-import { NetworkSchema, NetworkT } from "../_schemas/wallet"
-
+import { NetworkSchema, NetworkT } from "../_schemas/network"
 
 export type ContractConfig = {
 	address: `0x${string}`

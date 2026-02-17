@@ -1,13 +1,12 @@
 'server-only'
 
-import { NetworkT } from "@/app/_schemas/wallet"
-import { publishPublication, slashPublication } from "@/lib/protocol/review/actions"
+import { publishPublication } from "@/lib/protocol/review/publish-publication"
+import { slashPublication } from "@/lib/protocol/review/slash-publication"
 import { getThreadId } from "@/lib/utils/get-thread-id"
 import { reviewersGraph } from "./graph"
 import { InterruptKind, LlmDecisionSchema, ReviewsState } from "./state"
 
 type Params = {
-	network: NetworkT
 	publicationId: string
 	rootCid: string
 	reviewers: string[]
@@ -34,7 +33,6 @@ type Return =
 
 export const startReviewersAgent = async (params: Params): Promise<Return> => {
 	const {
-		network,
 		publicationId,
 		rootCid,
 		reviewers,
@@ -123,7 +121,6 @@ export const startReviewersAgent = async (params: Params): Promise<Return> => {
 		}, { honest: [] as string[], negligent: [] as string[] })
 
 		const settleParams = {
-			network,
 			publicationId,
 			rootCid,
 			reason: finalVerdict.reason,

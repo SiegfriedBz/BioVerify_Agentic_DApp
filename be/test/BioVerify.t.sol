@@ -13,7 +13,6 @@ import {
     BioVerify_PayReviewerMinStake,
     BioVerify_Agent_TransferSlashedPool,
     BioVerify_Agent_SlashPublisher,
-    BioVerify_Agent_SlashMember,
     BioVerify_Agent_SetMemberReputation,
 
     // errors

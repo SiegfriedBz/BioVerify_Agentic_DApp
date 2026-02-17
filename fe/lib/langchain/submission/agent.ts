@@ -1,12 +1,12 @@
 'server-only'
 
-import { NetworkT } from "@/app/_schemas/wallet"
-import { pickReviewers, slashPublisher } from "@/lib/protocol/submission/actions"
+import { pickReviewers } from "@/lib/protocol/submission/pick-reviewers"
+import { slashPublisher } from "@/lib/protocol/submission/slash-publisher"
 import { getThreadId } from "@/lib/utils/get-thread-id"
+import { HumanDecisionSchema } from "../review/state"
 import { submissionGraph } from "./graph"
 
 type Params = {
-  network: NetworkT
   publicationId: string
   rootCid: string
 }
@@ -14,7 +14,7 @@ type Params = {
 export const startSubmissionAgent = async (
   params: Params,
 ) => {
-  const { network, publicationId, rootCid } = params
+  const { publicationId, rootCid } = params
 
   const threadId = getThreadId({ publicationId, rootCid })
 
@@ -24,12 +24,12 @@ export const startSubmissionAgent = async (
   const finalState = await submissionGraph.invoke({ publicationId, rootCid }, config)
 
   // 2. Handle the Verdict
-  if (finalState.verdict.decision === "fail") {
+  if (finalState.verdict.decision === HumanDecisionSchema.enum.fail) {
     // Call Smart Contract's 'slashPublisher' function
-    await slashPublisher({ network, publicationId, reason: finalState.verdict.reason ?? "", rootCid })
+    await slashPublisher({ publicationId, reason: finalState.verdict.reason ?? "", rootCid })
 
   } else {
     // Call Smart Contract's 'pickReviewers' function
-    await pickReviewers({ network, publicationId, rootCid })
+    await pickReviewers({ publicationId, rootCid })
   }
 }

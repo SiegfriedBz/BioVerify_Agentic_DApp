@@ -1,4 +1,3 @@
-import { NetworkSchema } from "@/app/_schemas/wallet"
 import { startSubmissionAgent } from "@/lib/langchain/submission/agent"
 import { waitUntil } from "@vercel/functions"
 import { createHmac } from "node:crypto"
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
 		const log = body.event?.data?.block?.logs?.[0]
 
 		if (!log) {
-			console.warn("⚠️ Reviewers Webhook received but no log found in payload.")
+			console.warn("⚠️ Submission Webhook received but no log found in payload.")
 			return new Response("No logs found", { status: 200 })
 		}
 
@@ -51,16 +50,16 @@ export async function POST(req: Request) {
 			topics: log.topics,
 		})
 
-		const { pubId: publicationId, cid: rootCid } = decoded.args as {
+		const { pubId, cid: rootCid } = decoded.args as {
 			publisher: `0x${string}`
 			pubId: bigint
 			cid: string
 		}
 
-		const pubIdStr = publicationId.toString()
-		const network = isSepolia ? NetworkSchema.enum.sepolia : NetworkSchema.enum.sei_testnet
+		const pubIdString = pubId.toString()
 
-		console.log(`🚀 [${network.toUpperCase()}] New Submission Detected: Pub #${pubIdStr}`, {
+		console.log(`🚀 Webhook - Submission for Pub #${pubIdString}`, {
+			pubIdString,
 			rootCid,
 		})
 
@@ -68,13 +67,12 @@ export async function POST(req: Request) {
 		// waitUntil keeps the Vercel function alive for forensic checks (Tavily)
 		waitUntil(
 			startSubmissionAgent({
-				network,
-				publicationId: pubIdStr,
-				rootCid,
+				publicationId: pubIdString,
+				rootCid
 			}).then(() => {
-				console.log(`✅ Submission Agent Analysis Complete for Pub #${pubIdStr}`)
+				console.log(`✅ Submission Agent Analysis Complete for Pub #${pubIdString}`)
 			}).catch(err => {
-				console.error(`❌ Submission Agent failure for Pub #${pubIdStr}:`, err)
+				console.error(`❌ Submission Agent failure for Pub #${pubIdString}:`, err)
 			})
 		)
 

@@ -1,4 +1,5 @@
-import { NetworkT, NetworkToChainId } from "@/app/_schemas/wallet"
+
+import { NetworkT, NetworkToChainId } from "@/app/_schemas/network"
 import { getContractConfig } from "../utils/get-contract-config"
 
 /** Standard EIP-712 Domain */

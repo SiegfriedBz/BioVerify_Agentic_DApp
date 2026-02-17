@@ -1,4 +1,3 @@
-import { NetworkSchema } from "@/app/_schemas/wallet"
 import { startReviewersAgent } from "@/lib/langchain/review/start-agent"
 import { waitUntil } from "@vercel/functions"
 import { createHmac } from "node:crypto"
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
 		const log = body.event?.data?.block?.logs?.[0]
 
 		if (!log) {
-			console.warn("⚠️ Webhook received but no log found in payload.")
+			console.warn("⚠️ Reviewers Webhook received but no log found in payload.")
 			return new Response("No logs found", { status: 200 })
 		}
 
@@ -51,7 +50,7 @@ export async function POST(req: Request) {
 			topics: log.topics,
 		})
 
-		const { pubId: publicationId, rootCid, reviewers, seniorReviewer, minValidReviewsCount } = decoded.args as {
+		const { pubId, rootCid, reviewers, seniorReviewer, minValidReviewsCount } = decoded.args as {
 			pubId: bigint
 			rootCid: string
 			reviewers: `0x${string}`[]
@@ -59,29 +58,28 @@ export async function POST(req: Request) {
 			minValidReviewsCount: bigint
 		}
 
-		const pubIdStr = publicationId.toString()
-		const network = isSepolia ? NetworkSchema.enum.sepolia : NetworkSchema.enum.sei_testnet
+		const pubIdString = pubId.toString()
 
-		console.log(`🚀 [${network.toUpperCase()}] Reviewers Picked for Pub #${pubIdStr}`, {
+		console.log(`🚀 Webhook - Reviewers Picked for Pub #${pubIdString}`, {
 			reviewers,
 			seniorReviewer,
-			rootCid
+			rootCid,
+			minValidReviewsCount
 		})
 
-		// 4. Trigger the Agent (Non-blocking)
+		// 4. Trigger the Reviewer Agent
 		// waitUntil ensures the Vercel function stays alive to start the Reviewers Graph
 		waitUntil(
 			startReviewersAgent({
-				network,
-				publicationId: pubIdStr,
+				publicationId: pubIdString,
 				rootCid,
 				reviewers,
 				seniorReviewer,
 				minValidReviewsCount: Number(minValidReviewsCount)
 			}).then(() => {
-				console.log(`✅ Reviewers Agent Settlement Complete for Pub #${pubIdStr}`)
+				console.log(`✅ Reviewers Agent Settlement Complete for Pub #${pubIdString}`)
 			}).catch(err => {
-				console.error(`❌ Reviewers Agent failure for Pub #${pubIdStr}:`, err)
+				console.error(`❌ Reviewers Agent failure for Pub #${pubIdString}:`, err)
 			})
 		)
 

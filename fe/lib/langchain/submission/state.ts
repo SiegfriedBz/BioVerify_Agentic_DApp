@@ -1,4 +1,4 @@
-import { PublicationSchema } from "@/app/_schemas/publication"
+import { IpfsPublicationSchema } from "@/app/_schemas/ipfs-publication"
 import { StateSchema } from "@langchain/langgraph"
 import { z } from "zod"
 
@@ -12,7 +12,7 @@ const SubmissionBase = {
 	rootCid: z.string(),
 	verdict: VerdictSchema,
 	// the raw publication abstract fetched from IPFS
-	publication: PublicationSchema.pick({
+	publication: IpfsPublicationSchema.pick({
 		abstract: true,
 	}).optional(),
 	// the sources fetched by tavily

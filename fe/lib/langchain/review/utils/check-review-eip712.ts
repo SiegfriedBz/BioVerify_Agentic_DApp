@@ -1,6 +1,6 @@
 'server-only'
 
-import { NetworkT } from "@/app/_schemas/wallet"
+import { NetworkT } from "@/app/_schemas/network"
 import { getEip712Domain, HUMAN_REVIEW_TYPES } from "@/lib/eip-712"
 import { verifyTypedData } from "viem"
 import { HumanFullReview } from "../state"

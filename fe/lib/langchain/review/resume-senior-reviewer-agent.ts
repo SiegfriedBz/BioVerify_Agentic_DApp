@@ -1,6 +1,6 @@
 'server-only'
 
-import { NetworkT } from "@/app/_schemas/wallet"
+import { NetworkT } from "@/app/_schemas/network"
 import { Command } from "@langchain/langgraph"
 import { reviewersGraph } from "./graph"
 import { HumanFullReview } from "./state"
