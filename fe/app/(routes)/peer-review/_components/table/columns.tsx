@@ -1,7 +1,8 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { MappedProtocolReviewerAssignment } from "@/lib/protocol/mappers/protoccol-reviewer-assignmement-mapper"
+import { HasSubmittedReviewBadge } from "@/app/_components/has-submitted-review-badge"
+import { ReviewerRoleBadge } from "@/app/_components/reviewer-role-badge"
+import { MappedProtocolReviewerAssignment } from "@/app/_schemas/mappers/protoccol-reviewer-assignmement-mapper"
 import { ColumnDef } from "@tanstack/react-table"
 
 export const columns: ColumnDef<MappedProtocolReviewerAssignment>[] = [
@@ -23,9 +24,15 @@ export const columns: ColumnDef<MappedProtocolReviewerAssignment>[] = [
     accessorKey: "role",
     header: "Assignment Role",
     cell: ({ row }) => (
-      <Badge variant={row.original.isSeniorReviewer ? "default" : "outline"} className="text-[10px] uppercase">
-        {row.original.isSeniorReviewer ? "Senior" : "Peer"}
-      </Badge>
+      <ReviewerRoleBadge isSeniorReviewer={row.original.isSeniorReviewer} />
     )
+  },
+  {
+    id: "has_reviewed",
+    header: "Status",
+    cell: ({ row }) => <HasSubmittedReviewBadge
+      reviewerAddress={row.original.address}
+      publicationId={row.original.pubId}
+    />,
   }
 ]

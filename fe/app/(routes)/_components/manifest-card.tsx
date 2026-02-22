@@ -1,10 +1,11 @@
-import { StatusBadge } from "@/app/_components/status-badge"
+
+import { PublicationStatusBadge } from "@/app/_components/publication-status-badge"
 import { TypographyH3, TypographyP, TypographySmall } from "@/app/_components/typography"
-import { Manifest } from "@/app/_schemas/manifest"
+import { ProtocolPublicationStatus } from "@/app/_schemas/schemas/contract/protocol-publication"
+import { Manifest } from "@/app/_schemas/schemas/manifest"
+import { fetchIpfs } from "@/app/api/pinata/fetch-ipfs"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { fetchIpfs } from "@/lib/ipfs/fetch-ipfs"
-import { ProtocolPublicationStatus } from "@/lib/protocol/schemas/protocol-publication"
 import { FileTextIcon, FingerprintIcon } from "lucide-react"
 import { FC } from "react"
 
@@ -33,7 +34,7 @@ export const ManifestCard: FC<Props> = async ({ rootCid, status }) => {
           <TypographyH3 className="text-2xl font-serif tracking-tight leading-snug mt-0!">
             {title}
           </TypographyH3>
-          <StatusBadge status={status} />
+          <PublicationStatusBadge status={status} />
         </div>
 
         <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground bg-background/50 px-3 py-1.5 rounded-md border border-border w-fit shadow-sm">

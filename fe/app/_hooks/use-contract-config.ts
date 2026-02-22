@@ -1,12 +1,9 @@
 "use client"
 
 import { useMemo } from "react"
-import {
-	bioVerifyContractConfig,
-	type ContractConfig,
-} from "../_contracts/config"
-
-import { NetworkSchema } from "../_schemas/network"
+import { ContractConfig } from "../_config/contracts/constants"
+import { bioVerifyContractConfig } from "../_config/contracts/contract-config"
+import { NetworkSchema } from "../_schemas/schemas/network"
 import { useCurrentChain } from "./use-current-chain"
 
 /**

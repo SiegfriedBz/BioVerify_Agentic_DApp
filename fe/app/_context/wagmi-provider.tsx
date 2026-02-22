@@ -6,7 +6,7 @@ import { createAppKit } from "@reown/appkit/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import type { FC, PropsWithChildren } from "react"
 import { type Config, cookieToInitialState, WagmiProvider } from "wagmi"
-import { wagmiAdapter } from "@/lib/wagmi/config"
+import { customRpcUrls, wagmiAdapter } from "../_config/wagmi/wagmi-config"
 
 const RAINBOWKIT_PROJECT_ID =
   process.env.NEXT_PUBLIC_RAINBOWKIT_PROJECT_ID || ""
@@ -16,20 +16,21 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 // Set up metadata
 const metadata = {
   name: "BioVerify",
-  description: "BioVerify DApp - AI",
+  description: "BioVerify Agentic DApp",
   url: APP_URL,
   icons: ["https://avatars.githubusercontent.com/u/179229932"],
 }
 
-// Create the modal
+// Create the modal with synchronized RPC settings
 createAppKit({
   adapters: [wagmiAdapter],
   projectId: RAINBOWKIT_PROJECT_ID,
   networks: [seiTestnet, sepolia],
   defaultNetwork: sepolia,
   metadata: metadata,
+  customRpcUrls,
   features: {
-    analytics: true, // Optional - defaults to your Cloud configuration
+    analytics: true,
   },
 })
 

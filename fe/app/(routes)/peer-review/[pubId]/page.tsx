@@ -1,4 +1,5 @@
 import { TypographyH2, TypographyP } from "@/app/_components/typography"
+import { Loader2Icon } from "lucide-react"
 import { Suspense } from "react"
 import { ExecuteReviewContainer } from "./_components/execute-review-container"
 import { ReviewGuard } from "./_components/reviewer-guard"
@@ -22,7 +23,8 @@ export default async function Page(props: Props) {
 				</TypographyP>
 			</div>
 
-			<Suspense fallback={<>Loading Skeleton...</>}>
+
+			<Suspense fallback={<Loader2Icon className="h-6 w-6 animate-spin text-muted-foreground" />}>
 				<ReviewGuard pubId={pubId}>
 					<ExecuteReviewContainer pubId={pubId} />
 				</ReviewGuard>

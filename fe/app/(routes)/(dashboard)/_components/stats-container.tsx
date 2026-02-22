@@ -1,11 +1,10 @@
-import { getProtocolGlobalStatsMock } from "@/lib/protocol/get-protocol-global-stats"
-import { ProtocolGlobalStatsMapper } from "@/lib/protocol/mappers/protocol-global-stats-mapper"
+import { ProtocolGlobalStatsMapper } from "@/app/_schemas/mappers/protocol-global-stats-mapper"
+import { getProtocolGlobalStats } from "@/app/api/contract/get-protocol-global-stats"
 import { FlaskConicalIcon, LandmarkIcon, ShieldAlertIcon, UsersIcon } from "lucide-react"
 import { MetricCard } from "./metric-card"
 
 export const StatsContainer = async () => {
-  // TODO call getProtocolGlobalStats after next solidty deployment
-  const rawStats = await getProtocolGlobalStatsMock()
+  const rawStats = await getProtocolGlobalStats()
   const stats = ProtocolGlobalStatsMapper(rawStats)
 
   return (
@@ -30,7 +29,7 @@ export const StatsContainer = async () => {
       />
       <MetricCard
         label="Active Members"
-        value={stats.memberCount}
+        value={stats.membersCount}
         icon={UsersIcon}
         description="Total protocol participants"
       />

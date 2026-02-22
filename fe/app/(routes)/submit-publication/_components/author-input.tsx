@@ -1,7 +1,7 @@
 "use client"
 
-import { AuthorRoleLabel, AuthorRoleSchema } from "@/app/_schemas/author"
-import { NetworkLabel, NetworkSchema } from "@/app/_schemas/network"
+import { AuthorRoleLabel, AuthorRoleSchema } from "@/app/_schemas/schemas/author"
+import { NetworkLabel, NetworkSchema } from "@/app/_schemas/schemas/network"
 import { Button } from "@/components/ui/button"
 import { Field, FieldError } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"

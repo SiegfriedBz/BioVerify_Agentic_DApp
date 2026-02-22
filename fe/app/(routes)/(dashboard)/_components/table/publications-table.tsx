@@ -1,5 +1,7 @@
 "use client"
 
+import { publicationStatusOptions } from "@/app/_components/publication-status-badge"
+import { MappedProtocolPublication } from "@/app/_schemas/mappers/protocol-publication-mapper"
 import {
   DataTableClearFilter,
   DataTableFacetedFilter,
@@ -15,7 +17,6 @@ import {
   DataTableHeader,
   DataTableRoot,
 } from "@/components/niko-table/core"
-import { MappedProtocolPublication } from "@/lib/protocol/mappers/protocol-publication-mapper"
 import { useRouter } from "next/navigation"
 import { FC } from "react"
 import { columns } from "./columns"
@@ -38,7 +39,7 @@ export const PublicationsTable: FC<Props> = (props) => {
           <DataTableFacetedFilter
             accessorKey="status"
             multiple
-            limitToFilteredRows={false}
+            options={publicationStatusOptions}
           />
           {/* Stakes Slider */}
           <DataTableSliderFilter accessorKey="stakes" />

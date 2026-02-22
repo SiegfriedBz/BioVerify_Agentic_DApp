@@ -1,7 +1,7 @@
 import { AddressDisplay } from "@/app/_components/address-display"
-import { StatusBadge } from "@/app/_components/status-badge"
+import { PublicationStatusBadge } from "@/app/_components/publication-status-badge"
 import { TypographyH2, TypographySmall } from "@/app/_components/typography"
-import { ProtocolPublicationStatus } from "@/lib/protocol/schemas/protocol-publication"
+import { ProtocolPublicationStatus } from "@/app/_schemas/schemas/contract/protocol-publication"
 import { CalendarIcon } from "lucide-react"
 import { FC } from "react"
 import { ShareReportButton } from "./share-report-button"
@@ -55,7 +55,7 @@ export const PublicationHeader: FC<Props> = (props) => {
           <TypographySmall className="font-bold text-[10px] uppercase tracking-tighter text-muted-foreground/70">
             Current Status
           </TypographySmall>
-          <StatusBadge status={status} />
+          <PublicationStatusBadge status={status} />
         </div>
       </div>
     </div>

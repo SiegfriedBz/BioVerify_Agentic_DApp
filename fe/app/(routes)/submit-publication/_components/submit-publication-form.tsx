@@ -3,11 +3,12 @@
 import { TypographySmall } from "@/app/_components/typography"
 import { useEffectiveSubmissionFee } from "@/app/_hooks/use-effective-submission-fee"
 import { useSubmitPublication } from "@/app/_hooks/use-submit-publication"
-import { AuthorRoleSchema } from "@/app/_schemas/author"
-import { NetworkSchema } from "@/app/_schemas/network"
+import { AuthorRoleSchema } from "@/app/_schemas/schemas/author"
+import { NetworkSchema } from "@/app/_schemas/schemas/network"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "next/navigation"
 import { FC, useCallback, useEffect } from "react"
 import { FormProvider, SubmitHandler, useFieldArray, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -52,6 +53,8 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 
 	const { effectiveSubmissionFeeWei } = useEffectiveSubmissionFee()
 
+	const router = useRouter()
+
 	const form = useForm<SubmitPublicationFormT>({
 		resolver: zodResolver(SubmitPublicationFormSchema),
 		defaultValues: DEFAULT_VALUES,
@@ -84,7 +87,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 		useSubmitPublication()
 
 	const onSubmit: SubmitHandler<SubmitPublicationFormT> = useCallback(
-		async (data) => {
+		async (data: SubmitPublicationFormT) => {
 			// 1. Submit to IPFS
 			const { createAndPinManifestRootCid } = await import(
 				"@/app/api/pinata/create-and-pin-manifest-root-cid"
@@ -134,9 +137,9 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 		if (isConfirmed) {
 			// form.reset();
 			toast.success("Transaction confirmed.")
-			return
+			router.push("/")
 		}
-	}, [error, isPending, isConfirming, isConfirmed])
+	}, [error, isPending, isConfirming, isConfirmed, router])
 
 	return (
 		<FormProvider {...form}>

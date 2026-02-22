@@ -1,0 +1,8 @@
+{
+  "sepolia": {
+    "BioVerify": {
+      "address": "0x0C81E8aAc54deDf98920D3f8e04f6e9d0De39e6E",
+      "startBlock": 10313499
+    }
+  }
+}

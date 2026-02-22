@@ -1,8 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-
-import { NetworkSchema, NetworkT } from "../_schemas/network"
+import { NetworkSchema, NetworkT } from "../_schemas/schemas/network"
 import { useCurrentChain } from "./use-current-chain"
 
 export const useNetwork = (): NetworkT => {

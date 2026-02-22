@@ -4,17 +4,16 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail
 } from "@/components/ui/sidebar"
-import { BookCheckIcon, BookPlusIcon, LayoutDashboardIcon, LinkIcon } from "lucide-react"
+import { BookCheckIcon, BookPlusIcon, LayoutDashboardIcon } from "lucide-react"
 import Link from "next/link"
 import { FC } from "react"
 import { UserAvatar } from "../user-avatar"
-
+import { ConnectButton } from "./connect-button"
 
 export const AppSidebar: FC = () => {
   return (
@@ -22,6 +21,8 @@ export const AppSidebar: FC = () => {
       <SidebarHeader className="mt-4">
         <>
           <span className="font-extrabold text-2xl">BioVerify</span>
+          <ConnectButton /><span className="sr-only">Connect Wallet</span>
+
           <SidebarMenu>
             {/* ConnectButton */}
             {/* <SidebarMenuItem>
@@ -31,16 +32,16 @@ export const AppSidebar: FC = () => {
             </SidebarMenuItem> */}
 
             {/* ChangeChainButtons */}
-            <SidebarMenuItem>
-              {/* <SidebarMenuButton asChild>
+            {/* <SidebarMenuItem>
+              <SidebarMenuButton asChild>
                 <ChangeChainButtons />
-              </SidebarMenuButton> */}
+              </SidebarMenuButton>
               <SidebarMenuAction>
                 <>
                   <LinkIcon /> <span className="sr-only">Change network</span>
                 </>
               </SidebarMenuAction>
-            </SidebarMenuItem>
+            </SidebarMenuItem> */}
           </SidebarMenu>
         </>
       </SidebarHeader>

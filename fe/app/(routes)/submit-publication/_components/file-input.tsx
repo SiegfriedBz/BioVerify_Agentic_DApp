@@ -1,6 +1,6 @@
 "use client"
 
-import { FileTypeSchema } from "@/app/_schemas/ipfs-publication"
+import { FileTypeSchema } from "@/app/_schemas/schemas/ipfs-publication"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"

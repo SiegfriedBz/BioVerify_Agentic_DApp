@@ -8,15 +8,13 @@
  * bound to a specific publication and IPFS root CID.
  */
 
+import { EIP712_HUMAN_REVIEW_TYPES, EIP712_PRIMARY_TYPE } from "@/app/_utils/eip-712/constants"
+import { getEip712Domain } from "@/app/_utils/eip-712/get-eip712-domain"
 import { useCallback } from "react"
 import { useSignTypedData } from "wagmi"
 import { SignTypedDataVariables } from "wagmi/query"
-import z from "zod"
-
-/** * @dev Enum representing the valid outcomes of a human review session. 
- */
-export const HumanDecisionSchema = z.enum(["pass", "fail"])
-export type HumanDecision = z.infer<typeof HumanDecisionSchema>
+import { HumanDecision } from "../_schemas/schemas/langchain/review"
+import { NetworkT } from "../_schemas/schemas/network"
 
 /**
  * @notice Input parameters for the signing function.
@@ -31,6 +29,7 @@ export type SignDataParams = {
 }
 
 type Params = {
+  network: NetworkT
   /** @dev The on-chain ID of the publication being reviewed. */
   publicationId: string
   /** @dev The IPFS Content Identifier of the research manifest being validated. */
@@ -40,12 +39,12 @@ type Params = {
 }
 
 export const useOnSignTypeData = (params: Params) => {
-  const { publicationId, rootCid, onSuccess } = params
+  const { network, publicationId, rootCid, onSuccess } = params
   const signTypedData = useSignTypedData()
 
   /**
    * @notice Triggers the wallet's signing prompt with structured EIP-712 data.
-   * @dev The message field names must match the HUMAN_REVIEW_TYPES exactly for the 
+   * @dev The message field names must match the EIP712_HUMAN_REVIEW_TYPES exactly for the 
    * signature to be valid during recovery on the server/contract.
    */
   const signTd = useCallback((params: SignDataParams) => {
@@ -55,9 +54,12 @@ export const useOnSignTypeData = (params: Params) => {
       reason,
     } = params
 
+    const domain = getEip712Domain(network)
+
     signTypedData.mutate({
-      types: HUMAN_REVIEW_TYPES,
-      primaryType: 'HumanReview',
+      domain,
+      types: EIP712_HUMAN_REVIEW_TYPES,
+      primaryType: EIP712_PRIMARY_TYPE,
       message: {
         reviewer,
         publicationId,
@@ -66,22 +68,7 @@ export const useOnSignTypeData = (params: Params) => {
         reason
       },
     }, { onSuccess })
-  }, [publicationId, rootCid, onSuccess, signTypedData])
+  }, [publicationId, rootCid, onSuccess, signTypedData, network])
 
   return { signTd }
 }
-
-/**
- * @dev EIP-712 Typed Data Schema.
- * @notice This structure defines how the "Sign Message" prompt appears in the user's wallet.
- * Any change here requires a corresponding change in the server-side verification logic.
- */
-const HUMAN_REVIEW_TYPES = {
-  HumanReview: [
-    { name: 'reviewer', type: 'address' },
-    { name: 'publicationId', type: 'string' },
-    { name: 'rootCid', type: 'string' },
-    { name: 'decision', type: 'string' },
-    { name: 'reason', type: 'string' },
-  ],
-} as const

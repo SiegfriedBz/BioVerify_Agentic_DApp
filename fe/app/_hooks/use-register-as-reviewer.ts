@@ -4,7 +4,13 @@ import { useCallback } from "react"
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi"
 import { useContractConfig } from "./use-contract-config"
 
-export const usePayReviewerStake = () => {
+type Params = {
+	minStake: bigint
+}
+
+export const usePayReviewerStake = (params: Params) => {
+	const { minStake } = params
+
 	const { data: hash, error, isPending, writeContract } = useWriteContract()
 	const { isLoading: isConfirming, isSuccess: isConfirmed } =
 		useWaitForTransactionReceipt({
@@ -18,6 +24,7 @@ export const usePayReviewerStake = () => {
 			return writeContract({
 				...contractConfig,
 				functionName: "payReviewerMinStake",
+				value: minStake
 			})
 		},
 		[writeContract, contractConfig],

@@ -1,7 +1,7 @@
 import { AddressDisplay } from "@/app/_components/address-display"
 import { TypographyH4, TypographyP, TypographySmall } from "@/app/_components/typography"
+import { MappedProtocolPublication } from "@/app/_schemas/mappers/protocol-publication-mapper"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { MappedProtocolPublication } from "@/lib/protocol/mappers/protocol-publication-mapper"
 import { LandmarkIcon, UsersIcon } from "lucide-react"
 import { FC } from "react"
 

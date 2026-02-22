@@ -1,15 +1,14 @@
 import { PublicationMainContent } from "@/app/(routes)/_components/publication-main-content"
-import { getPublicationDetailsMock } from "@/lib/protocol/get-publication-details"
-import { ProtocolPublicationMapper } from "@/lib/protocol/mappers/protocol-publication-mapper"
+import { ProtocolPublicationMapper } from "@/app/_schemas/mappers/protocol-publication-mapper"
+import { getPublicationDetails } from "@/app/api/contract/get-publication-details"
 import { notFound } from "next/navigation"
 import { VerdictForm } from "./verdict-form"
 
 type Props = { pubId: string }
 
 export const ExecuteReviewContainer = async ({ pubId }: Props) => {
-  // TODO call getPublicationDetails after next solidty deployment
-  const data = await getPublicationDetailsMock()
-  if (!data) notFound()
+  const data = await getPublicationDetails({ id: pubId })
+  if (!data) { return notFound() }
 
   const publication = ProtocolPublicationMapper(data)
 

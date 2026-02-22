@@ -1,5 +1,6 @@
 "use client"
 
+import { MappedProtocolReviewerAssignment } from "@/app/_schemas/mappers/protoccol-reviewer-assignmement-mapper"
 import {
   DataTable,
   DataTableBody,
@@ -7,10 +8,9 @@ import {
   DataTableHeader,
   DataTableRoot
 } from "@/components/niko-table/core"
-import { MappedProtocolReviewerAssignment } from "@/lib/protocol/mappers/protoccol-reviewer-assignmement-mapper"
 import { useRouter } from "next/navigation"
 import { FC } from "react"
-import { columns, } from "./columns"
+import { columns } from "./columns"
 
 type Props = {
   assignments: MappedProtocolReviewerAssignment[]
@@ -26,7 +26,9 @@ export const ReviewAssignmentsTable: FC<Props> = ({ assignments }) => {
           <DataTable>
             <DataTableHeader className="bg-muted/30" />
             <DataTableBody<MappedProtocolReviewerAssignment>
-              onRowClick={(row) => router.push(`/peer-review/${row.pubId}`)}
+              onRowClick={(row) => {
+                router.push(`/peer-review/${row.pubId}`)
+              }}
             >
               <DataTableEmptyBody>No active peer-review assignments.</DataTableEmptyBody>
             </DataTableBody>

@@ -5,12 +5,22 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
-// TODO REFACTOR functions, extract sandwich modifiers
-// TODO ADD A REVIEW CID to publication ? (needs 1. reviewsAgent => IPFS => contract)
-
 /**
  * @title BioVerifyConfig
  * @notice Configuration struct for protocol deployment parameters.
+ * @param reputationBoost The amount of reputation gained for successful actions.
+ * @param aiAgent The address of the authorized AI Agent.
+ * @param treasury The address of the protocol treasury.
+ * @param pubMinFee The minimum fee paid by publishers (goes to infrastructure/VRF costs).
+ * @param pubMinStake The minimum stake required from publishers to back their publication.
+ * @param revMinStake The minimum stake required to become an active reviewer.
+ * @param revReward The reward amount distributed to honest reviewers per successful review.
+ * @param vrfSubId The Chainlink VRF subscription ID.
+ * @param vrfKeyHash The Chainlink VRF key hash (gas lane).
+ * @param vrfGasLimit The gas limit for the Chainlink VRF callback.
+ * @param vrfConfirmations The number of block confirmations required by Chainlink VRF.
+ * @param vrfNumWords The number of random words (reviewers) requested from Chainlink VRF.
+ * @param vrfCoordinator The address of the Chainlink VRF Coordinator contract.
  */
 struct BioVerifyConfig {
     uint256 reputationBoost;
@@ -22,8 +32,6 @@ struct BioVerifyConfig {
     // reviewer
     uint256 revMinStake;
     uint256 revReward;
-    // min reviews count in reviewing process
-    uint32 minReviewsCount;
     // vrf
     uint256 vrfSubId;
     bytes32 vrfKeyHash;
@@ -31,6 +39,70 @@ struct BioVerifyConfig {
     uint16 vrfConfirmations;
     uint32 vrfNumWords;
     address vrfCoordinator;
+}
+
+// --- Types ---
+
+/**
+ * @notice Enum representing the current lifecycle stage of a publication.
+ */
+enum PublicationStatus {
+    SUBMITTED, // Publisher has submitted the publication and staked.
+    IN_REVIEW, // Reviewers have been picked via VRF and the review is ongoing.
+    SLASHED, // Publication was deemed fraudulent/negligent.
+    PUBLISHED // Publication successfully passed peer review.
+}
+
+/**
+ * @notice Struct representing a research publication and its state.
+ * @param id The unique identifier of the publication.
+ * @param stakes Total active stake pool locked in this publication (publisher + reviewers).
+ * @param paidSubmissionFee The fee paid by the publisher to cover VRF and AI infrastructure costs.
+ * @param publisher The address of the author submitting the publication.
+ * @param reviewers Array of addresses assigned as peer reviewers.
+ * @param seniorReviewer The address of the reviewer assigned as the senior authority.
+ * @param cids Array of IPFS content identifiers tracking the manifest history.
+ * @param verdictCid The IPFS content identifier containing the final review verdict.
+ * @param status The current lifecycle stage of the publication.
+ */
+struct Publication {
+    uint256 id;
+    uint256 stakes;
+    uint256 paidSubmissionFee;
+    address publisher;
+    address[] reviewers;
+    address seniorReviewer;
+    string[] cids;
+    string verdictCid;
+    PublicationStatus status;
+}
+
+/**
+ * @notice Struct representing a protocol participant's profile.
+ * @param mbAddress The wallet address of the member.
+ * @param stakes Total active stakes by the member across the protocol.
+ * @param publishedPublicationsIds Array of publication IDs authored by this member.
+ * @param isReviewer Boolean indicating if the member has opted in to be an active reviewer.
+ * @param reputation The member's protocol reputation score, earned through honest participation.
+ */
+struct Member {
+    address mbAddress;
+    uint256 stakes;
+    uint256[] publishedPublicationsIds;
+    bool isReviewer;
+    uint256 reputation;
+}
+
+/**
+ * @notice Struct representing an active review task assigned to a reviewer.
+ * @param pubId The ID of the publication assigned for review.
+ * @param cid The current IPFS content identifier of the publication's manifest.
+ * @param isSeniorReviewer Boolean indicating if the member is acting as the Senior Reviewer for this task.
+ */
+struct Assignment {
+    uint256 pubId;
+    string cid;
+    bool isSeniorReviewer;
 }
 
 // --- Errors ---
@@ -51,24 +123,21 @@ error BioVerify_ZeroValueToTransfer();
 error BioVerify_InSufficientContractBalance(uint256 balance);
 
 // --- Events ---
-event BioVerify_SubmitPublication(address indexed publisher, uint256 indexed pubId, string indexed cid);
+event BioVerify_SubmitPublication(address indexed publisher, uint256 indexed pubId, string cid);
 event BioVerify_PayReviewerMinStake(address indexed reviewer);
 event BioVerify_Claimed(address indexed member, uint256 indexed pubId, uint256 indexed amount);
-event BioVerify_Agent_SlashPublisher(uint256 indexed pubId, address indexed publisher);
 event BioVerify_Agent_RequestVRF(uint256 indexed pubId, uint256 indexed requestId);
 event BioVerify_Agent_PickReviewers(
-    uint256 indexed pubId,
-    address[] reviewers,
-    address indexed seniorReviewer,
-    string rootCid,
-    uint256 minValidReviewsCount
+    uint256 indexed pubId, address[] reviewers, address indexed seniorReviewer, string cid
 );
 event BioVerify_Agent_RewardReviewer(address indexed member, uint256 indexed newReputation, uint256 indexed pubId);
 event BioVerify_Agent_SlashMember(address indexed member, uint256 indexed newReputation, uint256 indexed pubId);
 event BioVerify_Agent_SetMemberReputation(address indexed member, uint256 indexed newReputation);
-event BioVerify_Agent_PublishPublication(uint256 indexed pubId);
-event BioVerify_Agent_SlashPublication(uint256 indexed pubId);
 event BioVerify_Agent_TransferSlashedPool(address indexed to, uint256 indexed value);
+event BioVerify_Agent_ReviewRecorded(address indexed member, uint256 indexed pubId);
+event BioVerify_Agent_SlashPublisher(uint256 indexed pubId, address indexed publisher, string verdictCid);
+event BioVerify_Agent_PublishPublication(uint256 indexed pubId, string verdictCid);
+event BioVerify_Agent_SlashPublication(uint256 indexed pubId, string verdictCid);
 
 /**
  * @title BioVerify Protocol
@@ -76,43 +145,17 @@ event BioVerify_Agent_TransferSlashedPool(address indexed to, uint256 indexed va
  * @notice A decentralized research validation protocol using AI agents and meritocratic peer review.
  */
 contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
-    // --- Types ---
-    enum PublicationStatus {
-        SUBMITTED,
-        IN_REVIEW,
-        SLASHED,
-        PUBLISHED
-    }
-
-    struct Publication {
-        uint256 id;
-        uint256 stakes;
-        uint256 paidSubmissionFee;
-        address publisher;
-        address[] reviewers;
-        address seniorReviewer;
-        string[] cids;
-        PublicationStatus status;
-    }
-
-    struct Member {
-        address memberAddress;
-        uint256 stakes;
-        uint256[] publishedPublicationsIds;
-        bool isReviewer;
-        uint256 reputation;
-    }
-
     // --- State Variables ---
     uint256 public rewardPool;
     uint256 public slashedPool;
     uint256 public nextPubId;
     address[] public memberAddresses;
 
-    mapping(uint256 => Publication) public idToPublication;
-    mapping(address => Member) public addressToMember;
     mapping(address => mapping(uint256 => uint256)) public memberStakeOnPubId;
-    mapping(uint256 => uint256) internal vrfRequestToPubId;
+    mapping(address => mapping(uint256 => bool)) public hasSubmittedReviewOnPubId;
+    mapping(uint256 => Publication) private idToPublication;
+    mapping(address => Member) private addressToMember;
+    mapping(uint256 => uint256) private vrfRequestToPubId;
 
     // --- Immutable Protocol Constants ---
     address public immutable I_AI_AGENT_ADDRESS;
@@ -126,7 +169,6 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
     uint256 public immutable I_VRF_SUBSCRIPTION_ID;
     uint32 public immutable I_VRF_CALLBACK_GAS_LIMIT;
     uint32 public immutable I_VRF_NUM_WORDS;
-    uint32 public immutable I_MIN_REVIEWS_COUNT;
     uint16 public immutable I_VRF_REQUEST_CONFIRMATIONS;
 
     // --- Modifiers ---
@@ -153,7 +195,6 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         I_PUBLISHER_MIN_STAKE = config.pubMinStake;
         I_REVIEWER_MIN_STAKE = config.revMinStake;
         I_REVIEWER_REWARD = config.revReward;
-        I_MIN_REVIEWS_COUNT = config.minReviewsCount;
         I_VRF_SUBSCRIPTION_ID = config.vrfSubId;
         I_VRF_KEY_HASH = config.vrfKeyHash;
         I_VRF_CALLBACK_GAS_LIMIT = config.vrfGasLimit;
@@ -214,8 +255,8 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         uint256 pubId = nextPubId++;
 
         Member storage member = addressToMember[msg.sender];
-        if (member.memberAddress == address(0)) {
-            member.memberAddress = msg.sender;
+        if (member.mbAddress == address(0)) {
+            member.mbAddress = msg.sender;
             memberAddresses.push(msg.sender);
         }
         member.publishedPublicationsIds.push(pubId);
@@ -242,8 +283,8 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
 
         // Effect
         Member storage member = addressToMember[msg.sender];
-        if (member.memberAddress == address(0)) {
-            member.memberAddress = msg.sender;
+        if (member.mbAddress == address(0)) {
+            member.mbAddress = msg.sender;
             memberAddresses.push(msg.sender);
         }
 
@@ -304,22 +345,25 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
      * @param _pubId The ID of the publication to publish.
      * @param _honest Array of reviewer addresses who voted correctly.
      * @param _negligent Array of reviewer addresses who voted incorrectly.
+     * @param _verdictCid The IPFS content identifier containing the final review verdict.
      */
-    function publishPublication(uint256 _pubId, address[] calldata _honest, address[] calldata _negligent)
-        external
-        onlyAgent
-        onlyValidPubId(_pubId)
-    {
+    function publishPublication(
+        uint256 _pubId,
+        address[] calldata _honest,
+        address[] calldata _negligent,
+        string calldata _verdictCid
+    ) external onlyAgent onlyValidPubId(_pubId) {
         Publication storage pub = idToPublication[_pubId];
 
         // Check
         if (pub.status != PublicationStatus.IN_REVIEW) revert BioVerify_MustBeInReviewToSettle(_pubId);
 
-        // 1. Update Status & Reputation
+        // 1. Update Verdict, Status & Reputation
+        pub.verdictCid = _verdictCid;
         pub.status = PublicationStatus.PUBLISHED;
         addressToMember[pub.publisher].reputation += I_REPUTATION_BOOST;
 
-        // 2. Process Rewards and Slashes
+        // 2. Process Rewards and Slashes.
         for (uint256 i = 0; i < _honest.length; ++i) {
             _rewardReviewer(_honest[i], _pubId);
         }
@@ -327,62 +371,82 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
             _slashMember(_negligent[i], _pubId);
         }
 
-        // 3. DECLARATIVE ACCOUNTING
+        // 3. Declarative accounting
         // The pool must equal: (Publisher's original stake) + (Honest Reviewers' total payout)
         uint256 publisherStake = memberStakeOnPubId[pub.publisher][_pubId];
         uint256 totalHonestPayout = _honest.length * (I_REVIEWER_MIN_STAKE + I_REVIEWER_REWARD);
 
         pub.stakes = publisherStake + totalHonestPayout;
 
-        // 4. Update Treasury
+        // 4. Capture slashed reviewer stakes for treasury
         uint256 totalSlashedFromReviewers = _negligent.length * I_REVIEWER_MIN_STAKE;
         slashedPool += totalSlashedFromReviewers;
 
-        emit BioVerify_Agent_PublishPublication(_pubId);
+        emit BioVerify_Agent_PublishPublication(_pubId, _verdictCid);
+    }
+
+    /**
+     * @notice Records that a member has submitted their review for a specific publication.
+     * @dev Restricted to the AI Agent. This provides an on-chain record for the frontend
+     * to prevent duplicate submissions and display user progress.
+     * @param _reviewer The address of the member who submitted the review.
+     * @param _pubId The unique ID of the publication reviewed.
+     */
+    function recordReviewSubmission(address _reviewer, uint256 _pubId) external onlyAgent onlyValidPubId(_pubId) {
+        if (hasSubmittedReviewOnPubId[_reviewer][_pubId]) return;
+
+        hasSubmittedReviewOnPubId[_reviewer][_pubId] = true;
+
+        emit BioVerify_Agent_ReviewRecorded(_reviewer, _pubId);
     }
 
     /**
      * @notice Finalizes a publication as fraudulent.
      * @notice Slashes the publisher.
-     * @dev Restricted to AI Agent. Triggered before reviewing process.
+     * @dev Restricted to AI Agent. Triggered before reviewing process if auto-failed.
      * @param _pubId The ID of the fraudulent publication.
+     * @param _verdictCid The IPFS content identifier containing the reason for the slash.
      */
-    function slashPublisher(uint256 _pubId) external onlyAgent onlyValidPubId(_pubId) {
+    function slashPublisher(uint256 _pubId, string calldata _verdictCid) external onlyAgent onlyValidPubId(_pubId) {
         Publication storage pub = idToPublication[_pubId];
         // Check
         if (pub.status == PublicationStatus.SLASHED) revert BioVerify_AlreadySlashed(_pubId);
 
         // Effect
         uint256 stakes = pub.stakes;
+        pub.verdictCid = _verdictCid;
         pub.status = PublicationStatus.SLASHED;
         _slashMember(pub.publisher, _pubId);
 
         pub.stakes = 0;
         slashedPool += stakes;
 
-        emit BioVerify_Agent_SlashPublisher(_pubId, pub.publisher);
+        emit BioVerify_Agent_SlashPublisher(_pubId, pub.publisher, _verdictCid);
     }
 
     /**
-     * @notice Finalizes a publication as fraudulent.
+     * @notice Finalizes a publication as fraudulent after peer review.
      * Rewards honest reviewers.
      * Slashes the publisher and negligent reviewers.
      * @dev Restricted to the AI Agent.
      * @param _pubId The ID of the publication to slash.
      * @param _honest Array of reviewer addresses who correctly flagged issues.
      * @param _negligent Array of reviewer addresses who failed to flag issues.
+     * @param _verdictCid The IPFS content identifier containing the final review verdict.
      */
-    function slashPublication(uint256 _pubId, address[] calldata _honest, address[] calldata _negligent)
-        external
-        onlyAgent
-        onlyValidPubId(_pubId)
-    {
+    function slashPublication(
+        uint256 _pubId,
+        address[] calldata _honest,
+        address[] calldata _negligent,
+        string calldata _verdictCid
+    ) external onlyAgent onlyValidPubId(_pubId) {
         Publication storage pub = idToPublication[_pubId];
 
         // Check
         if (pub.status != PublicationStatus.IN_REVIEW) revert BioVerify_MustBeInReviewToSettle(_pubId);
 
         // Effect
+        pub.verdictCid = _verdictCid;
         // 1. Capture what is being removed for the treasury
         uint256 slashedFromPublisher = memberStakeOnPubId[pub.publisher][_pubId];
         uint256 totalSlashedFromReviewers = _negligent.length * I_REVIEWER_MIN_STAKE;
@@ -405,7 +469,7 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         // 4. Update Treasury
         slashedPool += (slashedFromPublisher + totalSlashedFromReviewers);
 
-        emit BioVerify_Agent_SlashPublication(_pubId);
+        emit BioVerify_Agent_SlashPublication(_pubId, _verdictCid);
     }
 
     /**
@@ -432,7 +496,7 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
      * @notice Updates a member's reputation
      * @dev Restricted to the AI Agent.
      * @param _member The member address.
-     * @param _reputation The new reuptation.
+     * @param _reputation The new reputation.
      */
     function setMemberReputation(address _member, uint256 _reputation) external onlyAgent {
         Member storage member = addressToMember[_member];
@@ -452,6 +516,16 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
     }
 
     /**
+     * @notice Retrieves the review verdict CID for a publication.
+     * @param _pubId The publication ID.
+     * @return The verdict CID string.
+     */
+    function getVerdictCid(uint256 _pubId) public view onlyValidPubId(_pubId) returns (string memory) {
+        Publication storage pub = idToPublication[_pubId];
+        return pub.verdictCid;
+    }
+
+    /**
      * @notice Retrieves full publication details.
      * @param _pubId The publication ID.
      * @return The Publication struct data.
@@ -461,12 +535,58 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
     }
 
     /**
-     * @notice Gets the reputation of a specific member.
+     * @notice Retrieves full member details.
      * @param _member The member address.
-     * @return The reputation score.
+     * @return The Member struct data.
      */
-    function getMemberReputation(address _member) external view returns (uint256) {
-        return addressToMember[_member].reputation;
+    function getMember(address _member) external view returns (Member memory) {
+        return addressToMember[_member];
+    }
+
+    /**
+     * @notice Retrieves the total number of members.
+     */
+    function getMembersCount() external view returns (uint256) {
+        return memberAddresses.length;
+    }
+
+    /**
+     * @notice Retrieves all active review tasks assigned to a specific member.
+     * @dev Iterates through all publications with an 'IN_REVIEW' status.
+     * Uses a two-pass pattern to initialize the return array size and storage pointers for gas efficiency.
+     * @param _member The address of the reviewer whose assignments are being queried.
+     * @return assignments An array of Assignment structs containing pubId, CID, and seniority status.
+     */
+    function getReviewerAssignments(address _member) external view returns (Assignment[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < nextPubId; ++i) {
+            Publication storage pub = idToPublication[i];
+            if (
+                pub.status == PublicationStatus.IN_REVIEW
+                    && (_member == pub.seniorReviewer || _isAssignedPeerReviewer(_member, pub.reviewers))
+            ) {
+                count++;
+            }
+        }
+
+        Assignment[] memory assignments = new Assignment[](count);
+        if (count == 0) {
+            return assignments;
+        }
+
+        uint256 idx = 0;
+        for (uint256 i = 0; i < nextPubId; ++i) {
+            Publication storage pub = idToPublication[i];
+            bool isSenior = _member == pub.seniorReviewer;
+            if (
+                pub.status == PublicationStatus.IN_REVIEW
+                    && (isSenior || _isAssignedPeerReviewer(_member, pub.reviewers))
+            ) {
+                assignments[idx] = Assignment({pubId: pub.id, cid: getCurrentCid(pub.id), isSeniorReviewer: isSenior});
+                idx++;
+            }
+        }
+        return assignments;
     }
 
     // --- Internal Helpers ---
@@ -479,27 +599,27 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
     function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
         address[] memory solventReviewersAddresses = _getSolventReviewersAddresses();
 
-        // Check if enough solvent reviewers (need I_VRF_NUM_WORDS peer reviewers + 1 senior reviewer)
+        // --- Validation ---
         uint256 poolSize = solventReviewersAddresses.length;
         if (poolSize < I_VRF_NUM_WORDS + 1) revert BioVerify_InsufficientReviewersPool(poolSize);
 
-        // Check if contract holds enough rewards
         uint256 cashOutForRewards = I_REVIEWER_REWARD * I_VRF_NUM_WORDS;
         if (rewardPool < cashOutForRewards) revert BioVerify_InsufficientRewardPool(rewardPool);
 
-        // Effect
+        // --- State Updates: Reward Pool ---
         rewardPool -= cashOutForRewards;
 
         uint256 pubId = vrfRequestToPubId[requestId];
         Publication storage publication = idToPublication[pubId];
         address publisher = publication.publisher;
 
+        // --- Candidate Selection ---
         address[] memory candidates = new address[](I_VRF_NUM_WORDS);
-
         for (uint32 i = 0; i < I_VRF_NUM_WORDS; ++i) {
             uint256 rdmIdx = randomWords[i] % poolSize;
             address candidate = solventReviewersAddresses[rdmIdx];
 
+            // Ensure unique selection and prevent publisher from self-reviewing
             while (_isAlreadySelected(candidates, candidate, i) || candidate == publisher) {
                 rdmIdx = (rdmIdx + 1) % poolSize;
                 candidate = solventReviewersAddresses[rdmIdx];
@@ -507,6 +627,7 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
             candidates[i] = candidate;
         }
 
+        // --- Meritocratic Seniority Assignment ---
         uint256 seniorIndex = 0;
         uint256 highestRep = addressToMember[candidates[0]].reputation;
 
@@ -518,6 +639,7 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
             }
         }
 
+        // --- Finalizing Assignments & Stake Accounting ---
         publication.seniorReviewer = candidates[seniorIndex];
 
         for (uint32 i = 0; i < I_VRF_NUM_WORDS; ++i) {
@@ -529,7 +651,7 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         }
 
         emit BioVerify_Agent_PickReviewers(
-            pubId, publication.reviewers, publication.seniorReviewer, getCurrentCid(pubId), I_MIN_REVIEWS_COUNT
+            pubId, publication.reviewers, publication.seniorReviewer, getCurrentCid(pubId)
         );
     }
 
@@ -574,12 +696,12 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         }
 
         address[] memory addresses = new address[](count);
-        uint256 currentIndex = 0;
+        uint256 idx = 0;
         for (uint256 i = 0; i < memberAddresses.length; ++i) {
             Member memory member = addressToMember[memberAddresses[i]];
             if (member.isReviewer && member.stakes >= I_REVIEWER_MIN_STAKE) {
-                addresses[currentIndex] = member.memberAddress;
-                currentIndex++;
+                addresses[idx] = member.mbAddress;
+                idx++;
             }
         }
         return addresses;
@@ -610,6 +732,19 @@ contract BioVerify is VRFConsumerBaseV2Plus, ReentrancyGuard {
         for (uint32 i = 0; i < limit; i++) {
             if (selected[i] == candidate) return true;
         }
+        return false;
+    }
+
+    /**
+     * @dev Helper to compute getReviewerAssignments;
+     */
+    function _isAssignedPeerReviewer(address _member, address[] memory reviewers) internal pure returns (bool) {
+        for (uint256 i = 0; i < reviewers.length; ++i) {
+            if (_member == reviewers[i]) {
+                return true;
+            }
+        }
+
         return false;
     }
 }

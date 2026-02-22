@@ -1,14 +1,14 @@
-import { startReviewersAgent } from "@/lib/langchain/review/start-agent"
+import { startReviewersAgent } from "@/app/_langchain/review/start-agent"
 import { waitUntil } from "@vercel/functions"
 import { createHmac } from "node:crypto"
 import { decodeEventLog, parseAbi } from "viem"
 
-const abi = parseAbi([
-	"event BioVerify_Agent_PickReviewers(uint256 indexed pubId,address[] reviewers,address indexed seniorReviewer,string rootCid,uint256 minValidReviewsCount)"
-])
+const SEPOLIA_SK = process.env.ALCHEMY_SEPOLIA_ETH_PICK_REVIEWERS_WH_SK
+const SEI_SK = process.env.ALCHEMY_SEI_TESTNET_PICK_REVIEWERS_WH_SK
 
-const SEPOLIA_SK = process.env.ALCHEMY_ETH_SEPOLIA_Agent_PickedReviewers_WEBHOOK_SK
-const SEI_SK = process.env.ALCHEMY_SEI_TESTNET_Agent_PickedReviewers_WEBHOOK_SK
+const abi = parseAbi([
+	"event BioVerify_Agent_PickReviewers(uint256 indexed pubId,address[] reviewers,address indexed seniorReviewer,string cid)"
+])
 
 export async function POST(req: Request) {
 	if (!SEPOLIA_SK && !SEI_SK) {
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 			createHmac("sha256", SEI_SK).update(rawBody).digest("hex") === signature
 
 		if (!isSepolia && !isSei) {
-			console.error("❌ Unauthorized: Signature Mismatch")
+			console.error("❌ Unauthorized: Signature Mismatch for Request ID:", req.headers.get("x-alchemy-request-id"))
 			return new Response("Unauthorized", { status: 401 })
 		}
 
@@ -50,12 +50,11 @@ export async function POST(req: Request) {
 			topics: log.topics,
 		})
 
-		const { pubId, rootCid, reviewers, seniorReviewer, minValidReviewsCount } = decoded.args as {
+		const { pubId, cid: rootCid, reviewers, seniorReviewer } = decoded.args as {
 			pubId: bigint
-			rootCid: string
+			cid: string
 			reviewers: `0x${string}`[]
 			seniorReviewer: `0x${string}`
-			minValidReviewsCount: bigint
 		}
 
 		const pubIdString = pubId.toString()
@@ -63,8 +62,7 @@ export async function POST(req: Request) {
 		console.log(`🚀 Webhook - Reviewers Picked for Pub #${pubIdString}`, {
 			reviewers,
 			seniorReviewer,
-			rootCid,
-			minValidReviewsCount
+			rootCid
 		})
 
 		// 4. Trigger the Reviewer Agent
@@ -75,7 +73,6 @@ export async function POST(req: Request) {
 				rootCid,
 				reviewers,
 				seniorReviewer,
-				minValidReviewsCount: Number(minValidReviewsCount)
 			}).then(() => {
 				console.log(`✅ Reviewers Agent Settlement Complete for Pub #${pubIdString}`)
 			}).catch(err => {

@@ -1,6 +1,6 @@
-import { IpfsPublicationSchema } from "@/app/_schemas/ipfs-publication"
+import { EthAmountSchema } from "@/app/_schemas/schemas/eth-amount"
+import { IpfsPublicationSchema } from "@/app/_schemas/schemas/ipfs-publication"
 import type { z } from "zod"
-import { EthAmountSchema } from "./eth-amount"
 
 // Submit Publication Form Schema
 export const SubmitPublicationFormSchema = IpfsPublicationSchema.extend({

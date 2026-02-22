@@ -1,14 +1,14 @@
-import { startSubmissionAgent } from "@/lib/langchain/submission/agent"
+import { startSubmissionAgent } from "@/app/_langchain/submission/agent"
 import { waitUntil } from "@vercel/functions"
 import { createHmac } from "node:crypto"
 import { decodeEventLog, parseAbi } from "viem"
 
-const abi = parseAbi([
-	"event BioVerify_SubmitPublication(address indexed publisher, uint256 indexed pubId, string indexed cid)"
-])
+const SEPOLIA_SK = process.env.ALCHEMY_SEPOLIA_ETH_SUBMISSION_WH_SK
+const SEI_SK = process.env.ALCHEMY_SEI_TESTNET_SUBMISSION_WH_SK
 
-const SEPOLIA_SK = process.env.ALCHEMY_ETH_SEPOLIA_SubmittedPublication_WEBHOOK_SK
-const SEI_SK = process.env.ALCHEMY_SEI_TESTNET_SubmittedPublication_WEBHOOK_SK
+const abi = parseAbi([
+	"event BioVerify_SubmitPublication(address indexed publisher, uint256 indexed pubId, string cid)"
+])
 
 export async function POST(req: Request) {
 	if (!SEPOLIA_SK && !SEI_SK) {
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 			createHmac("sha256", SEI_SK).update(rawBody).digest("hex") === signature
 
 		if (!isSepolia && !isSei) {
-			console.error("❌ Unauthorized: Signature Mismatch")
+			console.error("❌ Unauthorized: Signature Mismatch for Request ID:", req.headers.get("x-alchemy-request-id"))
 			return new Response("Unauthorized", { status: 401 })
 		}
 

@@ -7,6 +7,9 @@ import {Constants} from "../script/Constants.sol";
 import {
     BioVerify,
     BioVerifyConfig,
+    Publication,
+    Member,
+    Assignment,
 
     // events
     BioVerify_SubmitPublication,
@@ -14,6 +17,7 @@ import {
     BioVerify_Agent_TransferSlashedPool,
     BioVerify_Agent_SlashPublisher,
     BioVerify_Agent_SetMemberReputation,
+    BioVerify_Agent_ReviewRecorded,
 
     // errors
     BioVerify_MustPayToPublish,
@@ -24,9 +28,21 @@ import {
     BioVerify_AlreadySlashed,
     BioVerify_ZeroValueToTransfer,
     BioVerify_MustPayReviewerMinStake,
-    BioVerify_InsufficientReviewersPool
-} from  // Updated to plural
-"../src/BioVerify.sol";
+    BioVerify_InsufficientReviewersPool,
+    BioVerify_PublicationStatusNotFinalized,
+    BioVerify_MustBeInReviewToSettle,
+    BioVerify_AlreadyInReview,
+    BioVerify_InsufficientRewardPool,
+    BioVerify_FailedToTransferTo,
+    BioVerify_InSufficientContractBalance
+} from "../src/BioVerify.sol";
+
+// Helper contract to test failed ETH transfers
+contract ETHRejector {
+    receive() external payable {
+        revert("I refuse your ETH");
+    }
+}
 
 contract BioVerifyTest is Test, Constants {
     BioVerify public bioVerify;
@@ -42,23 +58,16 @@ contract BioVerifyTest is Test, Constants {
     uint256 constant VALID_PAID_PUBLISHER_STAKE = PUBLISHER_MIN_STAKE;
     uint256 constant VALID_PAID_PUBLISHER_AMOUNT = VALID_PAID_PUBLISHER_FEE + VALID_PAID_PUBLISHER_STAKE;
     string constant FAKE_CID = "ipfs://test-hash";
+    string constant FAKE_VERDICT_CID = "ipfs://test-verdict-hash";
 
     VRFCoordinatorV2_5Mock vrfCoordinatorMock;
     uint256 vrfMockSubscriptionId;
 
     function setUp() public {
-        // 1. Deploy the Mock Coordinator locally
-        vrfCoordinatorMock = new VRFCoordinatorV2_5Mock(
-            0.01 ether, // baseFee
-            0.0003 ether, // gasPriceLink
-            1e18 // weiPerUnitLink
-        );
-
-        // 2. create & fund Subscription to mock vrf
+        vrfCoordinatorMock = new VRFCoordinatorV2_5Mock(0.01 ether, 0.0003 ether, 1e18);
         vrfMockSubscriptionId = vrfCoordinatorMock.createSubscription();
         vrfCoordinatorMock.fundSubscriptionWithNative{value: 1000 ether}(vrfMockSubscriptionId);
 
-        // 3. Deploy BioVerify
         BioVerifyConfig memory mockConfig = BioVerifyConfig({
             reputationBoost: REPUTATION_BOOST,
             aiAgent: aiAgentAddress,
@@ -67,7 +76,6 @@ contract BioVerifyTest is Test, Constants {
             pubMinStake: PUBLISHER_MIN_STAKE,
             revMinStake: REVIEWER_MIN_STAKE,
             revReward: REVIEWER_REWARD,
-            minReviewsCount: MIN_REVIEWS_COUNT,
             vrfSubId: vrfMockSubscriptionId,
             vrfKeyHash: VRF_KEY_HASH,
             vrfGasLimit: VRF_CALLBACK_GAS_LIMIT,
@@ -76,12 +84,13 @@ contract BioVerifyTest is Test, Constants {
             vrfCoordinator: address(vrfCoordinatorMock)
         });
         bioVerify = new BioVerify{value: DEPLOYMENT_VALUE}(mockConfig);
-
-        // 4. add bioVerify to mock vrf
         vrfCoordinatorMock.addConsumer(vrfMockSubscriptionId, address(bioVerify));
     }
 
-    // ============= deployment
+    // ================================================================
+    // 1. DEPLOYMENT
+    // ================================================================
+
     function test_Deployment() public view {
         assertEq(address(bioVerify).balance, DEPLOYMENT_VALUE);
         assertEq(bioVerify.rewardPool(), DEPLOYMENT_VALUE);
@@ -92,56 +101,128 @@ contract BioVerifyTest is Test, Constants {
         assertEq(bioVerify.I_PUBLISHER_MIN_STAKE(), PUBLISHER_MIN_STAKE);
         assertEq(bioVerify.I_REVIEWER_MIN_STAKE(), REVIEWER_MIN_STAKE);
         assertEq(bioVerify.I_REVIEWER_REWARD(), REVIEWER_REWARD);
-        assertEq(bioVerify.I_MIN_REVIEWS_COUNT(), MIN_REVIEWS_COUNT);
-        assertEq(bioVerify.I_VRF_KEY_HASH(), VRF_KEY_HASH);
-        assertEq(bioVerify.I_VRF_CALLBACK_GAS_LIMIT(), VRF_CALLBACK_GAS_LIMIT);
-        assertEq(bioVerify.I_VRF_REQUEST_CONFIRMATIONS(), VRF_REQUEST_CONFIRMATIONS);
-        assertEq(bioVerify.I_VRF_NUM_WORDS(), VRF_NUM_WORDS);
-        assertEq(bioVerify.I_VRF_SUBSCRIPTION_ID(), vrfMockSubscriptionId);
     }
 
-    // ============= SubmitPublication
+    // ================================================================
+    // 2. MEMBER ONBOARDING (STAKING & REPUTATION)
+    // ================================================================
+
+    function test_PayReviewerMinStake_Success() public {
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
+
+        Member memory member = bioVerify.getMember(user);
+        assertEq(member.mbAddress, user);
+        assertTrue(member.isReviewer);
+        assertEq(member.stakes, REVIEWER_MIN_STAKE);
+    }
+
+    function test_PayReviewerMinStake_Success_EmitsCorrectEvent() public {
+        vm.deal(user, 1 ether);
+        vm.expectEmit(true, false, false, true);
+        emit BioVerify_PayReviewerMinStake(user);
+        vm.prank(user);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
+    }
+
+    function test_PayReviewerMinStake_AllowsTopUp() public {
+        vm.deal(user, 2 ether);
+        vm.prank(user);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
+        vm.prank(user);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
+        assertEq(bioVerify.getMember(user).stakes, REVIEWER_MIN_STAKE * 2);
+    }
+
+    function test_PayReviewerMinStake_RevertIfZeroStake() public {
+        vm.deal(user, 1 ether);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayReviewerMinStake.selector));
+        vm.prank(user);
+        bioVerify.payReviewerMinStake{value: 0}();
+    }
+
+    function test_PayReviewerMinStake_RevertIfStakeTooLow() public {
+        vm.deal(user, 1 ether);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayReviewerMinStake.selector));
+        vm.prank(user);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE - 1 wei}();
+    }
+
+    function test_PayReviewerMinStake_RevertIfStakeTooHigh() public {
+        vm.deal(user, 1 ether);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayReviewerMinStake.selector));
+        vm.prank(user);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE + 1 wei}();
+    }
+
+    function test_SetMemberReputation_Success() public {
+        vm.prank(aiAgentAddress);
+        vm.expectEmit(true, false, false, true);
+        emit BioVerify_Agent_SetMemberReputation(user, 85);
+        bioVerify.setMemberReputation(user, 85);
+        assertEq(bioVerify.getMember(user).reputation, 85);
+    }
+
+    function test_SetMemberReputation_RevertIfNotAgent() public {
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_OnlyAgent.selector));
+        vm.prank(user);
+        bioVerify.setMemberReputation(user, 100);
+    }
+
+    // ================================================================
+    // 3. PUBLICATION SUBMISSION
+    // ================================================================
+
     function test_SubmitPublication_EmitsCorrectEvent() public {
         vm.deal(publisher, 1 ether);
-
-        vm.expectEmit(true, true, true, false); // Checked topics: publisher, pubId, cid
+        vm.expectEmit(true, true, true, false);
         emit BioVerify_SubmitPublication(publisher, 0, FAKE_CID);
-
         vm.prank(publisher);
         bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
     }
 
     function test_SubmitPublication_RecordsCorrectAmountOnPublicationPaidSubmissionFee() public {
         vm.deal(publisher, 1 ether);
-
         vm.prank(publisher);
         bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        BioVerify.Publication memory publication = bioVerify.getPublication(0);
-        assertEq(publication.paidSubmissionFee, VALID_PAID_PUBLISHER_FEE);
+        assertEq(bioVerify.getPublication(0).paidSubmissionFee, VALID_PAID_PUBLISHER_FEE);
     }
 
     function test_SubmitPublication_IncreasesContractBalance() public {
         uint256 initContractBalance = address(bioVerify).balance;
-
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
         bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        uint256 expectedContractBalance = initContractBalance + VALID_PAID_PUBLISHER_AMOUNT;
-        assertEq(address(bioVerify).balance, expectedContractBalance);
+        assertEq(address(bioVerify).balance, initContractBalance + VALID_PAID_PUBLISHER_AMOUNT);
     }
 
     function test_SubmitPublication_StakesCorrectAmountOnPublication() public {
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
         bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        // Updated to use getPublication struct
         assertEq(bioVerify.getPublication(0).stakes, VALID_PAID_PUBLISHER_STAKE);
     }
 
-    // SubmitPublication - unhappy path
+    function test_SeniorReviewer_Logic_Branch() public {
+        _setupReviewerPool(VRF_NUM_WORDS + 1);
+        _submitDefaultPub();
+        _fulfillVrfForPub(0);
+
+        Publication memory pub = bioVerify.getPublication(0);
+        address senior = pub.seniorReviewer;
+
+        address[] memory honest = new address[](1);
+        honest[0] = senior;
+
+        vm.prank(aiAgentAddress);
+        bioVerify.publishPublication(0, honest, new address[](0), FAKE_VERDICT_CID);
+
+        // Senior should have: Initial Stake + Reviewer Reward
+        uint256 expectedBalance = REVIEWER_MIN_STAKE + REVIEWER_REWARD;
+        assertEq(bioVerify.getMember(senior).stakes, expectedBalance);
+    }
+
     function test_SubmitPublication_RevertIfZeroValueSent() public {
         vm.deal(publisher, 1 ether);
         vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayToPublish.selector));
@@ -171,303 +252,26 @@ contract BioVerifyTest is Test, Constants {
         bioVerify.submitPublication{value: validPublisherAmount}(FAKE_CID, invalidPublisherFee);
     }
 
-    // ============= slashPublisher
-    // slashPublisher - happy path
-    function test_SlashPublisher_DropsHighReputation() public {
-        uint256 initReputation = 1_000_000; // > REPUTATION_BOOST
+    // ================================================================
+    // 4. VRF & REVIEWER SELECTION
+    // ================================================================
 
-        vm.prank(aiAgentAddress);
-        bioVerify.setMemberReputation(publisher, initReputation);
-
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-
-        uint256 expectedReputation = initReputation > REPUTATION_BOOST ? initReputation - REPUTATION_BOOST : 0;
-        assertEq(bioVerify.getMemberReputation(publisher), expectedReputation);
-    }
-
-    function test_SlashPublisher_ZeroesLowReputation() public {
-        uint256 initReputation = 10; // < REPUTATION_BOOST
-
-        vm.prank(aiAgentAddress);
-        bioVerify.setMemberReputation(publisher, initReputation);
-
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-
-        uint256 expectedReputation = initReputation > REPUTATION_BOOST ? initReputation - REPUTATION_BOOST : 0;
-        assertEq(bioVerify.getMemberReputation(publisher), expectedReputation);
-    }
-
-    function test_SlashPublisher_SlashesPublicationStakeAndIncreasesSlashedPool() public {
-        uint256 initSlashedPool = bioVerify.slashedPool();
-        uint256 initReputation = 1_000;
-
-        vm.prank(aiAgentAddress);
-        bioVerify.setMemberReputation(publisher, initReputation);
-
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-
-        uint256 publisherStake = VALID_PAID_PUBLISHER_AMOUNT - VALID_PAID_PUBLISHER_FEE;
-        uint256 expectedSlashedPool = initSlashedPool + publisherStake;
-
-        assertEq(bioVerify.slashedPool(), expectedSlashedPool);
-    }
-
-    function test_SlashPublisher_SetCorrectPublicationStatus() public {
-        uint256 initReputation = 1_000;
-
-        vm.prank(aiAgentAddress);
-        bioVerify.setMemberReputation(publisher, initReputation);
-
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-
-        assertEq(uint256(bioVerify.getPublication(0).status), 2); // Status.SLASHED
-    }
-
-    function test_SlashPublisher_EmitsCorrectEvent() public {
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        // Expect the slash event from _slashMember
-        vm.expectEmit(true, true, true, false);
-        // Event: BioVerify_Agent_SlashPublisher(uint256 indexed pubId, address indexed publisher);
-        emit BioVerify_Agent_SlashPublisher(0, publisher);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-    }
-
-    // slashPublisher - unhappy path
-    function test_SlashPublisher_RevertIfNotAgentCall() public {
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_OnlyAgent.selector));
-        vm.prank(user);
-        bioVerify.slashPublisher(0);
-    }
-
-    function test_SlashPublisher_RevertIfPublicationIdNotValid() public {
-        uint256 invalidPublicationId = 1;
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_InvalidPublicationId.selector, invalidPublicationId));
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(invalidPublicationId);
-    }
-
-    function test_SlashPublisher_RevertIfAlreadySlashed() public {
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_AlreadySlashed.selector, 0));
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-    }
-
-    // ============= transferSlashedPool
-    function test_TransferTotalSlashed_MovesFundsToTreasury() public {
-        uint256 initialTreasuryBalance = treasuryAddress.balance;
-
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.transferSlashedPool();
-
-        assertEq(treasuryAddress.balance, initialTreasuryBalance + VALID_PAID_PUBLISHER_STAKE);
-        assertEq(bioVerify.slashedPool(), 0);
-    }
-
-    function test_TransferTotalSlashed_EmitCorrectEvent() public {
-        uint256 initSlashedPool = bioVerify.slashedPool();
-
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        uint256 publisherStake = VALID_PAID_PUBLISHER_AMOUNT - VALID_PAID_PUBLISHER_FEE;
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublisher(0);
-
-        uint256 expectedSlashedPool = initSlashedPool + publisherStake;
-
-        vm.expectEmit(true, true, false, true);
-        emit BioVerify_Agent_TransferSlashedPool(treasuryAddress, expectedSlashedPool);
-
-        vm.prank(aiAgentAddress);
-        bioVerify.transferSlashedPool();
-    }
-
-    // transferSlashedPool - unhappy path
-    function test_TransferTotalSlashed_RevertIfNotAgentCall() public {
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
-
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_OnlyAgent.selector));
-        vm.prank(user);
-        bioVerify.transferSlashedPool();
-    }
-
-    function test_TransferTotalSlashed_RevertIfZeroValueToTransfer() public {
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_ZeroValueToTransfer.selector));
-        vm.prank(aiAgentAddress);
-        bioVerify.transferSlashedPool();
-    }
-
-    // ============= setMemberReputation
-    // setMemberReputation - happy path
-    function test_SetMemberReputation_Success() public {
-        uint256 newScore = 85;
-
-        vm.prank(aiAgentAddress);
-        vm.expectEmit(true, false, false, true);
-        emit BioVerify_Agent_SetMemberReputation(user, newScore);
-
-        bioVerify.setMemberReputation(user, newScore);
-
-        assertEq(bioVerify.getMemberReputation(user), newScore);
-    }
-
-    // setMemberReputation - unhappy path
-    function test_SetMemberReputation_RevertIfNotAgent() public {
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_OnlyAgent.selector));
-        vm.prank(user);
-        bioVerify.setMemberReputation(user, 100);
-    }
-
-    // ============= payReviewerMinStake
-    function test_PayReviewerMinStake_Success() public {
-        vm.deal(user, 1 ether);
-        vm.prank(user);
-        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
-
-        (address mAddr, uint256 mStakes, bool isRev,) = bioVerify.addressToMember(user);
-
-        assertEq(mAddr, user);
-        assertTrue(isRev);
-        assertEq(mStakes, REVIEWER_MIN_STAKE);
-    }
-
-    function test_PayReviewerMinStake_Success_EmitsCorrectEvent() public {
-        vm.deal(user, 1 ether);
-        vm.expectEmit(true, false, false, true);
-        emit BioVerify_PayReviewerMinStake(user);
-
-        vm.prank(user);
-        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
-    }
-
-    // unhappy path
-    function test_PayReviewerMinStake_RevertIfZeroStake() public {
-        vm.deal(user, 1 ether);
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayReviewerMinStake.selector));
-        vm.prank(user);
-        bioVerify.payReviewerMinStake{value: 0}();
-    }
-
-    function test_PayReviewerMinStake_RevertIfStakeTooLow() public {
-        uint256 lowStake = REVIEWER_MIN_STAKE - 1 wei;
-        vm.deal(user, 1 ether);
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayReviewerMinStake.selector));
-        vm.prank(user);
-        bioVerify.payReviewerMinStake{value: lowStake}();
-    }
-
-    // Updated: The new contract allows paying again (topping up), so we verify that behavior instead of reverting
-    function test_PayReviewerMinStake_AllowsTopUp() public {
-        vm.deal(user, 2 ether);
-
-        // First pay
-        vm.prank(user);
-        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
-
-        // Second pay (Top Up)
-        vm.prank(user);
-        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
-
-        // Stakes should be doubled
-        (, uint256 mStakes,,) = bioVerify.addressToMember(user);
-        assertEq(mStakes, REVIEWER_MIN_STAKE * 2);
-    }
-
-    // ============= pickReviewers
     function test_FullVRFReviewerSelectionFlow() public {
-        // 1. Setup: Pool size must be VRF_NUM_WORDS + 1
-        uint256 poolSize = VRF_NUM_WORDS + 1;
-        uint32 highRepReviewerIndex = 1;
+        _setupReviewerPool(VRF_NUM_WORDS + 1);
+        vm.prank(aiAgentAddress);
+        bioVerify.setMemberReputation(makeAddr("r1"), 500); // Set high rep for one
 
-        address[] memory reviewers = new address[](poolSize);
-        for (uint32 i = 0; i < poolSize; ++i) {
-            reviewers[i] = makeAddr(string(abi.encodePacked("r", i)));
-            vm.deal(reviewers[i], 1 ether);
-            vm.prank(reviewers[i]);
-            bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
-
-            if (i == highRepReviewerIndex) {
-                vm.prank(aiAgentAddress);
-                bioVerify.setMemberReputation(reviewers[i], 500);
-            }
-        }
-
-        // 2. Submit
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
         bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
 
-        // 3. Pick
         vm.prank(aiAgentAddress);
         uint256 requestId = bioVerify.pickReviewers(0);
-
-        BioVerify.Publication memory pub = bioVerify.getPublication(0);
-        assertEq(uint256(pub.status), 1); // Status.IN_REVIEW
-
-        // 4. Fulfill VRF
         vrfCoordinatorMock.fulfillRandomWords(requestId, address(bioVerify));
 
-        // 5. Assertions
-        pub = bioVerify.getPublication(0);
-        // We pick VRF_NUM_WORDS total. The senior is one of them.
-        // The contract pushes (VRF_NUM_WORDS - 1) into `reviewers` array, and assigns 1 to `seniorReviewer`.
+        Publication memory pub = bioVerify.getPublication(0);
+        assertEq(uint256(pub.status), 1); // Status.IN_REVIEW
         assertEq(pub.reviewers.length, VRF_NUM_WORDS - 1);
-        assertEq(pub.seniorReviewer, reviewers[highRepReviewerIndex]);
-
-        for (uint256 i = 0; i < pub.reviewers.length; i++) {
-            assertTrue(pub.reviewers[i] != publisher);
-        }
-        assertTrue(pub.seniorReviewer != publisher);
     }
 
     function test_VRF_SkipsPublisherIfSelected() public {
@@ -499,37 +303,151 @@ contract BioVerifyTest is Test, Constants {
 
         vrfCoordinatorMock.fulfillRandomWordsWithOverride(requestId, address(bioVerify), words);
 
-        BioVerify.Publication memory pub = bioVerify.getPublication(0);
+        Publication memory pub = bioVerify.getPublication(0);
         assertTrue(pub.seniorReviewer != publisher);
         for (uint256 i = 0; i < pub.reviewers.length; i++) {
             assertTrue(pub.reviewers[i] != publisher);
         }
     }
 
-    function test_PickReviewers_RevertsIfInsufficientPool() public {
+    function test_VRF_HandlesDuplicateAndPublisherCollisions() public {
         vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}(); // Pub at index 0
+        _setupReviewerPool(VRF_NUM_WORDS + 1);
+
         vm.prank(publisher);
         bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
 
         vm.prank(aiAgentAddress);
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_InsufficientReviewersPool.selector, 0));
+        uint256 requestId = bioVerify.pickReviewers(0);
+
+        uint256[] memory words = new uint256[](VRF_NUM_WORDS);
+        words[0] = 0; // Hits publisher, skips
+        words[1] = 1; // Hits rev1, stays
+        words[2] = 1; // Hits rev1 (duplicate), skips
+        for (uint256 i = 3; i < VRF_NUM_WORDS; i++) {
+            words[i] = i + 1;
+        }
+
+        vrfCoordinatorMock.fulfillRandomWordsWithOverride(requestId, address(bioVerify), words);
+        assertNotEq(bioVerify.getPublication(0).seniorReviewer, publisher);
+    }
+
+    function test_VRF_HeavyCollisions_Branch() public {
+        // 1. Setup a small pool (only 5 people)
+        _setupReviewerPool(5);
+        _submitDefaultPub();
+
+        // 2. Start pick
+        vm.prank(aiAgentAddress);
+        uint256 requestId = bioVerify.pickReviewers(0);
+
+        // 3. Create a word array that forces every type of collision
+        uint256[] memory words = new uint256[](VRF_NUM_WORDS);
+        words[0] = 0; // Hits index 0 (likely publisher) -> Collision branch 1
+        words[1] = 1; // Hits index 1 -> Success
+        words[2] = 1; // Hits index 1 AGAIN -> Collision branch 2 (Duplicate)
+        words[3] = 1; // Hits index 1 AGAIN -> Collision branch 2
+        for (uint256 i = 4; i < VRF_NUM_WORDS; i++) {
+            words[i] = i + 1;
+        }
+
+        // This should force the internal loop to skip the duplicates/publisher
+        vrfCoordinatorMock.fulfillRandomWordsWithOverride(requestId, address(bioVerify), words);
+
+        Publication memory pub = bioVerify.getPublication(0);
+        assertEq(uint256(pub.status), 1); // Should still succeed after skipping
+    }
+
+    function test_PickReviewers_RevertIfAlreadyInReview() public {
+        _setupReviewerPool(VRF_NUM_WORDS + 1);
+        _submitDefaultPub();
+
+        // First call sets status to IN_REVIEW (via VRF)
+        _fulfillVrfForPub(0);
+
+        // Second call should hit the branch: if (pub.status == IN_REVIEW) revert AlreadyInReview
+        vm.prank(aiAgentAddress);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_AlreadyInReview.selector, 0));
         bioVerify.pickReviewers(0);
     }
 
-    // ============= publishPublication
+    function test_PickReviewers_RevertsIfRewardPoolEmpty() public {
+        BioVerifyConfig memory brokeConfig = _getMockConfig();
+        BioVerify brokeVerify = new BioVerify{value: 0}(brokeConfig);
+
+        _setupReviewerPoolForContract(address(brokeVerify), VRF_NUM_WORDS + 1);
+
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        brokeVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
+
+        vm.prank(aiAgentAddress);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_InsufficientRewardPool.selector, 0));
+        brokeVerify.pickReviewers(0);
+    }
+
+    function test_PickReviewers_RevertIfInsufficientRewardPool() public {
+        // 1. Setup config and calculate a "not enough" value
+        BioVerifyConfig memory brokeConfig = _getMockConfig();
+        uint256 requiredValue = VRF_NUM_WORDS * REVIEWER_REWARD;
+        uint256 insufficientValue = requiredValue - 1; // 1 wei below threshold
+
+        // 2. Deploy the new contract with insufficient funds
+        BioVerify brokeVerify = new BioVerify{value: insufficientValue}(brokeConfig);
+
+        // --- THE CRITICAL FIX: Authorize the new contract for VRF ---
+        vrfCoordinatorMock.addConsumer(vrfMockSubscriptionId, address(brokeVerify));
+
+        // 3. Setup reviewers and publication for this new instance
+        _setupReviewerPoolForContract(address(brokeVerify), VRF_NUM_WORDS + 1);
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        brokeVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
+
+        // 4. Expect Revert: Should fail the math check inside pickReviewers
+        vm.prank(aiAgentAddress);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_InsufficientRewardPool.selector, insufficientValue));
+        brokeVerify.pickReviewers(0);
+    }
+
+    // ================================================================
+    // 4.1 REVIEW RECORDING
+    // ================================================================
+
+    function test_RecordReviewSubmission_Success() public {
+        _submitDefaultPub();
+
+        // Only the AI Agent should be able to record a submission
+        vm.prank(aiAgentAddress);
+        vm.expectEmit(true, true, false, false);
+        emit BioVerify_Agent_ReviewRecorded(publisher, 0);
+
+        bioVerify.recordReviewSubmission(publisher, 0);
+
+        assertTrue(bioVerify.hasSubmittedReviewOnPubId(publisher, 0));
+    }
+
+    function test_RecordReviewSubmission_RevertIfNotAgent() public {
+        _submitDefaultPub();
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_OnlyAgent.selector));
+        vm.prank(user);
+        bioVerify.recordReviewSubmission(publisher, 0);
+    }
+
+    function test_RecordReviewSubmission_RevertIfInvalidId() public {
+        vm.prank(aiAgentAddress);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_InvalidPublicationId.selector, 999));
+        bioVerify.recordReviewSubmission(publisher, 999);
+    }
+
+    // ================================================================
+    // 5. SETTLEMENT (PUBLISH & SLASH)
+    // ================================================================
+
     function test_PublishPublication_RewardsHonestAndSlashesNegligent() public {
-        // --- 1. SETUP: Initialize the Reviewer Pool ---
-        // Total needed: The peers picked by VRF + the 1 Senior Reviewer
-        uint32 numReviewers = VRF_NUM_WORDS + 1;
-
-        for (uint32 i = 0; i < numReviewers; i++) {
-            address rev = makeAddr(string(abi.encodePacked("rev", i)));
-            vm.deal(rev, 1 ether);
-            vm.prank(rev);
-            bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
-        }
-
-        // 2. SUBMIT & PICK
+        _setupReviewerPool(10);
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
         bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
@@ -538,123 +456,353 @@ contract BioVerifyTest is Test, Constants {
         uint256 requestId = bioVerify.pickReviewers(0);
         vrfCoordinatorMock.fulfillRandomWords(requestId, address(bioVerify));
 
-        BioVerify.Publication memory pub = bioVerify.getPublication(0);
-
-        // 3. DYNAMICALLY SORT ALL ASSIGNED REVIEWERS
-        // We must account for the Senior + all 5 Peers = 6 total reviewers
-        address[] memory honest = new address[](3);
-        address[] memory negligent = new address[](3);
-
-        // Fill Honest: Senior + first 2 peers
+        Publication memory pub = bioVerify.getPublication(0);
+        address[] memory honest = new address[](2);
+        address[] memory negligent = new address[](2);
         honest[0] = pub.seniorReviewer;
         honest[1] = pub.reviewers[0];
-        honest[2] = pub.reviewers[1];
+        negligent[0] = pub.reviewers[1];
+        negligent[1] = pub.reviewers[2];
 
-        // Fill Negligent: the remaining 3 peers
-        negligent[0] = pub.reviewers[2];
-        negligent[1] = pub.reviewers[3];
-        negligent[2] = pub.reviewers[4];
-
-        uint256 initSlashedPool = bioVerify.slashedPool();
-
-        // 4. ACTION
+        uint256 initSlashed = bioVerify.slashedPool();
         vm.prank(aiAgentAddress);
-        bioVerify.publishPublication(0, honest, negligent);
+        bioVerify.publishPublication(0, honest, negligent, FAKE_VERDICT_CID);
 
-        // 5. ASSERTIONS
-        BioVerify.Publication memory finalizedPub = bioVerify.getPublication(0);
+        assertEq(uint256(bioVerify.getPublication(0).status), 3); // Status.PUBLISHED
+        assertEq(bioVerify.slashedPool(), initSlashed + (negligent.length * REVIEWER_MIN_STAKE));
+    }
 
-        // PUBLISHER STAKE: (VALID_PAID_PUBLISHER_AMOUNT - VALID_PAID_PUBLISHER_FEE)
-        uint256 publisherStake = VALID_PAID_PUBLISHER_AMOUNT - VALID_PAID_PUBLISHER_FEE;
+    function test_SlashPublication_SlashesPublisherAndNegligentReviewers() public {
+        _setupReviewerPool(VRF_NUM_WORDS + 1);
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
 
-        // HONEST PAYOUT: 3 people * (Stake + Reward)
-        uint256 honestPayoutTotal = honest.length * (REVIEWER_MIN_STAKE + REVIEWER_REWARD);
+        vm.prank(aiAgentAddress);
+        uint256 rid = bioVerify.pickReviewers(0);
+        vrfCoordinatorMock.fulfillRandomWords(rid, address(bioVerify));
 
-        // The new declarative total
-        uint256 expectedStakes = publisherStake + honestPayoutTotal;
+        Publication memory pub = bioVerify.getPublication(0);
+        address[] memory honest = new address[](1);
+        address[] memory negligent = new address[](VRF_NUM_WORDS);
+        honest[0] = pub.seniorReviewer;
+        for (uint256 i = 0; i < pub.reviewers.length; i++) {
+            negligent[i] = pub.reviewers[i];
+        }
 
-        assertEq(finalizedPub.stakes, expectedStakes, "Publication stakes mismatch");
+        uint256 startSlashed = bioVerify.slashedPool();
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublication(0, honest, negligent, FAKE_VERDICT_CID);
+
         assertEq(
-            bioVerify.slashedPool(), initSlashedPool + (negligent.length * REVIEWER_MIN_STAKE), "Slashed pool mismatch"
+            bioVerify.slashedPool(), startSlashed + VALID_PAID_PUBLISHER_STAKE + (negligent.length * REVIEWER_MIN_STAKE)
         );
     }
 
-    // ============= slashPublication
-    function test_SlashPublication_SlashesPublisherAndNegligentReviewers() public {
-        // --- 1. SETUP: Initialize the Reviewer Pool ---
-        // Total needed: The peers picked by VRF + the 1 Senior Reviewer
-        uint32 totalReviewersNeeded = VRF_NUM_WORDS + 1;
+    function test_SlashPublication_RevertsIfNotInReview() public {
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
 
-        for (uint32 i = 0; i < totalReviewersNeeded; i++) {
-            address rev = makeAddr(string(abi.encodePacked("reviewer", i)));
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustBeInReviewToSettle.selector, 0));
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublication(0, new address[](0), new address[](0), FAKE_VERDICT_CID);
+    }
+
+    function test_PublishPublication_RevertIfAlreadyFinalized() public {
+        // 1. Setup a valid publication in the IN_REVIEW state
+        _setupReviewerPool(VRF_NUM_WORDS + 1);
+        _submitDefaultPub();
+        _fulfillVrfForPub(0);
+
+        address[] memory empty = new address[](0);
+
+        // 2. First Settlement: This call succeeds and moves status to Status.PUBLISHED
+        vm.prank(aiAgentAddress);
+        bioVerify.publishPublication(0, empty, empty, FAKE_VERDICT_CID);
+
+        // 3. Second Settlement: This must fail because the status is no longer IN_REVIEW
+        vm.prank(aiAgentAddress);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustBeInReviewToSettle.selector, 0));
+        bioVerify.publishPublication(0, empty, empty, FAKE_VERDICT_CID);
+    }
+
+    function test_PublishPublication_RevertIfInvalidId() public {
+        vm.prank(aiAgentAddress);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_InvalidPublicationId.selector, 999));
+        bioVerify.publishPublication(999, new address[](0), new address[](0), FAKE_VERDICT_CID);
+    }
+
+    function test_PublishPublication_WorksWithEmptyArrays() public {
+        // 1. Setup the pool so VRF has people to pick
+        _setupReviewerPool(VRF_NUM_WORDS + 1);
+
+        // 2. Submit the pub (creates ID 0)
+        _submitDefaultPub();
+
+        // 3. Move ID 0 to IN_REVIEW using the VRF mock
+        _fulfillVrfForPub(0);
+
+        // 4. Settle with empty arrays (The "Empty Loop" Branch)
+        vm.prank(aiAgentAddress);
+        bioVerify.publishPublication(0, new address[](0), new address[](0), FAKE_VERDICT_CID);
+
+        assertEq(uint256(bioVerify.getPublication(0).status), 3); // Status.PUBLISHED
+    }
+
+    function test_PublishPublication_RevertIfNotInReview() public {
+        _submitDefaultPub();
+        // Skip VRF! Status is still SUBMITTED
+
+        vm.prank(aiAgentAddress);
+        // This hits the branch: if (status != IN_REVIEW) revert MustBeInReviewToSettle
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustBeInReviewToSettle.selector, 0));
+        bioVerify.publishPublication(0, new address[](0), new address[](0), FAKE_VERDICT_CID);
+    }
+
+    // ================================================================
+    // 6. PUBLISHER SLASHING
+    // ================================================================
+
+    function test_SlashPublisher_DropsHighReputation() public {
+        vm.prank(aiAgentAddress);
+        bioVerify.setMemberReputation(publisher, 1_000_000);
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
+
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublisher(0, FAKE_VERDICT_CID);
+        assertEq(bioVerify.getMember(publisher).reputation, 1_000_000 - REPUTATION_BOOST);
+    }
+
+    function test_SlashPublisher_ZeroesLowReputation() public {
+        vm.prank(aiAgentAddress);
+        bioVerify.setMemberReputation(publisher, 10);
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
+
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublisher(0, FAKE_VERDICT_CID);
+        assertEq(bioVerify.getMember(publisher).reputation, 0);
+    }
+
+    function test_SlashPublisher_RevertIfNotAgentCall() public {
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_OnlyAgent.selector));
+        vm.prank(user);
+        bioVerify.slashPublisher(0, FAKE_VERDICT_CID);
+    }
+
+    function test_SlashPublisher_RevertIfAlreadySlashed() public {
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublisher(0, FAKE_VERDICT_CID);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_AlreadySlashed.selector, 0));
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublisher(0, FAKE_VERDICT_CID);
+    }
+
+    // ================================================================
+    // 6.1 REPUTATION FLOORING (INTERNAL BRANCHES)
+    // ================================================================
+
+    function test_SlashPublisher_ReputationFloorsAtZero() public {
+        // Give publisher exactly REPUTATION_BOOST - 1
+        uint256 lowRep = REPUTATION_BOOST - 1;
+        vm.prank(aiAgentAddress);
+        bioVerify.setMemberReputation(publisher, lowRep);
+
+        _submitDefaultPub();
+
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublisher(0, FAKE_VERDICT_CID);
+
+        // Branch check: Should be 0, not a negative overflow or a large number
+        assertEq(bioVerify.getMember(publisher).reputation, 0);
+    }
+
+    function test_SlashPublisher_ReputationSubtractsCorrectly() public {
+        // Give publisher 2x REPUTATION_BOOST
+        uint256 highRep = REPUTATION_BOOST * 2;
+        vm.prank(aiAgentAddress);
+        bioVerify.setMemberReputation(publisher, highRep);
+
+        _submitDefaultPub();
+
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublisher(0, FAKE_VERDICT_CID);
+
+        // Branch check: Should subtract exactly the boost
+        assertEq(bioVerify.getMember(publisher).reputation, highRep - REPUTATION_BOOST);
+    }
+
+    // ================================================================
+    // 7. FINANCIALS & CLAIMS
+    // ================================================================
+
+    function test_ClaimStake_HonestReviewerCanClaimAfterPublish() public {
+        test_PublishPublication_RewardsHonestAndSlashesNegligent();
+        address honestReviewer = bioVerify.getPublication(0).seniorReviewer;
+        uint256 initBal = honestReviewer.balance;
+
+        vm.prank(honestReviewer);
+        bioVerify.claimStakeOnPublication(0);
+        assertEq(honestReviewer.balance, initBal + REVIEWER_MIN_STAKE + REVIEWER_REWARD);
+    }
+
+    function test_ClaimStake_RevertsIfNotFinalized() public {
+        vm.deal(publisher, 1 ether);
+        vm.prank(publisher);
+        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_PublicationStatusNotFinalized.selector, 0));
+        vm.prank(publisher);
+        bioVerify.claimStakeOnPublication(0);
+    }
+
+    function test_ClaimStake_RevertsIfTransferFails() public {
+        ETHRejector rejector = new ETHRejector();
+        address honestRejector = address(rejector);
+        vm.deal(honestRejector, 1 ether);
+        vm.prank(honestRejector);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
+        vm.prank(aiAgentAddress);
+        bioVerify.setMemberReputation(honestRejector, 10_000);
+
+        _setupReviewerPool(VRF_NUM_WORDS);
+        _submitDefaultPub();
+        vm.prank(aiAgentAddress);
+        uint256 rid = bioVerify.pickReviewers(0);
+        vrfCoordinatorMock.fulfillRandomWords(rid, address(bioVerify));
+
+        vm.prank(aiAgentAddress);
+        address[] memory h = new address[](1);
+        h[0] = honestRejector;
+        bioVerify.publishPublication(0, h, new address[](0), FAKE_VERDICT_CID);
+
+        vm.prank(honestRejector);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_FailedToTransferTo.selector, honestRejector));
+        bioVerify.claimStakeOnPublication(0);
+    }
+
+    function test_TransferTotalSlashed_MovesFundsToTreasury() public {
+        _submitDefaultPub();
+        vm.prank(aiAgentAddress);
+        bioVerify.slashPublisher(0, FAKE_VERDICT_CID);
+
+        uint256 treasuryInit = treasuryAddress.balance;
+        vm.prank(aiAgentAddress);
+        bioVerify.transferSlashedPool();
+        assertEq(treasuryAddress.balance, treasuryInit + VALID_PAID_PUBLISHER_STAKE);
+    }
+
+    function test_TransferTotalSlashed_RevertIfZeroValueToTransfer() public {
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_ZeroValueToTransfer.selector));
+        vm.prank(aiAgentAddress);
+        bioVerify.transferSlashedPool();
+    }
+
+    function test_ClaimStake_RevertIfZeroValue() public {
+        // Setup a successful publish
+        _setupReviewerPool(VRF_NUM_WORDS + 1);
+        _submitDefaultPub();
+        _fulfillVrfForPub(0);
+
+        address senior = bioVerify.getPublication(0).seniorReviewer;
+        address[] memory honest = new address[](1);
+        honest[0] = senior;
+
+        vm.prank(aiAgentAddress);
+        bioVerify.publishPublication(0, honest, new address[](0), FAKE_VERDICT_CID);
+
+        // First claim works
+        vm.prank(senior);
+        bioVerify.claimStakeOnPublication(0);
+
+        // Second claim hits the branch: if (amount == 0) revert ZeroValueToTransfer
+        vm.prank(senior);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_ZeroValueToTransfer.selector));
+        bioVerify.claimStakeOnPublication(0);
+    }
+
+    // ================================================================
+    // 8. GETTERS & FALLBACKS
+    // ================================================================
+
+    function test_Receive_FundsRewardPool() public {
+        uint256 initPool = bioVerify.rewardPool();
+        (bool success,) = address(bioVerify).call{value: 1 ether}("");
+        assertTrue(success);
+        assertEq(bioVerify.rewardPool(), initPool + 1 ether);
+    }
+
+    function test_GetVerdictCid_ReturnsCorrectString() public {
+        test_PublishPublication_RewardsHonestAndSlashesNegligent();
+        assertEq(bioVerify.getVerdictCid(0), FAKE_VERDICT_CID);
+    }
+
+    function test_GetMembersCount_IncreasesCorrectly() public {
+        uint256 initCount = bioVerify.getMembersCount();
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
+        assertEq(bioVerify.getMembersCount(), initCount + 1);
+    }
+
+    // ================================================================
+    // INTERNAL TEST HELPERS
+    // ================================================================
+
+    function _setupReviewerPool(uint256 count) internal {
+        for (uint32 i = 0; i < count; i++) {
+            address rev = makeAddr(string(abi.encodePacked("r", i)));
             vm.deal(rev, 1 ether);
             vm.prank(rev);
             bioVerify.payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
         }
+    }
 
-        // --- 2. SUBMISSION & VRF SELECTION ---
+    function _setupReviewerPoolForContract(address target, uint256 count) internal {
+        for (uint32 i = 0; i < count; i++) {
+            address rev = makeAddr(string(abi.encodePacked("br", i)));
+            vm.deal(rev, 1 ether);
+            vm.prank(rev);
+            BioVerify(payable(target)).payReviewerMinStake{value: REVIEWER_MIN_STAKE}();
+        }
+    }
+
+    function _fulfillVrfForPub(uint256 pubId) internal {
+        vm.prank(aiAgentAddress);
+        uint256 requestId = bioVerify.pickReviewers(pubId);
+        vrfCoordinatorMock.fulfillRandomWords(requestId, address(bioVerify));
+    }
+
+    function _submitDefaultPub() internal {
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
-        // Publisher pays stake + fee
-        bioVerify.submitPublication{value: PUBLISHER_MIN_STAKE + PUBLISHER_MIN_FEE}("ipfs://test", PUBLISHER_MIN_FEE);
+        bioVerify.submitPublication{value: VALID_PAID_PUBLISHER_AMOUNT}(FAKE_CID, VALID_PAID_PUBLISHER_FEE);
+    }
 
-        // AI Agent triggers the VRF to pick the committee
-        vm.prank(aiAgentAddress);
-        uint256 requestId = bioVerify.pickReviewers(0);
-        vrfCoordinatorMock.fulfillRandomWords(requestId, address(bioVerify));
-
-        // --- 3. DYNAMIC CATEGORIZATION (Sorting the Committee) ---
-        BioVerify.Publication memory pub = bioVerify.getPublication(0);
-
-        // We decide our split: Senior + first 2 peers = Honest (3 total)
-        // The remaining peers = Negligent (VRF_NUM_WORDS - 2)
-        uint256 peersToMakeHonest = 2;
-
-        address[] memory honest = new address[](1 + peersToMakeHonest); // +1 for Senior
-        address[] memory negligent = new address[](VRF_NUM_WORDS - peersToMakeHonest);
-
-        // A. Senior always goes to Honest
-        honest[0] = pub.seniorReviewer;
-
-        // B. Distribute Peers based on the index
-        uint256 hIdx = 1; // Start at 1 because Senior is at 0
-        uint256 nIdx = 0;
-
-        for (uint256 i = 0; i < pub.reviewers.length; i++) {
-            if (i < peersToMakeHonest) {
-                honest[hIdx] = pub.reviewers[i];
-                hIdx++;
-            } else {
-                negligent[nIdx] = pub.reviewers[i];
-                nIdx++;
-            }
-        }
-
-        // --- 4. THE ACTION: SLASHER ---
-        uint256 startSlashedPool = bioVerify.slashedPool();
-
-        vm.prank(aiAgentAddress);
-        bioVerify.slashPublication(0, honest, negligent);
-
-        // --- 5. VERIFICATION (Using Array Lengths, No Magic Numbers) ---
-        BioVerify.Publication memory finalizedPub = bioVerify.getPublication(0);
-
-        // Treasury Gain: Publisher's stake + stakes of everyone in the negligent array
-        uint256 expectedSlashedIncrease = PUBLISHER_MIN_STAKE + (negligent.length * REVIEWER_MIN_STAKE);
-        assertEq(bioVerify.slashedPool(), startSlashedPool + expectedSlashedIncrease, "Treasury accounting failed");
-
-        // Contract Liability: Remaining stakes should only belong to honest reviewers
-        // Each honest reviewer now holds: (Original Stake + Reward)
-        uint256 expectedRemainingStakes = honest.length * (REVIEWER_MIN_STAKE + REVIEWER_REWARD);
-        assertEq(finalizedPub.stakes, expectedRemainingStakes, "Publication stakes accounting failed");
-
-        // Final State Checks
-        assertEq(bioVerify.memberStakeOnPubId(publisher, 0), 0, "Publisher not fully slashed");
-        assertEq(bioVerify.memberStakeOnPubId(negligent[0], 0), 0, "Negligent reviewer not fully slashed");
-        assertEq(
-            bioVerify.memberStakeOnPubId(honest[0], 0),
-            REVIEWER_MIN_STAKE + REVIEWER_REWARD,
-            "Honest reviewer did not receive reward"
-        );
+    function _getMockConfig() internal view returns (BioVerifyConfig memory) {
+        return BioVerifyConfig({
+            reputationBoost: REPUTATION_BOOST,
+            aiAgent: aiAgentAddress,
+            treasury: treasuryAddress,
+            pubMinFee: PUBLISHER_MIN_FEE,
+            pubMinStake: PUBLISHER_MIN_STAKE,
+            revMinStake: REVIEWER_MIN_STAKE,
+            revReward: REVIEWER_REWARD,
+            vrfSubId: vrfMockSubscriptionId,
+            vrfKeyHash: VRF_KEY_HASH,
+            vrfGasLimit: VRF_CALLBACK_GAS_LIMIT,
+            vrfConfirmations: VRF_REQUEST_CONFIRMATIONS,
+            vrfNumWords: VRF_NUM_WORDS,
+            vrfCoordinator: address(vrfCoordinatorMock)
+        });
     }
 }

@@ -1,17 +1,15 @@
-import { getPublicationDetailsMock } from "@/lib/protocol/get-publication-details"
-import { ProtocolPublicationMapper } from "@/lib/protocol/mappers/protocol-publication-mapper"
+import { ProtocolPublicationMapper } from "@/app/_schemas/mappers/protocol-publication-mapper"
+import { getPublicationDetails } from "@/app/api/contract/get-publication-details"
 import { notFound } from "next/navigation"
-import { EconomicsSidebar } from "./economics-sidebar"
-
 import { PublicationMainContent } from "../../_components/publication-main-content"
-import { VerdictTimeline } from "./verdict-timeline"
+import { EconomicsSidebar } from "./economics-sidebar"
+import { VerdictTimeLineWrapper } from "./verdict-time-line-wrapper"
 
 type Props = { pubId: string }
 
 export const PublicationDetailContainer = async ({ pubId }: Props) => {
-  // TODO call getPublicationDetails after next solidty deployment
-  const data = await getPublicationDetailsMock()
-  if (!data) notFound()
+  const data = await getPublicationDetails({ id: pubId })
+  if (!data) { return notFound() }
 
   const publication = ProtocolPublicationMapper(data)
 
@@ -31,7 +29,8 @@ export const PublicationDetailContainer = async ({ pubId }: Props) => {
             Validation Trail
           </h3>
           <div className="bg-card/30 rounded-xl border border-border/50 p-6">
-            <VerdictTimeline
+            <VerdictTimeLineWrapper
+              publicationId={publication.id}
               currentStatus={publication.status}
               hasReviewers={hasReviewers}
             />

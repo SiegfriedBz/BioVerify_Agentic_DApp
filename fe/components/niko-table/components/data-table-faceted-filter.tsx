@@ -1,18 +1,18 @@
 "use client"
 
+import type { Row, Table } from "@tanstack/react-table"
 import * as React from "react"
-import type { Table, Row } from "@tanstack/react-table"
+import { useDataTable } from "../core"
 import {
   TableFacetedFilter,
   TableFacetedFilterContent,
   useTableFacetedFilter,
   type TableFacetedFilterProps,
 } from "../filters/table-faceted-filter"
-import { useDataTable } from "../core"
-import type { Option } from "../types"
 import { useDerivedColumnTitle } from "../hooks/use-derived-column-title"
 import { useGeneratedOptionsForColumn } from "../hooks/use-generated-options"
 import { formatLabel } from "../lib/format"
+import type { Option } from "../types"
 
 /**
  * Get filtered rows excluding a specific column's filter.
@@ -54,12 +54,12 @@ function getFilteredRowsExcludingColumn<TData>(
         // Use the table's filterFns
         const fn = table.options.filterFns?.[filterFn]
         if (fn && typeof fn === "function") {
-          if (!fn(row, filter.id, filterValue, () => {})) {
+          if (!fn(row, filter.id, filterValue, () => { })) {
             return false
           }
         }
       } else if (typeof filterFn === "function") {
-        if (!filterFn(row, filter.id, filterValue, () => {})) {
+        if (!filterFn(row, filter.id, filterValue, () => { })) {
           return false
         }
       }
@@ -69,7 +69,7 @@ function getFilteredRowsExcludingColumn<TData>(
     if (globalFilter) {
       const globalFilterFn = table.options.globalFilterFn
       if (globalFilterFn && typeof globalFilterFn === "function") {
-        if (!globalFilterFn(row, "global", globalFilter, () => {})) {
+        if (!globalFilterFn(row, "global", globalFilter, () => { })) {
           return false
         }
       }
@@ -196,11 +196,11 @@ function useFacetedOptions<TData>({
     // that exist in the filtered dataset (from other filters)
     const rows = limitToFilteredRows
       ? getFilteredRowsExcludingColumn(
-          table,
-          accessorKey,
-          columnFilters,
-          globalFilter,
-        )
+        table,
+        accessorKey,
+        columnFilters,
+        globalFilter,
+      )
       : table.getCoreRowModel().rows
 
     const valueCounts = new Map<string, number>()

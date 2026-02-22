@@ -1,8 +1,11 @@
-import { MappedProtocolPublication } from "@/lib/protocol/mappers/protocol-publication-mapper"
+import { MappedProtocolPublication } from "@/app/_schemas/mappers/protocol-publication-mapper"
 import { FC, Suspense } from "react"
 import { ManifestCard } from "./manifest-card"
 import { ManifestCardSkeleton } from "./manifest-card-skeleton"
 import { PublicationHeader } from "./publication-header"
+import { VerdictCard } from "./verdict-card"
+import { VerdictCardSkeleton } from "./verdict-card-skeleton"
+
 
 type Props = {
   publication: MappedProtocolPublication
@@ -19,7 +22,18 @@ export const PublicationMainContent: FC<Props> = props => {
       status={publication.status}
     />
 
-    {/* Wrap IPFS fetch in a separate Suspense boundary */}
+    {/* Wrap IPFS fetch in separate Suspense boundary */}
+
+    {
+      publication?.verdictCid &&
+      <Suspense fallback={<VerdictCardSkeleton />}>
+        <VerdictCard
+          verdictCid={publication.verdictCid}
+          status={publication.status}
+        />
+      </Suspense>
+    }
+
     {
       rootCid &&
       <Suspense fallback={<ManifestCardSkeleton />}>

@@ -21,8 +21,6 @@ contract BioVerifyScript is Script, Constants {
         // reviewer
         revMinStake: REVIEWER_MIN_STAKE,
         revReward: REVIEWER_REWARD,
-        // min reviews count (seniorReviewer excepted)
-        minReviewsCount: MIN_REVIEWS_COUNT,
         // VRF
         vrfSubId: vrfSubscriptionId,
         vrfKeyHash: VRF_KEY_HASH,
@@ -37,7 +35,7 @@ contract BioVerifyScript is Script, Constants {
     function run() public returns (BioVerify) {
         vm.startBroadcast();
 
-        bioVerify = new BioVerify{value: 1 ether}(config);
+        bioVerify = new BioVerify{value: 0.0005 ether}(config);
 
         vm.stopBroadcast();
 

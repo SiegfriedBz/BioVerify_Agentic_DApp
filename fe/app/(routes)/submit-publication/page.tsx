@@ -1,4 +1,5 @@
 import { TypographyH2, TypographyP } from "@/app/_components/typography"
+import { Suspense } from "react"
 import { SubmitPublicationFormContainer } from "./_components/submit-publication-form-container"
 
 export default function Page() {
@@ -13,7 +14,9 @@ export default function Page() {
 				</TypographyP>
 			</div>
 
-			<SubmitPublicationFormContainer />
+			<Suspense fallback={<>LOADING</>}>
+				<SubmitPublicationFormContainer />
+			</Suspense>
 		</div>
 	)
 }

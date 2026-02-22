@@ -15,12 +15,11 @@ type Props = { minStake: bigint }
 export const ReviewerRegistration: FC<Props> = ({ minStake }) => {
   const {
     payReviewerMinStake,
-    hash,
     error,
     isPending,
     isConfirming,
     isConfirmed,
-  } = usePayReviewerStake()
+  } = usePayReviewerStake({ minStake })
 
   const onRegister = useCallback(() => {
     payReviewerMinStake()
@@ -35,7 +34,7 @@ export const ReviewerRegistration: FC<Props> = ({ minStake }) => {
             Error: {(error as BaseError).shortMessage || error.message}
           </span>
           <span>Please try again</span>
-        </div>,
+        </div>
       )
       return
     }
@@ -58,7 +57,6 @@ export const ReviewerRegistration: FC<Props> = ({ minStake }) => {
 
   return (
     <Card className="border-border bg-card overflow-hidden">
-      {/* Container-aware grid: Stacks on mobile, splits 2/1 on desktop */}
       <div className="grid grid-cols-1 @4xl:grid-cols-3">
 
         <CardContent className="p-8 @4xl:col-span-2 space-y-6">

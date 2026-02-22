@@ -1,11 +1,11 @@
 "use client"
 
 import { AddressDisplay } from "@/app/_components/address-display"
-import { StatusBadge } from "@/app/_components/status-badge"
+import { PublicationStatusBadge } from "@/app/_components/publication-status-badge"
 import { TypographySmall } from "@/app/_components/typography"
+import { MappedProtocolPublication } from "@/app/_schemas/mappers/protocol-publication-mapper"
+import { ProtocolPublicationStatusSchema } from "@/app/_schemas/schemas/contract/protocol-publication"
 import { Badge } from "@/components/ui/badge"
-import { MappedProtocolPublication } from "@/lib/protocol/mappers/protocol-publication-mapper"
-import { ProtocolPublicationStatusSchema } from "@/lib/protocol/schemas/protocol-publication"
 import { ColumnDef } from "@tanstack/react-table"
 
 export const columns: ColumnDef<MappedProtocolPublication>[] = [
@@ -89,7 +89,7 @@ export const columns: ColumnDef<MappedProtocolPublication>[] = [
         Status
       </TypographySmall>
     ),
-    cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+    cell: ({ row }) => <PublicationStatusBadge status={row.getValue("status")} />,
     filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
