@@ -1,0 +1,834 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "config",
+        "type": "tuple",
+        "internalType": "struct BioVerifyConfig",
+        "components": [
+          {
+            "name": "reputationBoost",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          { "name": "aiAgent", "type": "address", "internalType": "address" },
+          { "name": "treasury", "type": "address", "internalType": "address" },
+          { "name": "pubMinFee", "type": "uint256", "internalType": "uint256" },
+          {
+            "name": "pubMinStake",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "revMinStake",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          { "name": "revReward", "type": "uint256", "internalType": "uint256" },
+          {
+            "name": "vrfCoordinator",
+            "type": "address",
+            "internalType": "address"
+          },
+          { "name": "vrfGasLimit", "type": "uint32", "internalType": "uint32" },
+          { "name": "vrfSubId", "type": "uint256", "internalType": "uint256" },
+          {
+            "name": "vrfKeyHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "vrfConfirmations",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          { "name": "vrfNumWords", "type": "uint32", "internalType": "uint32" }
+        ]
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  { "type": "receive", "stateMutability": "payable" },
+  {
+    "type": "function",
+    "name": "I_AI_AGENT_ADDRESS",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "I_PUBLISHER_MIN_FEE",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "I_PUBLISHER_STAKE",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "I_REPUTATION_BOOST",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "I_REVIEWER_REWARD",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "I_REVIEWER_STAKE",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "I_TREASURY_ADDRESS",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "acceptOwnership",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "claim",
+    "inputs": [
+      { "name": "_amount", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "earlySlashPublication",
+    "inputs": [
+      { "name": "_pubId", "type": "uint256", "internalType": "uint256" },
+      { "name": "_verdictCid", "type": "string", "internalType": "string" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "moveSlashPoolToRewardPool",
+    "inputs": [
+      { "name": "_amount", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "payReviewerStake",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "pickReviewers",
+    "inputs": [
+      { "name": "_pubId", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [
+      { "name": "requestId", "type": "uint256", "internalType": "uint256" }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "publishPublication",
+    "inputs": [
+      { "name": "_pubId", "type": "uint256", "internalType": "uint256" },
+      { "name": "_honest", "type": "address[]", "internalType": "address[]" },
+      {
+        "name": "_negligent",
+        "type": "address[]",
+        "internalType": "address[]"
+      },
+      { "name": "_verdictCid", "type": "string", "internalType": "string" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "rawFulfillRandomWords",
+    "inputs": [
+      { "name": "requestId", "type": "uint256", "internalType": "uint256" },
+      {
+        "name": "randomWords",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "recordReview",
+    "inputs": [
+      { "name": "_pubId", "type": "uint256", "internalType": "uint256" },
+      { "name": "_reviewer", "type": "address", "internalType": "address" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "rewardPool",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "s_vrfCoordinator",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVRFCoordinatorV2Plus"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setCoordinator",
+    "inputs": [
+      {
+        "name": "_vrfCoordinator",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "slashPool",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "slashPublication",
+    "inputs": [
+      { "name": "_pubId", "type": "uint256", "internalType": "uint256" },
+      { "name": "_honest", "type": "address[]", "internalType": "address[]" },
+      {
+        "name": "_negligent",
+        "type": "address[]",
+        "internalType": "address[]"
+      },
+      { "name": "_verdictCid", "type": "string", "internalType": "string" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "submitPublication",
+    "inputs": [
+      { "name": "_cid", "type": "string", "internalType": "string" },
+      {
+        "name": "_paidSubmissionFee",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [{ "name": "to", "type": "address", "internalType": "address" }],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferSlashPoolToTreasury",
+    "inputs": [
+      { "name": "_amount", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "Agent_FinalizePublication",
+    "inputs": [
+      {
+        "name": "pubId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "verdictCid",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum PublicationStatus"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Agent_MoveSlashPoolToRewardPool",
+    "inputs": [
+      {
+        "name": "value",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Agent_PickReviewers",
+    "inputs": [
+      {
+        "name": "pubId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "publisher",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "reviewers",
+        "type": "address[]",
+        "indexed": false,
+        "internalType": "address[]"
+      },
+      {
+        "name": "seniorReviewer",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "cid",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Agent_RecordReview",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "pubId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Agent_RequestVRF",
+    "inputs": [
+      {
+        "name": "pubId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Agent_TransferSlashPoolToTreasury",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Claim",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "claimAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "memberAvailableStake",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "contractBalance",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CoordinatorSet",
+    "inputs": [
+      {
+        "name": "vrfCoordinator",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "IsAvailableReviewer",
+    "inputs": [
+      {
+        "name": "reviewer",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "isAvailableReviewer",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      },
+      {
+        "name": "currentActiveReviewsCount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LockedStakeOnPubId",
+    "inputs": [
+      {
+        "name": "pubId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "stake",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MemberAvailableStake",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "stake",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MemberLockedStake",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "stake",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MemberLockedStakeOnPubId",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "pubId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "stake",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MemberReputation",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "reputation",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "NewPublicationStatus",
+    "inputs": [
+      {
+        "name": "pubId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum PublicationStatus"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferRequested",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RewardMember",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RewardPool",
+    "inputs": [
+      {
+        "name": "rewardPool",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SlashMember",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SlashPool",
+    "inputs": [
+      {
+        "name": "slashPool",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SubmitPublication",
+    "inputs": [
+      {
+        "name": "publisher",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "pubId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "cid",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_AlreadyInReview",
+    "inputs": [
+      { "name": "pubId", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_CanNotSettle",
+    "inputs": [
+      { "name": "pubId", "type": "uint256", "internalType": "uint256" },
+      {
+        "name": "from",
+        "type": "uint8",
+        "internalType": "enum PublicationStatus"
+      },
+      {
+        "name": "to",
+        "type": "uint8",
+        "internalType": "enum PublicationStatus"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_ClaimFailTransferTo",
+    "inputs": [
+      { "name": "member", "type": "address", "internalType": "address" },
+      { "name": "amount", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  { "type": "error", "name": "BioVerify_ClaimTooMuch", "inputs": [] },
+  {
+    "type": "error",
+    "name": "BioVerify_FailedToTransferTo",
+    "inputs": [{ "name": "to", "type": "address", "internalType": "address" }]
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_InsufficientPublisherFee",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_InsufficientReviewersPool",
+    "inputs": [
+      { "name": "poolSize", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_InsufficientRewardPool",
+    "inputs": [
+      { "name": "rewardPool", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_InsufficientSlashPoolToMove",
+    "inputs": [
+      { "name": "slashPool", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_InsufficientSlashPoolToTransfer",
+    "inputs": [
+      { "name": "slashPool", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "BioVerify_InvalidPublicationId",
+    "inputs": [
+      { "name": "pubId", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  { "type": "error", "name": "BioVerify_InvalidReviewerCount", "inputs": [] },
+  {
+    "type": "error",
+    "name": "BioVerify_MemberNotReviewerForThisPub",
+    "inputs": [
+      { "name": "member", "type": "address", "internalType": "address" },
+      { "name": "pubId", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  { "type": "error", "name": "BioVerify_MustPayPublisherStake", "inputs": [] },
+  { "type": "error", "name": "BioVerify_MustPayReviewerStake", "inputs": [] },
+  { "type": "error", "name": "BioVerify_NotAMember", "inputs": [] },
+  { "type": "error", "name": "BioVerify_OnlyAgent", "inputs": [] },
+  {
+    "type": "error",
+    "name": "OnlyCoordinatorCanFulfill",
+    "inputs": [
+      { "name": "have", "type": "address", "internalType": "address" },
+      { "name": "want", "type": "address", "internalType": "address" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "OnlyOwnerOrCoordinator",
+    "inputs": [
+      { "name": "have", "type": "address", "internalType": "address" },
+      { "name": "owner", "type": "address", "internalType": "address" },
+      { "name": "coordinator", "type": "address", "internalType": "address" }
+    ]
+  },
+  { "type": "error", "name": "ReentrancyGuardReentrantCall", "inputs": [] },
+  { "type": "error", "name": "ZeroAddress", "inputs": [] }
+]
