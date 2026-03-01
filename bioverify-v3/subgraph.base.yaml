@@ -1,0 +1,41 @@
+specVersion: 1.3.0
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: BioVerifyV3_Base
+    network: base-sepolia
+    source:
+      address: "0xa81cDEc6794110ccD76773378D7e6e8B981e7824"
+      abi: BioVerifyV3
+      startBlock: 38300394
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Publication
+        - Member
+      abis:
+        - name: BioVerifyV3
+          file: ./abis/BioVerifyV3.json
+      eventHandlers:
+        - event: SubmitPublication(indexed address,indexed uint256,string)
+          handler: handleSubmitPublication
+        - event: NewPublicationStatus(indexed uint256,uint8)
+          handler: handleNewPublicationStatus
+        - event: LockedStakeOnPubId(indexed uint256,uint256)
+          handler: handleLockedStakeOnPubId
+        - event: Agent_PickReviewers(indexed uint256,indexed address,address[],address,string)
+          handler: handleAgentPickReviewers
+        - event: Agent_FinalizePublication(indexed uint256,string,uint8)
+          handler: handleAgentFinalizePublication
+        - event: MemberReputation(indexed address,uint256)
+          handler: handleMemberReputation
+        - event: MemberAvailableStake(indexed address,uint256)
+          handler: handleMemberAvailableStake
+        - event: MemberLockedStake(indexed address,uint256)
+          handler: handleMemberLockedStake
+        - event: IsAvailableReviewer(indexed address,bool,uint256)
+          handler: handleIsAvailableReviewer
+      file: ./src/bio-verify-v-3.ts
