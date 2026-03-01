@@ -19,12 +19,12 @@ struct BioVerifyConfig {
     uint256 revMinStake;
     uint256 revReward;
     // vrf
+    address vrfCoordinator;
+    uint32 vrfGasLimit;
     uint256 vrfSubId;
     bytes32 vrfKeyHash;
-    uint32 vrfGasLimit;
     uint16 vrfConfirmations;
     uint32 vrfNumWords;
-    address vrfCoordinator;
 }
 
 // --- Types ---

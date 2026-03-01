@@ -5,8 +5,13 @@ libs = ["lib"]
 optimizer = true
 optimizer_runs = 200
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 [rpc_endpoints]
 sepolia = "${ALCHEMY_SEPOLIA_RPC_URL}"
+base_sepolia = "${ALCHEMY_BASE_SEPOLIA_RPC_URL}"
 
-etherscan_api_key = "${ETHERSCAN_API_KEY}"
+[etherscan]
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
+base_sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api", chain = 84532 }
+
+# source .env && forge script script/BioVerifyV3.s.sol:BioVerifyV3Script --rpc-url base_sepolia --broadcast --verify --target-contract BioVerifyV3
+# source .env && forge script script/BioVerifyV3.s.sol:BioVerifyV3Script --rpc-url sepolia --broadcast --verify --target-contract BioVerifyV3
