@@ -2,11 +2,11 @@
 pragma solidity ^0.8.13;
 
 import {Script} from "forge-std/Script.sol";
-import {BioVerify, BioVerifyConfig} from "../src/BioVerify.sol";
-import {Constants} from ".//Constants.sol";
+import {BioVerifyV3, BioVerifyConfig} from "../src/BioVerifyV3.sol";
+import {Constants} from "./Constants.sol";
 
-contract BioVerifyScript is Script, Constants {
-    BioVerify public bioVerify;
+contract BioVerifyV3Script is Script, Constants {
+    BioVerifyV3 public bioVerify;
     address aiAgentAddress = vm.envAddress("AI_AGENT_ADDRESS");
     address treasuryAddress = vm.envAddress("TREASURY_ADDRESS");
     uint256 vrfSubscriptionId = uint256(vm.envUint("VRF_SUBSCRIPTION_ID"));
@@ -17,9 +17,9 @@ contract BioVerifyScript is Script, Constants {
         treasury: treasuryAddress,
         // publisher
         pubMinFee: PUBLISHER_MIN_FEE,
-        pubMinStake: PUBLISHER_MIN_STAKE,
+        pubMinStake: PUBLISHER_STAKE,
         // reviewer
-        revMinStake: REVIEWER_MIN_STAKE,
+        revMinStake: REVIEWER_STAKE,
         revReward: REVIEWER_REWARD,
         // VRF
         vrfSubId: vrfSubscriptionId,
@@ -32,10 +32,10 @@ contract BioVerifyScript is Script, Constants {
 
     function setUp() public {}
 
-    function run() public returns (BioVerify) {
+    function run() public returns (BioVerifyV3) {
         vm.startBroadcast();
 
-        bioVerify = new BioVerify{value: 0.0005 ether}(config);
+        bioVerify = new BioVerifyV3{value: 0.0005 ether}(config);
 
         vm.stopBroadcast();
 

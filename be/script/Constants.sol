@@ -6,10 +6,10 @@ contract Constants {
 
     // Publisher
     uint256 constant PUBLISHER_MIN_FEE = 0.02 ether; // Opex - Covers VRF + AI Agent costs
-    uint256 constant PUBLISHER_MIN_STAKE = 0.001 ether; // Security/slashing - submitPublication call
+    uint256 constant PUBLISHER_STAKE = 0.001 ether; // Security/slashing - submitPublication
 
     // Reviewer
-    uint256 constant REVIEWER_MIN_STAKE = 0.001 ether; // Security/slashing - joinReviewerPool call
+    uint256 constant REVIEWER_STAKE = 0.001 ether; // Security/slashing - payReviewerStake
     uint256 constant REVIEWER_REWARD = 0.0005 ether;
 
     // VRF
@@ -17,6 +17,6 @@ contract Constants {
     bytes32 constant VRF_KEY_HASH = 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae;
     uint32 constant VRF_CALLBACK_GAS_LIMIT = 500_000;
     uint16 constant VRF_REQUEST_CONFIRMATIONS = 3;
-    uint32 constant VRF_NUM_WORDS = 4; // Total Reviewers to pick: pick (n-1) reviewers + 1 senior reviewer (highest reputation score among the n picked)
+    uint32 constant VRF_NUM_WORDS = 4; // Total Reviewers to pick: pick (n-1) peer reviewers + 1 senior reviewer (highest reputation score among the n picked)
 }
 
