@@ -19,11 +19,11 @@ export const usePayReviewerStake = (params: Params) => {
 
 	const contractConfig = useContractConfig()
 
-	const payReviewerMinStake = useCallback(
+	const payReviewerStake = useCallback(
 		() => {
 			return writeContract({
 				...contractConfig,
-				functionName: "payReviewerMinStake",
+				functionName: "payReviewerStake",
 				value: minStake
 			})
 		},
@@ -31,7 +31,7 @@ export const usePayReviewerStake = (params: Params) => {
 	)
 
 	return {
-		payReviewerMinStake,
+		payReviewerStake,
 		hash,
 		error,
 		isPending,

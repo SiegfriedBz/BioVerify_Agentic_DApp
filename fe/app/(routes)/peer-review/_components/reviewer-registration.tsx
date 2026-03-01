@@ -14,7 +14,7 @@ type Props = { minStake: bigint }
 
 export const ReviewerRegistration: FC<Props> = ({ minStake }) => {
   const {
-    payReviewerMinStake,
+    payReviewerStake,
     error,
     isPending,
     isConfirming,
@@ -22,7 +22,7 @@ export const ReviewerRegistration: FC<Props> = ({ minStake }) => {
   } = usePayReviewerStake({ minStake })
 
   const onRegister = useCallback(() => {
-    payReviewerMinStake()
+    payReviewerStake()
   }, [])
 
   useEffect(() => {

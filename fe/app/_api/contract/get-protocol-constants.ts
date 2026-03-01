@@ -16,8 +16,8 @@ export const getProtocolConstants = async (): Promise<ProtocolConstants> => {
     { ...contractConfig, functionName: 'I_VRF_NUM_WORDS' },
     { ...contractConfig, functionName: 'I_REPUTATION_BOOST' },
     { ...contractConfig, functionName: 'I_PUBLISHER_MIN_FEE' },
-    { ...contractConfig, functionName: 'I_PUBLISHER_MIN_STAKE' },
-    { ...contractConfig, functionName: 'I_REVIEWER_MIN_STAKE' },
+    { ...contractConfig, functionName: 'I_PUBLISHER_STAKE' },
+    { ...contractConfig, functionName: 'I_REVIEWER_STAKE' },
     { ...contractConfig, functionName: 'I_REVIEWER_REWARD' },
     { ...contractConfig, functionName: 'I_MIN_REVIEWS_COUNT' },
   ]

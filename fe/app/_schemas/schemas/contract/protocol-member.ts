@@ -5,7 +5,7 @@ import { EthAddressSchema } from "../eth-address"
 export const ProtocolMemberSchema = z.object({
   memberAddress: EthAddressSchema,
   stakes: z.bigint(), // wei
-  publishedPublicationsIds: z.array(z.bigint()).catch([]),
+  submittedPublicationsIds: z.array(z.bigint()).catch([]),
   isReviewer: z.boolean(),
   reputation: z.bigint(),
 })
