@@ -1,3 +1,5 @@
 be/coverage-report/
 be/lcov.info
 node_modules
+
+.env

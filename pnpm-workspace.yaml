@@ -1,4 +1,3 @@
 packages:
-  - 'fe'
-  - 'be'
-  - 'subgraph'
+  - 'apps/*'
+  - 'packages/*'
