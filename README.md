@@ -11,22 +11,29 @@
 
 ---
 
-### ✅ Phase 2: Monorepo Migration & CQRS Indexing
+### ✅ Phase 2: Monorepo Migration, Getter-less BioVerify Contract & CQRS Indexing
 **Timeline:** Feb 7 — March 27, 2026
 
-* **Pnpm Monorepo Architecture:**
+* **Pnpm Monorepo Infrastructure:**
     * **Strict Boundaries:** Modularized the stack into `@packages/agents` (LangGraph), `@packages/db` (Drizzle/Neon), `@packages/schema` (Zod validation), `@packages/utils`, `@packages/utils-server`, and `@packages/cqrs`.
-    * **Workspace Apps:** Separated concerns between `apps/fe` (Next.js 16) and `apps/contracts` (Foundry).
-* **Dual-Chain Webhook Orchestration:**
-    * **Unified Pipeline:** Configured independent Alchemy Notify webhooks for **Ethereum Sepolia** and **Base Sepolia**.
-    * **The Gateway Service:** Implemented a central **Next.js API Route** as the secure ingestion point. It verifies HMAC signatures, normalizes cross-chain payloads, and upserts data into the unified **Neon PostgreSQL** instance, acting as the bridge between Alchemy and the DB.
-* **Getterless Design Pattern (V3):**
-    * **Lean EVM:** Refactored Solidity contracts to remove almost all `view` getters, shifting state-tracking to the off-chain indexing pipeline to dramatically reduce gas costs and improve performance.
-* **Next.js 16 UI & Forensic UX:**
-    * **Advanced Streaming:** Evolved the React Streaming architecture with route-level boundaries and more granular **Suspense** points.
-    * **Optimistic UI:** Leveraged TanStack Query to bridge the gap between blockchain finality and UI responsiveness, specifically for reviewer staking and status updates.
-
-
+    * **Workspace Apps:** Clean separation between `apps/fe` (Next.js 16) and `apps/contracts` (Foundry).
+* **Solidity Getterless Design Pattern (V3):**
+    * **Lean EVM:** Systematically removed nearly all on-chain `view` getters, treating the blockchain as a lean "truth engine" to drastically reduce gas costs.
+    * **Event-Driven State:** Leveraged emitted events as the primary data source to feed the Neon DB, enabling high-performance queries for the frontend without RPC bottlenecking.
+    * **Economics Refinement:** Optimized the **staking and reward logic** to ensure precise distribution.
+    * **100% Coverage:** Verified 100% line, function, and branch coverage across the Foundry test suite.
+* **Custom CQRS Indexing Pipeline:**
+    * **Dual-Chain Webhook Orchestration:** Configured independent **Alchemy Notify** webhooks for Ethereum and Base Sepolia.
+    * **The Gateway Service:** A unified Next.js API route that verifies HMAC signatures, normalizes cross-chain payloads, and upserts data into **Neon PostgreSQL**.
+    * **Optimistic Concurrency Control (OCC):** Implemented SQL version checks using `lastBlockNumber` and `lastLogIndex` to prevent out-of-order webhook events from overwriting fresh data.
+* **Meritocratic Review Orchestration (HITL):**
+    * **Cryptographic Integrity:** Implemented **EIP-712 typed data signing** for gasless reviewer verdicts.
+    * **AI-Driven Consensus:** A LangGraph engine that evaluates peer variance and triggers **Senior Reviewer** escalation (Golden Truth) upon conflict.
+* **Frontend Architecture & React Streaming:**
+    * **Advanced Streaming:** Utilized Next.js App Router granular **Suspense** to allow UI shells to render while IPFS content streams in.
+    * **TanStack Query / Optimistic UI:** Implemented structured query keys and optimistic updates for interactions like `usePayReviewerStake`, bridging the gap between blockchain finality and UX responsiveness.
+    
+#### 📊 Submission & Forensic Pipeline
 ```mermaid
 sequenceDiagram
     autonumber
@@ -64,9 +71,9 @@ sequenceDiagram
     LG->>IPFS: Fetch Abstract from Root CID
     IPFS-->>LG: Abstract Data
     LG->>TAV: Plagiarism Search (Abstract)
-    TAV-->>LG: Similarity Score & Context
+    TAV-->>LG: LLM Similarity Score & Context
 
-    Note over LG, BC: Similarity > Threshold (FAIL)
+    Note over LG, BC: Plagiarism Check - FAIL
     alt Similarity > Threshold (FAIL)
         LG->>BC: earlySlashPublication(pubId)
         BC->>BC: emit NewPublicationStatus (EARLY_SLASHED)
@@ -75,7 +82,7 @@ sequenceDiagram
         API->>CQRS: processContractEvent(blockNumber, ...rest)
         CQRS->>DB: /sync
 
-    Note over LG, BC: Similarity < Threshold (PASS)
+    Note over LG, BC: Plagiarism Check - PASS
     else Similarity < Threshold (PASS)
         LG->>BC: pickReviewers(pubId)
         BC->>BC: emit Agent_RequestVRF
@@ -97,6 +104,120 @@ sequenceDiagram
     deactivate LG
 
     Note over BC, LG: Telemetry logs pushed to Telegram
+```
+
+#### 📊 Peer Review & Consensus Flow (HITL)
+```mermaid
+sequenceDiagram
+    autonumber
+    participant REV_A as Reviewer OxA (Next.js/Wagmi)
+    participant REV_B as Reviewer OxB (Next.js/Wagmi)
+    participant SENIOR_REV as Senior Reviewer OxX (Next.js/Wagmi)
+    participant BC as BioVerify Contract
+    participant VRF as Chainlink VRF
+    participant AN as Alchemy Notify (Dual Chain)
+    participant API as Vercel API (Webhook)
+    participant CQRS as CQRS Event Handler
+    participant DB as Neon DB (PostgreSQL)
+    participant LG as LangGraph Submission Agent
+    participant LGR as LangGraph Review Agent (HITL)
+
+     Note over LG, BC: Plagiarism Check - PASS
+     LG->>BC: pickReviewers(pubId)
+        BC->>BC: emit Agent_RequestVRF
+        BC-->>AN: [Blockchain Event]
+        AN->>API: POST /api/webhooks/alchemy/all-events
+        API->>CQRS: processContractEvent(blockNumber, ...rest)
+        CQRS->>DB: /sync
+
+        BC->>VRF: requestRandomWords()
+        activate VRF
+        VRF-->>BC: fulfillRandomWords(requestId, randoms)
+        deactivate VRF
+        BC->>BC: emit Agent_PickReviewers(pubId, reviewers)
+        BC-->>AN: [Blockchain Event]
+        AN->>API: POST /api/webhooks/alchemy/all-events
+        API->>CQRS: processContractEvent(blockNumber, ...rest)
+        activate CQRS
+          CQRS->>DB: /sync
+          CQRS->>LGR: startReviewersAgent(pubId, reviewers)
+       deactivate CQRS
+
+    Note over REV_A, LGR: HITL - EIP712
+    Note right of LGR: EIP712 Signature Verified
+    REV_A->>LGR: resumeReviewersAgent(threadId, review, signature)
+
+    Note over LGR, BC: Protocol Entry
+    LGR-->BC: recordReview(pubId, reviewer)
+    BC->>BC: emit Agent_RecordReview
+    BC-->>AN: [Blockchain Event]
+
+    AN->>API: POST /api/webhooks/alchemy/all-events
+    API->>CQRS: processContractEvent(blockNumber, ...rest)
+    activate CQRS
+       CQRS->>DB: /sync
+    deactivate CQRS
+
+    Note over REV_B, LGR: HITL - EIP712
+    Note right of LGR: EIP712 Signature Verified
+    REV_B->>LGR: resumeReviewersAgent(threadId, review, signature)
+
+    Note over LGR, BC: Protocol Entry
+    LGR-->BC: recordReview(pubId, reviewer)
+    BC->>BC: emit Agent_RecordReview
+    BC-->>AN: [Blockchain Event]
+
+    AN->>API: POST /api/webhooks/alchemy/all-events
+    API->>CQRS: processContractEvent(blockNumber, ...rest)
+    activate CQRS
+       CQRS->>DB: /sync
+    deactivate CQRS
+    
+    activate LGR
+    LGR->>LGR: Reviewers' Verdicts LLM Consensus Check
+
+    Note over LGR, BC: Clear Consensus on Verdicts - PASS
+    alt Clear Consensus on Verdicts - PASS
+        LGR->>BC: publishPublication(pubId)
+        BC->>BC: emit NewPublicationStatus (PUBLISHED)
+        BC-->>AN: [Blockchain Event]
+        AN->>API: POST /api/webhooks/alchemy/all-events
+        API->>CQRS: processContractEvent(blockNumber, ...rest)
+        CQRS->>DB: /sync
+
+    Note over LGR, BC: Clear Consensus on Verdicts - FAIL
+    else Clear Consensus on Verdicts - FAIL
+        LGR->>BC: slashPublication(pubId)
+        BC->>BC: emit NewPublicationStatus (SLASHED)
+        BC-->>AN: [Blockchain Event]
+        AN->>API: POST /api/webhooks/alchemy/all-events
+        API->>CQRS: processContractEvent(blockNumber, ...rest)
+        CQRS->>DB: /sync
+
+    Note over LGR, BC: UN-clear Consensus - Senior Reviewer HITL
+    else UN-clear Consensus on Verdicts - Senior Reviewer HITL
+       Note over SENIOR_REV, LGR: HITL - EIP712
+       Note right of LGR: EIP712 Signature Verified
+       SENIOR_REV->>LGR: resumeSeniorReviewerAgent(threadId, review, signature)
+   
+       Note over LGR, BC: Protocol Entry
+       LGR-->BC: recordReview(pubId, reviewer)
+       BC->>BC: emit Agent_RecordReview
+       BC-->>AN: [Blockchain Event]
+   
+       AN->>API: POST /api/webhooks/alchemy/all-events
+       API->>CQRS: processContractEvent(blockNumber, ...rest)
+       activate CQRS
+          CQRS->>DB: /sync
+       deactivate CQRS
+       
+       activate LGR
+       LGR->>LGR: LLM Alignment on Senior Reviewer Verdict 
+       end
+    deactivate LGR
+
+    Note over BC, LG: Telemetry logs pushed to Telegram
+
 ```
 
 ---
