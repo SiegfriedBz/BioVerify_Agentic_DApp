@@ -1,6 +1,6 @@
-import { END, MemorySaver, START, StateGraph } from "@langchain/langgraph"
-import { InMemoryCache } from "@langchain/langgraph-checkpoint"
+import { END, START, StateGraph } from "@langchain/langgraph"
 import 'server-only'
+import pgCheckpointer from "../../utils/agents-pool"
 import { fetchIpfsNode } from "./nodes/1.fetch-ipfs"
 import { tavilyNode } from "./nodes/2.tavily"
 import { llmNode } from "./nodes/3.llm-verdict"
@@ -29,7 +29,6 @@ const builder = new StateGraph(SubmissionStateSchema)
   .addEdge("tavilyNode", "llmNode")
   .addEdge("llmNode", END)
 
-const checkpointer = new MemorySaver()
 
 /**
  * Compiled Submission Graph
@@ -37,6 +36,6 @@ const checkpointer = new MemorySaver()
  * execution via Vercel's waitUntil.
  */
 export const submissionGraph = builder.compile({
-  cache: new InMemoryCache(),
-  checkpointer,
+  /** Persistence Layer: Connects to Neon/Postgres */
+  checkpointer: pgCheckpointer,
 })
