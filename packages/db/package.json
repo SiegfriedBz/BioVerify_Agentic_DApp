@@ -1,0 +1,23 @@
+{
+  "name": "@packages/db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "db:push": "drizzle-kit push",
+    "seed": "tsx ./scripts/seed-protocol.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.23.0",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "drizzle-orm": "^0.45.1",
+    "drizzle-kit": "^0.31.9",
+    "tsx": "^4.21.0",
+    "server-only": "^0.0.1",
+    "@packages/env": "workspace:*",
+    "@packages/schema": "workspace:*"
+  }
+}
