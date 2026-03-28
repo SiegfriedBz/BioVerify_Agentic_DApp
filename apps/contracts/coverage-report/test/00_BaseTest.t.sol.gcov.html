@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info - test/00_BaseTest.t.sol</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory test">test</a> - 00_BaseTest.t.sol<span style="font-size: 80%;"> (source / <a href="00_BaseTest.t.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">9</td>
+            <td class="headerCovTableEntry">9</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2026-03-01 10:31:26</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">            Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>              : // SPDX-License-Identifier: UNLICENSED</span>
+<span id="L2"><span class="lineNum">       2</span>              : pragma solidity ^0.8.13;</span>
+<span id="L3"><span class="lineNum">       3</span>              : </span>
+<span id="L4"><span class="lineNum">       4</span>              : import {Test} from &quot;forge-std/Test.sol&quot;;</span>
+<span id="L5"><span class="lineNum">       5</span>              : import {VRFCoordinatorV2_5Mock} from &quot;@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol&quot;;</span>
+<span id="L6"><span class="lineNum">       6</span>              : import {Constants} from &quot;../script/Constants.sol&quot;;</span>
+<span id="L7"><span class="lineNum">       7</span>              : import {</span>
+<span id="L8"><span class="lineNum">       8</span>              :     BioVerifyV3,</span>
+<span id="L9"><span class="lineNum">       9</span>              :     BioVerifyConfig,</span>
+<span id="L10"><span class="lineNum">      10</span>              : </span>
+<span id="L11"><span class="lineNum">      11</span>              :     // events</span>
+<span id="L12"><span class="lineNum">      12</span>              :     RewardPool,</span>
+<span id="L13"><span class="lineNum">      13</span>              :     SlashPool,</span>
+<span id="L14"><span class="lineNum">      14</span>              :     RewardMember,</span>
+<span id="L15"><span class="lineNum">      15</span>              :     SlashMember,</span>
+<span id="L16"><span class="lineNum">      16</span>              :     MemberAvailableStake,</span>
+<span id="L17"><span class="lineNum">      17</span>              :     MemberLockedStake,</span>
+<span id="L18"><span class="lineNum">      18</span>              :     MemberLockedStakeOnPubId,</span>
+<span id="L19"><span class="lineNum">      19</span>              :     MemberReputation,</span>
+<span id="L20"><span class="lineNum">      20</span>              :     IsAvailableReviewer,</span>
+<span id="L21"><span class="lineNum">      21</span>              :     Claim,</span>
+<span id="L22"><span class="lineNum">      22</span>              :     NewPublicationStatus,</span>
+<span id="L23"><span class="lineNum">      23</span>              :     SubmitPublication,</span>
+<span id="L24"><span class="lineNum">      24</span>              :     LockedStakeOnPubId,</span>
+<span id="L25"><span class="lineNum">      25</span>              :     Agent_RequestVRF,</span>
+<span id="L26"><span class="lineNum">      26</span>              :     Agent_PickReviewers,</span>
+<span id="L27"><span class="lineNum">      27</span>              :     Agent_FinalizePublication,</span>
+<span id="L28"><span class="lineNum">      28</span>              :     Agent_RecordReview,</span>
+<span id="L29"><span class="lineNum">      29</span>              :     Agent_TransferSlashPoolToTreasury,</span>
+<span id="L30"><span class="lineNum">      30</span>              :     Agent_MoveSlashPoolToRewardPool,</span>
+<span id="L31"><span class="lineNum">      31</span>              : </span>
+<span id="L32"><span class="lineNum">      32</span>              :     // enum</span>
+<span id="L33"><span class="lineNum">      33</span>              :     PublicationStatus</span>
+<span id="L34"><span class="lineNum">      34</span>              : } from &quot;../src/BioVerifyV3.sol&quot;;</span>
+<span id="L35"><span class="lineNum">      35</span>              : </span>
+<span id="L36"><span class="lineNum">      36</span>              : contract BaseTest is Test, Constants {</span>
+<span id="L37"><span class="lineNum">      37</span>              :     BioVerifyV3 public bioVerify;</span>
+<span id="L38"><span class="lineNum">      38</span>              : </span>
+<span id="L39"><span class="lineNum">      39</span>              :     address aiAgentAddress = vm.envAddress(&quot;AI_AGENT_ADDRESS&quot;);</span>
+<span id="L40"><span class="lineNum">      40</span>              :     address treasuryAddress = vm.envAddress(&quot;TREASURY_ADDRESS&quot;);</span>
+<span id="L41"><span class="lineNum">      41</span>              : </span>
+<span id="L42"><span class="lineNum">      42</span>              :     address publisher = makeAddr(&quot;publisher&quot;);</span>
+<span id="L43"><span class="lineNum">      43</span>              :     address user = makeAddr(&quot;user&quot;);</span>
+<span id="L44"><span class="lineNum">      44</span>              : </span>
+<span id="L45"><span class="lineNum">      45</span>              :     uint256 constant DEPLOYMENT_VALUE = 1_000 ether;</span>
+<span id="L46"><span class="lineNum">      46</span>              :     uint256 constant VALID_PAID_PUBLISHER_FEE = PUBLISHER_MIN_FEE;</span>
+<span id="L47"><span class="lineNum">      47</span>              :     uint256 constant VALID_PAID_PUBLISHER_STAKE = PUBLISHER_STAKE;</span>
+<span id="L48"><span class="lineNum">      48</span>              :     uint256 constant VALID_PAID_PUBLISHER_AMOUNT = VALID_PAID_PUBLISHER_FEE + VALID_PAID_PUBLISHER_STAKE;</span>
+<span id="L49"><span class="lineNum">      49</span>              : </span>
+<span id="L50"><span class="lineNum">      50</span>              :     uint256 VALID_MIN_REVIEWERS_POOL_SIZE = VRF_NUM_WORDS + 1; // + 1 needed to prevent publisher to self-review</span>
+<span id="L51"><span class="lineNum">      51</span>              : </span>
+<span id="L52"><span class="lineNum">      52</span>              :     string constant FAKE_CID = &quot;ipfs://test-hash&quot;;</span>
+<span id="L53"><span class="lineNum">      53</span>              :     string constant FAKE_VERDICT_CID = &quot;ipfs://test-verdict-hash&quot;;</span>
+<span id="L54"><span class="lineNum">      54</span>              : </span>
+<span id="L55"><span class="lineNum">      55</span>              :     VRFCoordinatorV2_5Mock vrfCoordinatorMock;</span>
+<span id="L56"><span class="lineNum">      56</span>              :     uint256 vrfMockSubscriptionId;</span>
+<span id="L57"><span class="lineNum">      57</span>              : </span>
+<span id="L58"><span class="lineNum">      58</span> <span class="tlaGNC">          50 :     function setUp() public {</span></span>
+<span id="L59"><span class="lineNum">      59</span> <span class="tlaGNC">          50 :         vrfCoordinatorMock = new VRFCoordinatorV2_5Mock(0.01 ether, 0.0003 ether, 1e18);</span></span>
+<span id="L60"><span class="lineNum">      60</span> <span class="tlaGNC">          50 :         vrfMockSubscriptionId = vrfCoordinatorMock.createSubscription();</span></span>
+<span id="L61"><span class="lineNum">      61</span> <span class="tlaGNC">          50 :         vrfCoordinatorMock.fundSubscriptionWithNative{value: 1000 ether}(vrfMockSubscriptionId);</span></span>
+<span id="L62"><span class="lineNum">      62</span>              : </span>
+<span id="L63"><span class="lineNum">      63</span> <span class="tlaGNC">          50 :         BioVerifyConfig memory mockConfig = _getMockConfig();</span></span>
+<span id="L64"><span class="lineNum">      64</span> <span class="tlaGNC">          50 :         bioVerify = new BioVerifyV3{value: DEPLOYMENT_VALUE}(mockConfig);</span></span>
+<span id="L65"><span class="lineNum">      65</span> <span class="tlaGNC">          50 :         vrfCoordinatorMock.addConsumer(vrfMockSubscriptionId, address(bioVerify));</span></span>
+<span id="L66"><span class="lineNum">      66</span>              :     }</span>
+<span id="L67"><span class="lineNum">      67</span>              : </span>
+<span id="L68"><span class="lineNum">      68</span> <span class="tlaGNC">          52 :     function _getMockConfig() internal view returns (BioVerifyConfig memory) {</span></span>
+<span id="L69"><span class="lineNum">      69</span> <span class="tlaGNC">          52 :         return BioVerifyConfig({</span></span>
+<span id="L70"><span class="lineNum">      70</span>              :             reputationBoost: REPUTATION_BOOST,</span>
+<span id="L71"><span class="lineNum">      71</span>              :             aiAgent: aiAgentAddress,</span>
+<span id="L72"><span class="lineNum">      72</span>              :             treasury: treasuryAddress,</span>
+<span id="L73"><span class="lineNum">      73</span>              :             pubMinFee: PUBLISHER_MIN_FEE,</span>
+<span id="L74"><span class="lineNum">      74</span>              :             pubMinStake: PUBLISHER_STAKE,</span>
+<span id="L75"><span class="lineNum">      75</span>              :             revMinStake: REVIEWER_STAKE,</span>
+<span id="L76"><span class="lineNum">      76</span>              :             revReward: REVIEWER_REWARD,</span>
+<span id="L77"><span class="lineNum">      77</span>              :             vrfSubId: vrfMockSubscriptionId,</span>
+<span id="L78"><span class="lineNum">      78</span>              :             vrfKeyHash: VRF_KEY_HASH,</span>
+<span id="L79"><span class="lineNum">      79</span>              :             vrfGasLimit: VRF_CALLBACK_GAS_LIMIT,</span>
+<span id="L80"><span class="lineNum">      80</span>              :             vrfConfirmations: VRF_REQUEST_CONFIRMATIONS,</span>
+<span id="L81"><span class="lineNum">      81</span>              :             vrfNumWords: VRF_NUM_WORDS,</span>
+<span id="L82"><span class="lineNum">      82</span>              :             vrfCoordinator: address(vrfCoordinatorMock)</span>
+<span id="L83"><span class="lineNum">      83</span>              :         });</span>
+<span id="L84"><span class="lineNum">      84</span>              :     }</span>
+<span id="L85"><span class="lineNum">      85</span>              : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.4-0</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
