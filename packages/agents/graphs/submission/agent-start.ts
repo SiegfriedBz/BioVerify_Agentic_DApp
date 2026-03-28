@@ -2,8 +2,8 @@ import { earlySlashPublicationCommand, pickReviewersCommand } from "@packages/cq
 import { env } from "@packages/env"
 import { networkMessage, sendTelegramNotification } from "@packages/notifications"
 import { HumanDecisionSchema, NetworkT } from "@packages/schema"
+import { AgentType, getThreadId } from "@packages/utils"
 import 'server-only'
-import { getThreadId } from "../../utils/get-thread-id"
 import { submissionGraph } from "./graph"
 
 const PINATA_IPFS_URL = env.NEXT_PUBLIC_PINATA_IPFS_URL || "https://ipfs.io/ipfs"
@@ -34,7 +34,10 @@ export const startSubmissionAgent = async (
     await sendTelegramNotification(message)
 
     // 2. Run the Graph
-    const threadId = getThreadId({ publicationId, rootCid })
+    const threadId = getThreadId({
+      type: AgentType.SUBMISSION,
+      publicationId, rootCid
+    })
     const config = { configurable: { thread_id: threadId } }
 
     console.log(`[Submission Agent] Starting LangGraph for Pub #${publicationId} (Thread: ${threadId})`)

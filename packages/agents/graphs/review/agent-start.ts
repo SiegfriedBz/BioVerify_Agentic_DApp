@@ -1,8 +1,8 @@
 import { env } from "@packages/env"
 import { mask, networkMessage, sendTelegramNotification } from "@packages/notifications"
 import { InterruptKind, LlmDecisionSchema, NetworkT } from "@packages/schema"
+import { AgentType, getThreadId } from "@packages/utils"
 import 'server-only'
-import { getThreadId } from "../../utils/get-thread-id"
 import { reviewersGraph } from "./graph"
 
 const PINATA_IPFS_URL = env.NEXT_PUBLIC_PINATA_IPFS_URL ?? ""
@@ -23,7 +23,10 @@ export const startReviewersAgent = async (params: Params) => {
 	const { network, publicationId, rootCid, reviewers, seniorReviewer } = params
 
 	try {
-		const threadId = getThreadId({ publicationId, rootCid })
+		const threadId = getThreadId({
+			type: AgentType.REVIEW,
+			publicationId, rootCid
+		})
 		const config = { configurable: { thread_id: threadId } }
 
 		console.log(`[REVIEW_AGENT:START] Thread: ${threadId} | Pub: ${publicationId}`)
