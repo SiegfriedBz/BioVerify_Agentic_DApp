@@ -1,5 +1,5 @@
 import { HumanFullReview, NetworkT } from "@packages/schema"
-import { EIP712_HUMAN_REVIEW_TYPES, EIP712_PRIMARY_TYPE, getEip712Domain } from "@packages/utils"
+import { EIP712_HUMAN_REVIEW_TYPES, EIP712_PRIMARY_TYPE, getEip712Domain, parseThreadId } from "@packages/utils"
 import "server-only"
 import { verifyTypedData } from "viem"
 
@@ -14,7 +14,11 @@ export const verifyRewiewEip712 = async (params: Params): Promise<boolean> => {
   const { threadId, network, review, signature } = params
   const bioverifyDomain = getEip712Domain(network)
 
-  const [publicationId, rootCid] = threadId.split('-')
+  const { publicationId, rootCid } = parseThreadId(threadId)
+
+  if (!publicationId || !rootCid) {
+    throw new Error(`Malformed threadId for Eip712 verification: ${threadId}`)
+  }
 
   const isValid = await verifyTypedData({
     domain: bioverifyDomain,
