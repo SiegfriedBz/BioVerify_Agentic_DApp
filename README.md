@@ -1,6 +1,22 @@
+# 🔬 BioVerify: The Agentic Protocol for Autonomous Peer Review
+
 ## 🛠 Protocol Roadmap & Status
 
-> **Note:** This project is developed in parallel with a full-time professional software engineering role.
+> **Note:** This project is developed in solo and in parallel with a full-time professional software engineering role.
+
+
+**BioVerify** is a decentralized science (DeSci) protocol designed to solve the global reproducibility crisis. By replacing opaque, slow, and biased traditional peer review with **Stateful AI Agents** and **On-Chain Game Theory**, BioVerify creates an immutable pipeline for scientific integrity. 
+
+The protocol enforces a **Meritocratic Incentive Layer** where Scientists (Publishers) must stake collateral to submit research, risking immediate **Automated Slashing** if my forensic agent detect plagiarism. Conversely, Reviewers participate in a **High-Stakes Consensus Model**, earning rewards for accuracy while facing stake slashing for malicious approvals—ensuring that only verified research reaches the "Published" state.
+
+---
+
+### 🏛 System Architecture: Technical Summary
+
+> BioVerify V3 utilizes a **Getterless Solidity Design Pattern** that treats the blockchain as a lean "truth engine," systematically removing on-chain view functions to drastically reduce gas costs and deployment overhead. To maintain a high-performance UX, the protocol employs a **Custom CQRS Indexing Pipeline** that orchestrates dual-chain Alchemy webhooks to synchronize a serverless Neon PostgreSQL database in real-time. This event-driven architecture, protected by **SQL-level Optimistic Concurrency Control**, provides a low-latency data layer that enables my LangGraph AI agents to ingest cross-chain protocol state without RPC bottlenecks.
+
+---
+
 
 ### ✅ Phase 1: Autonomous Foundation & Submission
 **Timeline:** Jan 27 — Feb 6, 2026
