@@ -1,8 +1,6 @@
 import { END, START, StateGraph } from "@langchain/langgraph"
-import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres"
-import { env } from "@packages/env"
 import { LlmDecisionSchema } from "@packages/schema"
-import { Pool } from "pg"
+import pgCheckpointer from "packages/agents/utils/agents-pool"
 import 'server-only'
 import { humanReviewsNode } from "./nodes/1.human-reviews"
 import { llmVerdictNode } from "./nodes/2.llm-verdict"
@@ -71,10 +69,6 @@ builder
   .addEdge("llmFinalVerdictNode", "settlementNode")
   .addEdge("settlementNode", END)
 
-/** Persistence Layer: Connects to Neon/Postgres to enable long-term HITL pauses */
-const pool = new Pool({ connectionString: env.NEON_AGENTS_DATABASE_URL })
-const checkpointer = new PostgresSaver(pool)
-// await checkpointer.setup() //-- only once to initiate Neon tables
 
 /**
  * Compiled Submission Graph
@@ -82,5 +76,6 @@ const checkpointer = new PostgresSaver(pool)
  * execution via Vercel's waitUntil or background webhooks.
  */
 export const reviewersGraph = builder.compile({
-  checkpointer,
+  /** Persistence Layer: Connects to Neon/Postgres to enable long-term HITL pauses */
+  checkpointer: pgCheckpointer,
 })
