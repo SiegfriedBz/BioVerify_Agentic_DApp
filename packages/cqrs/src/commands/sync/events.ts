@@ -6,7 +6,7 @@ import { and, eq, sql } from "drizzle-orm"
 
 /**
  * Optimistic Concurrency Control (OCC)
- * Ensures out-of-order webhooks never overwrite newer data.
+ * Ensures out-of-order webhook events never overwrite newer data.
  */
 function versionCheck(table: any, blockNumber: bigint, logIndex: number) {
   return sql`(${table.lastBlockNumber} < ${blockNumber}) OR (${table.lastBlockNumber} = ${blockNumber} AND ${table.lastLogIndex} < ${logIndex})`
