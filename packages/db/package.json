@@ -1,7 +1,9 @@
 {
   "name": "@packages/db",
-  "version": "1.0.0",
-  "description": "",
+	"version": "0.2.1",
+  "private": true,
+  "author": "Siegfried Bozza",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
     "db:push": "drizzle-kit push",

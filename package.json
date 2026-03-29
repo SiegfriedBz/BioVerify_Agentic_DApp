@@ -1,8 +1,10 @@
 {
 	"name": "bio_verify",
-	"version": "0.1.0-alpha",
-	"description": "",
-	"private": true,
+	"version": "0.2.1",
+	"description": "Durable AI Agent Protocol for Scientific Integrity",
+  "private": true,
+  "author": "Siegfried Bozza",
+  "license": "MIT",
 	"scripts": {
 		"env:check": "dotenv -f .env -- pnpm --filter @packages/env check",
 		"fe:dev": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/fe dev",

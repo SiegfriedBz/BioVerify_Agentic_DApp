@@ -1,7 +1,9 @@
 {
   "name": "@packages/agents",
-  "version": "1.0.0",
-  "description": "",
+	"version": "0.2.1",
+  "private": true,
+  "author": "Siegfried Bozza",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
     "db:setup-agents": "tsx --conditions=react-server ./scripts/setup-agents.ts",
