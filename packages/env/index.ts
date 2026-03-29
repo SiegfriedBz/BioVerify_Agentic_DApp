@@ -52,6 +52,7 @@ export const env = createEnv({
     NEON_DATABASE_URL: z.url(),
     NEON_AGENTS_DATABASE_URL: z.url().describe("LangGraph persistence"),
     INNGEST_SIGNING_KEY: z.string(),
+    INNGEST_EVENT_KEY: z.string(),
 
     /**
      * IPFS & STORAGE (PINATA)
