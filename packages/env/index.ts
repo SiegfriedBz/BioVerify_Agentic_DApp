@@ -42,13 +42,16 @@ export const env = createEnv({
      */
     GEMINI_API_KEY: z.string(),
     TAVILY_API_KEY: z.string(),
-    TAVILY_SEARCH_URL: z.string().url(),
+    TAVILY_SEARCH_URL: z.url(),
+    EXA_AI_API_KEY: z.string(),
+    EXA_BASE_URL: z.url(),
 
     /**
      * DATABASE & PERSISTENCE
      */
-    NEON_DATABASE_URL: z.string().url(),
-    NEON_AGENTS_DATABASE_URL: z.string().url().describe("LangGraph persistence"),
+    NEON_DATABASE_URL: z.url(),
+    NEON_AGENTS_DATABASE_URL: z.url().describe("LangGraph persistence"),
+    INNGEST_SIGNING_KEY: z.string(),
 
     /**
      * IPFS & STORAGE (PINATA)
@@ -74,21 +77,21 @@ export const env = createEnv({
     /**
      * ALCHEMY (RPC & WSS)
      */
-    NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_RPC_URL: z.string().url(),
-    NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_RPC_URL: z.string().url(),
-    NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_WSS: z.string().url(),
-    NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_WSS: z.string().url(),
+    NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_RPC_URL: z.url(),
+    NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_RPC_URL: z.url(),
+    NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_WSS: z.url(),
+    NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_WSS: z.url(),
 
     /**
      * IPFS & STORAGE (PINATA)
      */
-    NEXT_PUBLIC_PINATA_IPFS_URL: z.string().url(),
-    NEXT_PUBLIC_PINATA_PIN_API_URL: z.string().url(),
+    NEXT_PUBLIC_PINATA_IPFS_URL: z.url(),
+    NEXT_PUBLIC_PINATA_PIN_API_URL: z.url(),
 
     /**
    * MISC
    */
-    NEXT_PUBLIC_APP_URL: z.string().url(),
+    NEXT_PUBLIC_APP_URL: z.url(),
     NEXT_PUBLIC_RAINBOWKIT_PROJECT_ID: z.string()
   },
 
@@ -102,8 +105,6 @@ export const env = createEnv({
     NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_RPC_URL: process.env.NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_RPC_URL,
     NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_WSS: process.env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_WSS,
     NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_WSS: process.env.NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_WSS,
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY,
     NEXT_PUBLIC_PINATA_IPFS_URL: process.env.NEXT_PUBLIC_PINATA_IPFS_URL,
     NEXT_PUBLIC_PINATA_PIN_API_URL: process.env.NEXT_PUBLIC_PINATA_PIN_API_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
