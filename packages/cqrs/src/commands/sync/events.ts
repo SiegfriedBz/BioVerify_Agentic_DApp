@@ -1,6 +1,5 @@
-import { startReviewersAgent, startSubmissionAgent } from "@packages/agents"
 import { db } from "@packages/db"
-import { memberDbSchema, protocolDbSchema, publicationDbSchema } from '@packages/schema'
+import { InnGestEvents, InngestTrigger, memberDbSchema, protocolDbSchema, publicationDbSchema } from '@packages/schema'
 import { ChainIdToNetwork } from "@packages/utils"
 import { and, eq, sql } from "drizzle-orm"
 
@@ -12,12 +11,25 @@ function versionCheck(table: any, blockNumber: bigint, logIndex: number) {
   return sql`(${table.lastBlockNumber} < ${blockNumber}) OR (${table.lastBlockNumber} = ${blockNumber} AND ${table.lastLogIndex} < ${logIndex})`
 }
 
-export async function processContractEvent(
-  chainId: number,
-  decoded: { eventName: string; args: any },
-  blockNumber: bigint,
+type Params = {
+  chainId: number
+  decoded: { eventName: string; args: any }
+  blockNumber: bigint
   logIndex: number
+  inngest: InngestTrigger
+}
+
+export async function processContractEvent(
+  params: Params
 ) {
+  const {
+    chainId,
+    decoded,
+    blockNumber,
+    logIndex,
+    inngest
+  } = params
+
   const { eventName, args } = decoded
   const mId = (addr: string) => `${chainId}-${addr.toLowerCase()}`
   const pId = (id: bigint) => `${chainId}-${id.toString()}`
@@ -72,13 +84,20 @@ export async function processContractEvent(
     // --- PUBLICATION STATE ---
     case "SubmitPublication": {
       const { pubId, cid, publisher, paidFee } = args
+      // 1. Save to DB (Fast)
       await upsertPublication(pId(pubId), {
         pubId, chainId, publisher: publisher.toLowerCase(), cid, paidSubmissionFee: paidFee, status: 0
       }, blockNumber, logIndex)
 
-      await startSubmissionAgent({
-        publicationId: pubId.toString(), rootCid: cid, network: ChainIdToNetwork[chainId]
-      }).catch(err => console.error(`❌ Submission Agent failed (Pub #${pubId}):`, err))
+      // 2. Hand-off to Inngest (Fast)
+      await inngest.send({
+        name: InnGestEvents.CHAIN_SUBMISSION_RECEIVED,
+        data: {
+          network: ChainIdToNetwork[chainId],
+          publicationId: args.pubId.toString(),
+          rootCid: args.cid
+        }
+      })
       break
     }
 
@@ -94,11 +113,20 @@ export async function processContractEvent(
       const { pubId, cid, seniorReviewer } = args
       const reviewers = args.reviewers.map((a: string) => a.toLowerCase())
 
+      // 1. Save to DB (Fast)
       await upsertPublication(pId(pubId), { reviewers, seniorReviewer: seniorReviewer.toLowerCase(), status: 2 }, blockNumber, logIndex)
 
-      await startReviewersAgent({
-        publicationId: pubId.toString(), rootCid: cid, reviewers, seniorReviewer: seniorReviewer.toLowerCase(), network: ChainIdToNetwork[chainId]
-      }).catch(err => console.error(`❌ Reviewers Agent failed (Pub #${pubId}):`, err))
+      // 2. Hand-off to Inngest (Fast)
+      await inngest.send({
+        name: InnGestEvents.CHAIN_PICKED_REVIEWERS_RECEIVED,
+        data: {
+          network: ChainIdToNetwork[chainId],
+          publicationId: args.pubId.toString(),
+          rootCid: args.cid,
+          reviewers,
+          seniorReviewer: seniorReviewer.toLowerCase()
+        }
+      })
       break
     }
 
