@@ -25,6 +25,13 @@ export const resumeSeniorReviewerAgent = async (params: Params) => {
 	// 2. Fetch Current State
 	const state = await reviewersGraph.getState(config)
 
+	console.log("PRODUCTION_AUTH_CHECK:", {
+		signer: review.address.toLowerCase(),
+		storedReviews: state.values?.humanReviews,
+		seniorReview: state.values?.seniorReview?.address?.toLowerCase(),
+		allStateKeys: Object.keys(state.values || {})
+	})
+
 	// 3. Authorization Check
 	const assignedSenior = state.values?.seniorReview?.address
 	if (assignedSenior?.toLowerCase() !== review.address.toLowerCase()) {

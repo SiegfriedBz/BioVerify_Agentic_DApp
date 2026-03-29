@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "db:push": "drizzle-kit push",
-    "seed": "tsx ./scripts/seed-protocol.ts"
+    "db:seed": "tsx --conditions=react-server ./scripts/seed-protocol.ts"
   },
   "keywords": [],
   "author": "",

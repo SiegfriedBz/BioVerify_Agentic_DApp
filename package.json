@@ -14,8 +14,9 @@
 		"contract:deploy:base": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/contracts exec forge script script/BioVerifyV3.s.sol:BioVerifyV3Script --rpc-url base_sepolia --broadcast --verify --target-contract BioVerifyV3",
 		"contract:deploy:sepolia": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/contracts exec forge script script/BioVerifyV3.s.sol:BioVerifyV3Script --rpc-url sepolia --broadcast --verify --target-contract BioVerifyV3",
 		"db:push": "pnpm env:check && dotenv -f .env -- pnpm --filter @packages/db db:push",
-		"db:seed": "pnpm env:check && dotenv -f .env -- pnpm --filter @packages/db seed",
-		"db:push-seed": "pnpm db:push && pnpm db:seed"
+		"db:seed": "pnpm env:check && dotenv -f .env -- pnpm --filter @packages/db db:seed",
+		"db:push-seed": "pnpm db:push && pnpm db:seed",
+		"db:setup-agents": "pnpm env:check && dotenv -f .env -- pnpm --filter @packages/agents db:setup-agents"	
 	},
 	"keywords": [],
 	"author": "",
