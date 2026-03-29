@@ -1,9 +1,12 @@
 {
   "name": "@packages/agents",
-  "version": "1.0.0",
-  "description": "",
+	"version": "0.2.1",
+  "private": true,
+  "author": "Siegfried Bozza",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
+    "db:setup-agents": "tsx --conditions=react-server ./scripts/setup-agents.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -25,6 +28,7 @@
     "langchain": "^1.2.28",
     "pg": "^8.19.0",
     "zod": "^4.3.6",
+    "tsx": "^4.21.0",
     "server-only": "^0.0.1"
   },
   "devDependencies": {

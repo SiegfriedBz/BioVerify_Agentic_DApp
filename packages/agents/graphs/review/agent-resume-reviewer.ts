@@ -29,6 +29,13 @@ export const resumeReviewersAgent = async (params: Params) => {
 		r.address.toLowerCase()
 	) || []
 
+	console.log("PRODUCTION_AUTH_CHECK:", {
+		signer: review.address.toLowerCase(),
+		assignedAddresses,
+		storedReviews: state.values?.humanReviews,
+		allStateKeys: Object.keys(state.values || {})
+	})
+
 	if (!assignedAddresses.includes(review.address.toLowerCase())) {
 		throw new Error("Forbidden: Address not assigned as Peer Reviewer for this publication.")
 	}

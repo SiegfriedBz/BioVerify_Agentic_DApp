@@ -1,7 +1,8 @@
 "use server"
 
-import { getThreadId, resumeReviewersAgent, resumeSeniorReviewerAgent } from "@packages/agents"
+import { resumeReviewersAgent, resumeSeniorReviewerAgent } from "@packages/agents"
 import { HumanDecision, NetworkT } from "@packages/schema"
+import { AgentType, getThreadId } from "@packages/utils"
 import { verifyRewiewEip712 } from "@packages/utils-server"
 
 export type SendReviewToAgentParams = {
@@ -27,7 +28,10 @@ export const sendReviewToAgent = async (params: SendReviewToAgentParams) => {
     signature
   } = params
 
-  const threadId = getThreadId({ publicationId, rootCid })
+  const threadId = getThreadId({
+    type: AgentType.REVIEW,
+    publicationId, rootCid
+  })
 
   const review = {
     address,

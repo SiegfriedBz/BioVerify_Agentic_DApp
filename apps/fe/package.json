@@ -1,7 +1,9 @@
 {
 	"name": "@apps/fe",
-	"version": "0.1.0-alpha",
-	"private": true,
+	"version": "0.2.1",
+  "private": true,
+  "author": "Siegfried Bozza",
+  "license": "MIT",
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",

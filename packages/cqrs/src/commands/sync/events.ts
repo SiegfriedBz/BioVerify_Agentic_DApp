@@ -27,12 +27,15 @@ export async function processContractEvent(
     case "RewardPool":
       await upsertProtocol(chainId, { rewardPool: args.newRewardPool }, blockNumber, logIndex)
       break
+
     case "SlashPool":
       await upsertProtocol(chainId, { slashPool: args.newSlashPool }, blockNumber, logIndex)
       break
+
     case "Agent_MoveSlashPoolToRewardPool":
       await upsertProtocol(chainId, { slashPool: args.newSlashPool, rewardPool: args.newRewardPool }, blockNumber, logIndex)
       break
+
     case "Agent_TransferSlashPoolToTreasury":
       await upsertProtocol(chainId, { slashPool: args.newSlashPool }, blockNumber, logIndex)
       break
@@ -41,20 +44,25 @@ export async function processContractEvent(
     case "MemberAvailableStake":
       await upsertMember(mId(args.member), { address: args.member.toLowerCase(), chainId, availableStake: args.newAvailStake }, blockNumber, logIndex)
       break
+
     case "MemberLockedStake":
       await upsertMember(mId(args.member), { address: args.member.toLowerCase(), chainId, lockedStake: args.newLockedStake }, blockNumber, logIndex)
       break
+
     case "MemberReputation":
       await upsertMember(mId(args.member), { address: args.member.toLowerCase(), chainId, reputation: args.newRep }, blockNumber, logIndex)
       break
+
     case "IsAvailableReviewer":
       await upsertMember(mId(args.reviewer), { address: args.reviewer.toLowerCase(), chainId, isAvailable: args.isAvailable, activeReviewsCount: Number(args.newActiveReviews) }, blockNumber, logIndex)
       break
+
     case "RewardMember":
       await db.update(memberDbSchema)
         .set({ rewardsCount: sql`${memberDbSchema.rewardsCount} + 1`, updatedAt: new Date() })
         .where(and(eq(memberDbSchema.id, mId(args.member)), versionCheck(memberDbSchema, blockNumber, logIndex)))
       break
+
     case "SlashMember":
       await db.update(memberDbSchema)
         .set({ slashesCount: sql`${memberDbSchema.slashesCount} + 1`, updatedAt: new Date() })
@@ -68,28 +76,32 @@ export async function processContractEvent(
         pubId, chainId, publisher: publisher.toLowerCase(), cid, paidSubmissionFee: paidFee, status: 0
       }, blockNumber, logIndex)
 
-      startSubmissionAgent({
+      await startSubmissionAgent({
         publicationId: pubId.toString(), rootCid: cid, network: ChainIdToNetwork[chainId]
       }).catch(err => console.error(`❌ Submission Agent failed (Pub #${pubId}):`, err))
       break
     }
+
     case "LockedStakeOnPubId":
       await upsertPublication(pId(args.pubId), { lockedStake: args.newLockedStake }, blockNumber, logIndex)
       break
+
     case "NewPublicationStatus":
       await upsertPublication(pId(args.pubId), { status: args.newStatus }, blockNumber, logIndex)
       break
+
     case "Agent_PickReviewers": {
       const { pubId, cid, seniorReviewer } = args
       const reviewers = args.reviewers.map((a: string) => a.toLowerCase())
 
       await upsertPublication(pId(pubId), { reviewers, seniorReviewer: seniorReviewer.toLowerCase(), status: 2 }, blockNumber, logIndex)
 
-      startReviewersAgent({
+      await startReviewersAgent({
         publicationId: pubId.toString(), rootCid: cid, reviewers, seniorReviewer: seniorReviewer.toLowerCase(), network: ChainIdToNetwork[chainId]
       }).catch(err => console.error(`❌ Reviewers Agent failed (Pub #${pubId}):`, err))
       break
     }
+
     case "Agent_RecordReview": {
       const { member: reviewerMember, pubId } = args
       if (!reviewerMember || !pubId) break
@@ -102,6 +114,7 @@ export async function processContractEvent(
         .where(and(eq(publicationDbSchema.id, pId(pubId)), versionCheck(publicationDbSchema, blockNumber, logIndex)))
       break
     }
+
     case "Agent_FinalizePublication":
       await upsertPublication(pId(args.pubId), { verdictCid: args.verdictCid, status: args.status }, blockNumber, logIndex)
       break
