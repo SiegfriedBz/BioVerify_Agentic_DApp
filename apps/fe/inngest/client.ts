@@ -15,6 +15,7 @@ export const inngest =
     id: "bioverify-app",
     schemas: {} as BioVerifyInnGestEvents,
     signingKey: env.INNGEST_SIGNING_KEY,
+    eventKey: env.INNGEST_EVENT_KEY
   })
 
 if (process.env.NODE_ENV !== "production") {
