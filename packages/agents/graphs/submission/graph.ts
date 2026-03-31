@@ -2,7 +2,7 @@ import { END, START, StateGraph } from "@langchain/langgraph"
 import 'server-only'
 import pgCheckpointer from "../../utils/agents-pool"
 import { fetchIpfsNode } from "./nodes/1.fetch-ipfs"
-import { tavilyNode } from "./nodes/2.tavily"
+import { discoveryNode } from "./nodes/2.discovery"
 import { llmNode } from "./nodes/3.llm-verdict"
 import { SubmissionStateSchema } from "./state"
 
@@ -13,7 +13,7 @@ import { SubmissionStateSchema } from "./state"
  * novel research enters the peer-review staking pool.
  * * Pipeline:
  * 1. IPFS Ingestion: Resolution of the multi-layer manifest (Metadata -> Abstract).
- * 2. Forensic Search: Multi-source web crawling via Tavily to detect existing literature.
+ * 2. Forensic Search: Multi-source web crawling to detect existing literature.
  * 3. AI Verdict: LLM-driven plagiarism analysis and "Slashing" decision logic.
  * * @triggered-by Alchemy Webhooks (On-Chain BioVerify_SubmitPublication event)
  * @outcomes "pass" (proceed to VRF selection) | "fail" (immediate protocol slash)
@@ -21,14 +21,13 @@ import { SubmissionStateSchema } from "./state"
 
 const builder = new StateGraph(SubmissionStateSchema)
   .addNode("fetchIpfsNode", fetchIpfsNode)
-  .addNode("tavilyNode", tavilyNode)
+  .addNode("discoveryNode", discoveryNode)
   .addNode("llmNode", llmNode,)
 
   .addEdge(START, "fetchIpfsNode")
-  .addEdge("fetchIpfsNode", "tavilyNode")
-  .addEdge("tavilyNode", "llmNode")
+  .addEdge("fetchIpfsNode", "discoveryNode")
+  .addEdge("discoveryNode", "llmNode")
   .addEdge("llmNode", END)
-
 
 /**
  * Compiled Submission Graph
