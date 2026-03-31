@@ -1,9 +1,9 @@
 {
 	"name": "@apps/fe",
 	"version": "0.2.1",
-  "private": true,
-  "author": "Siegfried Bozza",
-  "license": "MIT",
+	"private": true,
+	"author": "Siegfried Bozza",
+	"license": "MIT",
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",
@@ -44,6 +44,7 @@
 		"drizzle-orm": "^0.45.1",
 		"graphql": "^16.13.1",
 		"graphql-yoga": "^5.18.1",
+		"inngest": "^4.1.0",
 		"lucide-react": "^0.563.0",
 		"next": "16.1.5",
 		"next-themes": "^0.4.6",
