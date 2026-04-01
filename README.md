@@ -1,3 +1,5 @@
+![CI-Foundry](https://github.com/SiegfriedBz/BioVerify_Agentic_DApp/actions/workflows/foundry-tests.yml/badge.svg)
+
 # 🔬 BioVerify: The Agentic Protocol for Autonomous Peer Review
 
 ## 🛠 Protocol Roadmap & Status
