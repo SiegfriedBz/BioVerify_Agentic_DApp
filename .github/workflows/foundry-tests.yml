@@ -1,0 +1,30 @@
+name: CI-Foundry
+
+on:
+  push:
+    branches: [ main, develop, ci/foundry-tests ] 
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  foundry-tests:
+    name: Foundry Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0 
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Tests
+        working-directory: ./apps/contracts 
+        run: |
+          # We check if lib is empty; if not, we skip forge install to save time
+          if [ -z "$(ls -A lib)" ]; then forge install; fi
+          forge test -vvv
