@@ -24,7 +24,18 @@ jobs:
 
       - name: Run Tests
         working-directory: ./apps/contracts 
+        env:
+          # Standard Dev/Anvil Keys & Addresses
+          DEPLOYER_PRIVATE_KEY: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+          AI_AGENT_ADDRESS: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+          TREASURY_ADDRESS: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+          # Protocol Logic Values
+          REPUTATION_BOOST: 10
+          PUBLISHER_MIN_FEE: 10000000000000000 # 0.01 ETH
+          PUBLISHER_STAKE: 50000000000000000   # 0.05 ETH
+          REVIEWER_STAKE: 20000000000000000    # 0.02 ETH
+          REVIEWER_REWARD: 10000000000000000   # 0.01 ETH
+          VRF_NUM_WORDS: 3
         run: |
-          # We check if lib is empty; if not, we skip forge install to save time
           if [ -z "$(ls -A lib)" ]; then forge install; fi
           forge test -vvv
