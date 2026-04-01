@@ -238,18 +238,24 @@ sequenceDiagram
 
 ---
 
-### 🏗 Phase 3: Advanced Forensics & Settlement UI
+### 🏗 Phase 3: Durable Workflows & Advanced Forensics
 **Timeline:** March 28, 2026 — Present
 
-* **Universal AI Reasoning:**
-    * **[ ] BIOS Integration:** Replace Tavily Search with specialized **BIOS bioprotocol agents**. This upgrades the forensic layer to a science-domain agnostic model for deeper integrity checks across all research fields.
-* **Protocol Settlement UI:**
-    * **[ ] Reward Claims:** Implement the `claim` interface using **Wagmi/Viem** to allow participants to withdraw available stakes and earned rewards directly from the UI.
-    * **[ ] Professional Typography:** Finalize migration of all feature views to the custom `@md` scaling **Typography** components for production-grade readability.
-* **UI Polish:**
-    * **[ ] Container Query Refinement:** Polish the `@container`-based layout to ensure a fluid, high-end dashboard experience within the `SidebarProvider` shell.
-    * **[ ] Real-time Forensic Timeline:** A visual component showing BIOS agent reasoning steps and consensus status as it happens.
+* **Durable Agent Orchestration (Inngest)**
+    * [ ] **Asynchronous Event Handlers:** Migrate LangGraph agents to background **Inngest** functions.
+    * [ ] **Persistence & Retries:** Implement durable execution steps to ensure LangGraph agents resume automatically after timeouts or cold starts.
+    * [ ] **Webhook Dependency Injection:** Refactor the `@packages/cqrs` dispatcher to trigger Inngest workflows directly from Alchemy webhooks.
 
+* **Neural Research Discovery (Exa AI)**
+    * [ ] **Semantic Plagiarism Detection:** Replace Tavily keyword-based search with **Exa AI**'s neural engine to identify similarities based on scientific meaning.
+    * [ ] **Full-Text Retrieval:** Integrate Exa’s content extraction to provide the LLM verdict node with complete source material for forensic analysis.
+
+* **Protocol Settlement UI**
+    * [ ] **Reward & Stake Claims:** Build the `claim` interface for withdrawing available rewards and unlocked stakes.
+    * [ ] **Real-time Audit Timeline:** Create a UI component to stream live reasoning steps and consensus status from the background workers.
+
+* **UI Polish & Layout**
+    * [ ] **Container Query Refinement:** Fine-tune the `@container`-based responsive layout within the `SidebarProvider` shell.
 ---
 
 ### 🌍 Deployment Registry
