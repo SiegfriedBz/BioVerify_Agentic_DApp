@@ -7,4 +7,3 @@ export const SubmitPublicationFormSchema = IpfsPublicationSchema.extend({
 })
 
 export type SubmitPublicationFormT = z.infer<typeof SubmitPublicationFormSchema>
-

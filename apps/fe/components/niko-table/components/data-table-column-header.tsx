@@ -1,7 +1,7 @@
 "use client"
 
-import React from "react"
 import type { Column } from "@tanstack/react-table"
+import React from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -10,30 +10,30 @@ import { cn } from "@/lib/utils"
 // ============================================================================
 
 interface TableColumnHeaderContextValue<TData, TValue> {
-  column: Column<TData, TValue>
+	column: Column<TData, TValue>
 }
 
 const TableColumnHeaderContext = React.createContext<
-  TableColumnHeaderContextValue<unknown, unknown> | undefined
+	TableColumnHeaderContextValue<unknown, unknown> | undefined
 >(undefined)
 
 export function useColumnHeaderContext<TData, TValue>(
-  required: true,
+	required: true,
 ): TableColumnHeaderContextValue<TData, TValue>
 export function useColumnHeaderContext<TData, TValue>(
-  required: false,
+	required: false,
 ): TableColumnHeaderContextValue<TData, TValue> | undefined
 export function useColumnHeaderContext<TData, TValue>(required = true) {
-  const context = React.useContext(TableColumnHeaderContext) as
-    | TableColumnHeaderContextValue<TData, TValue>
-    | undefined
+	const context = React.useContext(TableColumnHeaderContext) as
+		| TableColumnHeaderContextValue<TData, TValue>
+		| undefined
 
-  if (required && !context) {
-    throw new Error(
-      "useColumnHeaderContext must be used within DataTableColumnHeaderRoot",
-    )
-  }
-  return context
+	if (required && !context) {
+		throw new Error(
+			"useColumnHeaderContext must be used within DataTableColumnHeaderRoot",
+		)
+	}
+	return context
 }
 
 // ============================================================================
@@ -45,19 +45,19 @@ export function useColumnHeaderContext<TData, TValue>(required = true) {
  * Used internally by DataTableHeader to provide context to composable header components.
  */
 export function DataTableColumnHeaderRoot<TData, TValue>({
-  column,
-  children,
+	column,
+	children,
 }: {
-  column: Column<TData, TValue>
-  children: React.ReactNode
+	column: Column<TData, TValue>
+	children: React.ReactNode
 }) {
-  return (
-    <TableColumnHeaderContext.Provider
-      value={{ column } as TableColumnHeaderContextValue<unknown, unknown>}
-    >
-      {children}
-    </TableColumnHeaderContext.Provider>
-  )
+	return (
+		<TableColumnHeaderContext.Provider
+			value={{ column } as TableColumnHeaderContextValue<unknown, unknown>}
+		>
+			{children}
+		</TableColumnHeaderContext.Provider>
+	)
 }
 
 // ============================================================================
@@ -70,21 +70,21 @@ export type DataTableColumnHeaderProps = React.HTMLAttributes<HTMLDivElement>
  * Composable Column Header container.
  */
 export function DataTableColumnHeader({
-  className,
-  children,
-  ...props
+	className,
+	children,
+	...props
 }: DataTableColumnHeaderProps) {
-  return (
-    <div
-      className={cn(
-        "group flex w-full items-center justify-between gap-1",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  )
+	return (
+		<div
+			className={cn(
+				"group flex w-full items-center justify-between gap-1",
+				className,
+			)}
+			{...props}
+		>
+			{children}
+		</div>
+	)
 }
 
 DataTableColumnHeaderRoot.displayName = "DataTableColumnHeaderRoot"

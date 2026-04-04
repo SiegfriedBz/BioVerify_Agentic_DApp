@@ -1,8 +1,8 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { UserPlusIcon } from "lucide-react"
 import type { FC } from "react"
+import { Button } from "@/components/ui/button"
 
 type AddAuthorButtonProps = {
 	onAddAuthor: () => void

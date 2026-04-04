@@ -2,14 +2,16 @@
 	"name": "bio_verify",
 	"version": "0.3.0",
 	"description": "Durable AI Agent Protocol for Scientific Integrity",
-  "private": true,
-  "author": "Siegfried Bozza",
-  "license": "MIT",
+	"private": true,
+	"author": "Siegfried Bozza",
+	"license": "MIT",
 	"scripts": {
 		"env:check": "dotenv -f .env -- pnpm --filter @packages/env check",
+		"lint:check": "biome check --write ./apps/fe ./packages",
+  	"lint:format": "biome format --write ./apps/fe ./packages",
 		"fe:dev": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/fe dev",
-    "inngest:dev": "npx inngest-cli@latest dev",
-    "inngest:sync": "dotenv -f .env -- npx inngest-cli@latest apps sync --url $APP_URL/api/inngest",
+		"inngest:dev": "npx inngest-cli@latest dev",
+		"inngest:sync": "dotenv -f .env -- npx inngest-cli@latest apps sync --url $APP_URL/api/inngest",
 		"fe:build": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/fe build",
 		"fe:start": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/fe start",
 		"contract:compile": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/contracts exec forge compile",
@@ -20,14 +22,15 @@
 		"db:push": "pnpm env:check && dotenv -f .env -- pnpm --filter @packages/db db:push",
 		"db:seed": "pnpm env:check && dotenv -f .env -- pnpm --filter @packages/db db:seed",
 		"db:push-seed": "pnpm db:push && pnpm db:seed",
-		"db:setup-agents": "pnpm env:check && dotenv -f .env -- pnpm --filter @packages/agents db:setup-agents"	
+		"db:setup-agents": "pnpm env:check && dotenv -f .env -- pnpm --filter @packages/agents db:setup-agents"
 	},
 	"keywords": [],
 	"packageManager": "pnpm@10.32.0+sha512.9b2634bb3fed5601c33633f2d92593f506270a3963b8c51d2b2d6a828da615ce4e9deebef9614ccebbc13ac8d3c0f9c9ccceb583c69c8578436fa477dbb20d70",
 	"devDependencies": {
+		"@biomejs/biome": "^2.4.10",
 		"dotenv-cli": "^11.0.0"
 	},
 	"overrides": {
-    "@types/pg": "8.11.10" 
-  }
+		"@types/pg": "8.11.10"
+	}
 }

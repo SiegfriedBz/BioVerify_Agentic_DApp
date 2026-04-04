@@ -2,8 +2,8 @@
 
 import { useDataTable } from "../core"
 import {
-  TableSortMenu,
-  type TableSortMenuProps,
+	TableSortMenu,
+	type TableSortMenuProps,
 } from "../filters/table-sort-menu"
 
 type DataTableSortMenuProps<TData> = Omit<TableSortMenuProps<TData>, "table">
@@ -28,8 +28,8 @@ type DataTableSortMenuProps<TData> = Omit<TableSortMenuProps<TData>, "table">
  * <DataTableSortMenu className="w-[400px]" />
  */
 export function DataTableSortMenu<TData>(props: DataTableSortMenuProps<TData>) {
-  const { table } = useDataTable<TData>()
-  return <TableSortMenu<TData> table={table} {...props} />
+	const { table } = useDataTable<TData>()
+	return <TableSortMenu<TData> table={table} {...props} />
 }
 
 /**

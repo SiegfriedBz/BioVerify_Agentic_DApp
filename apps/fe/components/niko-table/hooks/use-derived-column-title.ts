@@ -38,14 +38,14 @@ import { formatLabel } from "../lib/format"
  * WHAT: Only recalculates when title, column, or accessorKey changes.
  */
 export function useDerivedColumnTitle<TData>(
-  column: Column<TData, unknown> | undefined,
-  accessorKey: string,
-  title?: string,
+	column: Column<TData, unknown> | undefined,
+	accessorKey: string,
+	title?: string,
 ): string {
-  return React.useMemo(() => {
-    if (title) return title
-    if (!column) return formatLabel(accessorKey)
-    const label = column.columnDef.meta?.label
-    return label ?? formatLabel(accessorKey)
-  }, [title, column, accessorKey])
+	return React.useMemo(() => {
+		if (title) return title
+		if (!column) return formatLabel(accessorKey)
+		const label = column.columnDef.meta?.label
+		return label ?? formatLabel(accessorKey)
+	}, [title, column, accessorKey])
 }

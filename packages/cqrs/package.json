@@ -1,22 +1,21 @@
 {
-  "name": "@packages/cqrs",
-  "version": "0.3.0",
-  "private": true,
-  "author": "Siegfried Bozza",
-  "license": "MIT",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "@packages/db": "workspace:*",
-    "@packages/schema": "workspace:*",
-    "drizzle-orm": "^0.45.1",
-    "server-only": "^0.0.1",
-    "viem": "^2.47.6"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.32.0"
+	"name": "@packages/cqrs",
+	"version": "0.3.0",
+	"private": true,
+	"author": "Siegfried Bozza",
+	"license": "MIT",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"dependencies": {
+		"@packages/env": "workspace:*",
+		"@packages/db": "workspace:*",
+		"@packages/schema": "workspace:*",
+		"drizzle-orm": "^0.45.1",
+		"server-only": "^0.0.1",
+		"viem": "^2.47.6"
+	},
+	"keywords": [],
+	"packageManager": "pnpm@10.32.0"
 }

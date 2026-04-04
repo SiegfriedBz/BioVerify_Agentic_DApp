@@ -1,5 +1,5 @@
-import { createSelectSchema } from 'drizzle-zod'
-import { z } from "zod"
+import { createSelectSchema } from "drizzle-zod"
+import type { z } from "zod"
 import { protocolDbSchema } from "../db"
 
 // RAW Data (DB)

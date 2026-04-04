@@ -1,8 +1,8 @@
 "use client"
 
+import type { FC, PropsWithChildren } from "react"
 import { AppSidebar } from "@/app/_components/sidebar/app-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import type { FC, PropsWithChildren } from "react"
 
 export const AppSideBarProvider: FC<PropsWithChildren> = (props) => {
 	const { children } = props
@@ -16,9 +16,7 @@ export const AppSideBarProvider: FC<PropsWithChildren> = (props) => {
 				</header>
 
 				<main className="@container flex-1 p-4 @md:p-8">
-					<div className="mx-auto w-full max-w-350">
-						{children}
-					</div>
+					<div className="mx-auto w-full max-w-350">{children}</div>
 				</main>
 			</div>
 		</SidebarProvider>

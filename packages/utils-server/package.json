@@ -1,22 +1,21 @@
 {
-  "name": "@packages/utils-server",
+	"name": "@packages/utils-server",
 	"version": "0.3.0",
-  "private": true,
-  "author": "Siegfried Bozza",
-  "license": "MIT",
-  "main": "index.ts",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.23.0",
-  "dependencies": {
-    "@packages/schema": "workspace:*",
-    "@packages/env": "workspace:*",
-    "viem": "^2.47.0",
-    "zod": "^4.3.6",
-    "server-only": "^0.0.1"
-  }
+	"private": true,
+	"author": "Siegfried Bozza",
+	"license": "MIT",
+	"main": "index.ts",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"packageManager": "pnpm@10.23.0",
+	"dependencies": {
+		"@packages/schema": "workspace:*",
+		"@packages/env": "workspace:*",
+		"@packages/utils": "workspace:*",
+		"viem": "^2.47.0",
+		"zod": "^4.3.6",
+		"server-only": "^0.0.1"
+	}
 }

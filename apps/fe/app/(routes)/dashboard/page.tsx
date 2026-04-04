@@ -1,6 +1,6 @@
-import { TypographyH1, TypographyP } from "@/app/_components/typography"
-import { SearchParams } from "nuqs/server"
+import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { TypographyH1, TypographyP } from "@/app/_components/typography"
 import { PublicationsTableSkeleton } from "./_components/publications-table-skeleton"
 import { StatsSkeleton } from "./_components/stats-skeleton"
 import { StatsWrapper } from "./_components/stats-wrapper"

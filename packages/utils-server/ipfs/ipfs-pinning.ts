@@ -1,114 +1,111 @@
 import { env } from "@packages/env"
-import { IpfsPublicationSchema } from "@packages/schema"
+import type { IpfsPublicationSchema } from "@packages/schema"
 import "server-only"
-import { z } from "zod"
+import type { z } from "zod"
 
 const PINATA_JWT = env.PINATA_API_JWT
 
-export type Params = z.infer<
-  typeof IpfsPublicationSchema
->
+type IpfsFileParam = {
+	file: Blob | File
+	name: string
+	type: string
+}
 
-export const createAndPinManifestRootCid = async (
-  params: Params,
-) => {
-  try {
-    // 1. Upload Attachments (Binary Files)
-    const attachments = await Promise.all(
-      (params.files || []).map(async (fileObj: any) => {
-        const formData = new FormData()
-        formData.append("file", fileObj.file)
+export type Params = z.infer<typeof IpfsPublicationSchema>
 
-        const res = await fetch(
-          "https://api.pinata.cloud/pinning/pinFileToIPFS",
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${PINATA_JWT}` },
-            body: formData,
-          },
-        )
+export const createAndPinManifestRootCid = async (params: Params) => {
+	try {
+		// 1. Upload Attachments (Binary Files)
+		const attachments = await Promise.all(
+			(params.files || []).map(async (fileObj: IpfsFileParam) => {
+				const formData = new FormData()
+				formData.append("file", fileObj.file)
 
-        const json = await res.json()
-        return {
-          name: fileObj.name,
-          type: fileObj.type,
-          cid: json.IpfsHash,
-        }
-      }),
-    )
+				const res = await fetch(
+					"https://api.pinata.cloud/pinning/pinFileToIPFS",
+					{
+						method: "POST",
+						headers: { Authorization: `Bearer ${PINATA_JWT}` },
+						body: formData,
+					},
+				)
 
-    // 2. Upload Title, Abstract, and Manuscript as individual files
-    // This gives us the specific CIDs for the Payload
-    const [titleCid, abstractCid, manuscriptCid] = await Promise.all([
-      pinText({ text: params.title, fileName: "title.txt" }),
-      pinText({ text: params.abstract, fileName: "abstract.txt" }),
-      pinText({ text: params.manuscript, fileName: "manuscript.txt" }),
-    ])
+				const json = await res.json()
+				return {
+					name: fileObj.name,
+					type: fileObj.type,
+					cid: json.IpfsHash,
+				}
+			}),
+		)
 
-    // 3. Build the Manifest object to match the ManifestSchema
-    const manifestData = {
-      metadata: {
-        authors: params.authors,
-        license: params.license || "",
-      },
-      payload: {
-        titleCid,
-        abstractCid,
-        manuscriptCid,
-        attachments,
-      },
-    }
+		// 2. Upload Title, Abstract, and Manuscript as individual files
+		// This gives us the specific CIDs for the Payload
+		const [titleCid, abstractCid, manuscriptCid] = await Promise.all([
+			pinText({ text: params.title, fileName: "title.txt" }),
+			pinText({ text: params.abstract, fileName: "abstract.txt" }),
+			pinText({ text: params.manuscript, fileName: "manuscript.txt" }),
+		])
 
-    // 4. Pin the final Root Manifest
-    const resManifest = await fetch(
-      "https://api.pinata.cloud/pinning/pinJSONToIPFS",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${PINATA_JWT}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(manifestData),
-      },
-    )
+		// 3. Build the Manifest object to match the ManifestSchema
+		const manifestData = {
+			metadata: {
+				authors: params.authors,
+				license: params.license || "",
+			},
+			payload: {
+				titleCid,
+				abstractCid,
+				manuscriptCid,
+				attachments,
+			},
+		}
 
-    const finalJson = await resManifest.json()
-    const rootCid = finalJson.IpfsHash
-    return rootCid
-  } catch (error) {
-    console.error("BioVerify Pinning Error:", error)
-    return null
-  }
+		// 4. Pin the final Root Manifest
+		const resManifest = await fetch(
+			"https://api.pinata.cloud/pinning/pinJSONToIPFS",
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${PINATA_JWT}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(manifestData),
+			},
+		)
+
+		const finalJson = await resManifest.json()
+		const rootCid = finalJson.IpfsHash
+		return rootCid
+	} catch (error) {
+		console.error("BioVerify Pinning Error:", error)
+		return null
+	}
 }
 
 type PinTextParams = {
-  text: string
-  fileName: string
+	text: string
+	fileName: string
 }
 
 /**
  * Helper to pin a simple string as a text file to get a unique CID
  */
 export const pinText = async (params: PinTextParams): Promise<string> => {
-  const { text, fileName } = params
+	const { text, fileName } = params
 
-  const formData = new FormData()
-  // Create a Blob from the string to simulate a file upload
-  const blob = new Blob([text], { type: "text/plain" })
-  formData.append("file", blob, fileName)
+	const formData = new FormData()
+	// Create a Blob from the string to simulate a file upload
+	const blob = new Blob([text], { type: "text/plain" })
+	formData.append("file", blob, fileName)
 
-  const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${PINATA_JWT}` },
-    body: formData,
-  })
+	const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+		method: "POST",
+		headers: { Authorization: `Bearer ${PINATA_JWT}` },
+		body: formData,
+	})
 
-  if (!res.ok) throw new Error(`Failed to pin text: ${fileName}`)
-  const json = await res.json()
-  return json.IpfsHash as string
+	if (!res.ok) throw new Error(`Failed to pin text: ${fileName}`)
+	const json = await res.json()
+	return json.IpfsHash as string
 }
-
-
-
-
-

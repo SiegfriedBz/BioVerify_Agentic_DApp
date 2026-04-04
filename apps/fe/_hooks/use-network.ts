@@ -1,6 +1,6 @@
 "use client"
 
-import { NetworkSchema, NetworkT } from "@packages/schema"
+import { NetworkSchema, type NetworkT } from "@packages/schema"
 import { NetworkToChainId } from "@packages/utils"
 import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react"
 import { useMemo } from "react"

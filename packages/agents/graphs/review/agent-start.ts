@@ -1,8 +1,16 @@
 import { env } from "@packages/env"
-import { mask, networkMessage, sendTelegramNotification } from "@packages/notifications"
-import { InterruptKind, LlmDecisionSchema, NetworkT } from "@packages/schema"
+import {
+	mask,
+	networkMessage,
+	sendTelegramNotification,
+} from "@packages/notifications"
+import {
+	InterruptKind,
+	LlmDecisionSchema,
+	type NetworkT,
+} from "@packages/schema"
 import { AgentType, getThreadId } from "@packages/utils"
-import 'server-only'
+import "server-only"
 import { reviewersGraph } from "./graph"
 
 const PINATA_IPFS_URL = env.NEXT_PUBLIC_PINATA_IPFS_URL ?? ""
@@ -17,7 +25,7 @@ type Params = {
 
 /**
  * Entry point for the Reviewer AI Agent.
- * Initializes state and executes the graph. 
+ * Initializes state and executes the graph.
  */
 export const startReviewersAgent = async (params: Params) => {
 	const { network, publicationId, rootCid, reviewers, seniorReviewer } = params
@@ -25,11 +33,14 @@ export const startReviewersAgent = async (params: Params) => {
 	try {
 		const threadId = getThreadId({
 			type: AgentType.REVIEW,
-			publicationId, rootCid
+			publicationId,
+			rootCid,
 		})
 		const config = { configurable: { thread_id: threadId } }
 
-		console.log(`[REVIEW_AGENT:START] Thread: ${threadId} | Pub: ${publicationId}`)
+		console.log(
+			`[REVIEW_AGENT:START] Thread: ${threadId} | Pub: ${publicationId}`,
+		)
 
 		// 1. Check if the graph is already in the database
 		const snapshot = await reviewersGraph.getState(config)
@@ -46,14 +57,14 @@ export const startReviewersAgent = async (params: Params) => {
 			network,
 			publicationId,
 			rootCid,
-			humanReviews: reviewers.map(address => ({ address })),
+			humanReviews: reviewers.map((address) => ({ address })),
 			llmVerdict: { decision: LlmDecisionSchema.enum.pending, reason: "" },
-			seniorReview: { address: seniorReviewer }
+			seniorReview: { address: seniorReviewer },
 		}
 
 		// 3. Notify the community
 		const seniorMasked = mask(seniorReviewer)
-		const peersMasked = reviewers.map(mask).join(', ')
+		const peersMasked = reviewers.map(mask).join(", ")
 
 		const message =
 			`🎲 *BioVerify Alert: Review Phase Started*\n\n` +
@@ -76,29 +87,49 @@ export const startReviewersAgent = async (params: Params) => {
 		// 5. Handle Interrupts (HITL)
 		// We check if the graph returned an interrupt to tell the UI what to display
 		if (result && typeof result === "object" && "__interrupt__" in result) {
-			const interrupt = Array.isArray(result.__interrupt__) ? result.__interrupt__[0] : result.__interrupt__
+			const interrupt = Array.isArray(result.__interrupt__)
+				? result.__interrupt__[0]
+				: result.__interrupt__
 			const { kind, llmVerdictReason } = interrupt.value
 
 			if (kind === InterruptKind.REVIEW_PUBLICATION) {
-				return { interrupt: { threadId, publicationId, rootCid, reviewersAddresses: reviewers } }
+				return {
+					interrupt: {
+						threadId,
+						publicationId,
+						rootCid,
+						reviewersAddresses: reviewers,
+					},
+				}
 			}
 
 			if (kind === InterruptKind.SENIOR_REVIEW_PUBLICATION) {
-				return { interrupt: { threadId, publicationId, rootCid, seniorReviewerAddress: seniorReviewer, llmVerdictReason } }
+				return {
+					interrupt: {
+						threadId,
+						publicationId,
+						rootCid,
+						seniorReviewerAddress: seniorReviewer,
+						llmVerdictReason,
+					},
+				}
 			}
 		}
 
 		return { finalState: result }
 	} catch (error: any) {
-		console.error(`[CRITICAL ERROR] [Review Agent] crashed for Pub #${publicationId}:`, error)
+		console.error(
+			`[CRITICAL ERROR] [Review Agent] crashed for Pub #${publicationId}:`,
+			error,
+		)
 
 		await sendTelegramNotification(
 			`🚨 *BioVerify REVIEW AGENT CRASHED*\n` +
-			`*Pub:* #${publicationId}\n` +
-			`*Error:* ${error?.message || "Unknown error"}`
-		).catch(() => { })
+				`*Pub:* #${publicationId}\n` +
+				`*Error:* ${error?.message || "Unknown error"}`,
+		).catch(() => {})
 
-		// Re-throw 
+		// Re-throw
 		throw error
 	}
 }

@@ -18,7 +18,8 @@ export const Providers: FC<PropsWithChildren<Props>> = (props) => {
 			defaultTheme="dark"
 			enableSystem
 			disableTransitionOnChange
-		><CustomWagmiProvider cookies={cookies}>
+		>
+			<CustomWagmiProvider cookies={cookies}>
 				<TooltipProvider>
 					<AppSideBarProvider>{children}</AppSideBarProvider>
 				</TooltipProvider>

@@ -1,68 +1,68 @@
 import { dataTableConfig } from "../config/data-table"
-import { FILTER_OPERATORS, FILTER_VARIANTS, JOIN_OPERATORS } from "./constants"
 import type {
-  ExtendedColumnFilter,
-  FilterOperator,
-  FilterVariant,
+	ExtendedColumnFilter,
+	FilterOperator,
+	FilterVariant,
 } from "../types"
+import { FILTER_OPERATORS, FILTER_VARIANTS, JOIN_OPERATORS } from "./constants"
 
 export function getFilterOperators(filterVariant: FilterVariant) {
-  const operatorMap: Record<
-    FilterVariant,
-    { label: string; value: FilterOperator }[]
-  > = {
-    [FILTER_VARIANTS.TEXT]: dataTableConfig.textOperators,
-    [FILTER_VARIANTS.NUMBER]: dataTableConfig.numericOperators,
-    [FILTER_VARIANTS.RANGE]: dataTableConfig.numericOperators,
-    [FILTER_VARIANTS.DATE]: dataTableConfig.dateOperators,
-    [FILTER_VARIANTS.DATE_RANGE]: dataTableConfig.dateOperators,
-    [FILTER_VARIANTS.BOOLEAN]: dataTableConfig.booleanOperators,
-    [FILTER_VARIANTS.SELECT]: dataTableConfig.selectOperators,
-    [FILTER_VARIANTS.MULTI_SELECT]: dataTableConfig.multiSelectOperators,
-  }
+	const operatorMap: Record<
+		FilterVariant,
+		{ label: string; value: FilterOperator }[]
+	> = {
+		[FILTER_VARIANTS.TEXT]: dataTableConfig.textOperators,
+		[FILTER_VARIANTS.NUMBER]: dataTableConfig.numericOperators,
+		[FILTER_VARIANTS.RANGE]: dataTableConfig.numericOperators,
+		[FILTER_VARIANTS.DATE]: dataTableConfig.dateOperators,
+		[FILTER_VARIANTS.DATE_RANGE]: dataTableConfig.dateOperators,
+		[FILTER_VARIANTS.BOOLEAN]: dataTableConfig.booleanOperators,
+		[FILTER_VARIANTS.SELECT]: dataTableConfig.selectOperators,
+		[FILTER_VARIANTS.MULTI_SELECT]: dataTableConfig.multiSelectOperators,
+	}
 
-  return operatorMap[filterVariant] ?? dataTableConfig.textOperators
+	return operatorMap[filterVariant] ?? dataTableConfig.textOperators
 }
 
 export function getDefaultFilterOperator(filterVariant: FilterVariant) {
-  const operators = getFilterOperators(filterVariant)
+	const operators = getFilterOperators(filterVariant)
 
-  return (
-    operators[0]?.value ??
-    (filterVariant === FILTER_VARIANTS.TEXT
-      ? FILTER_OPERATORS.ILIKE
-      : FILTER_OPERATORS.EQ)
-  )
+	return (
+		operators[0]?.value ??
+		(filterVariant === FILTER_VARIANTS.TEXT
+			? FILTER_OPERATORS.ILIKE
+			: FILTER_OPERATORS.EQ)
+	)
 }
 
 export function getValidFilters<TData>(
-  filters: ExtendedColumnFilter<TData>[],
+	filters: ExtendedColumnFilter<TData>[],
 ): ExtendedColumnFilter<TData>[] {
-  return filters.filter(filter => {
-    // isEmpty and isNotEmpty don't need values
-    if (
-      filter.operator === FILTER_OPERATORS.EMPTY ||
-      filter.operator === FILTER_OPERATORS.NOT_EMPTY
-    ) {
-      return true
-    }
+	return filters.filter((filter) => {
+		// isEmpty and isNotEmpty don't need values
+		if (
+			filter.operator === FILTER_OPERATORS.EMPTY ||
+			filter.operator === FILTER_OPERATORS.NOT_EMPTY
+		) {
+			return true
+		}
 
-    // For array values (like isBetween with range [min, max])
-    if (Array.isArray(filter.value)) {
-      // All array elements must be non-empty
-      return (
-        filter.value.length > 0 &&
-        filter.value.every(
-          val => val !== "" && val !== null && val !== undefined,
-        )
-      )
-    }
+		// For array values (like isBetween with range [min, max])
+		if (Array.isArray(filter.value)) {
+			// All array elements must be non-empty
+			return (
+				filter.value.length > 0 &&
+				filter.value.every(
+					(val) => val !== "" && val !== null && val !== undefined,
+				)
+			)
+		}
 
-    // For non-array values
-    return (
-      filter.value !== "" && filter.value !== null && filter.value !== undefined
-    )
-  })
+		// For non-array values
+		return (
+			filter.value !== "" && filter.value !== null && filter.value !== undefined
+		)
+	})
 }
 
 /**
@@ -98,49 +98,49 @@ export function getValidFilters<TData>(
  * ```
  */
 export function processFiltersForLogic<TData>(
-  filters: ExtendedColumnFilter<TData>[],
+	filters: ExtendedColumnFilter<TData>[],
 ): {
-  processedFilters: ExtendedColumnFilter<TData>[]
-  hasOrFilters: boolean
-  hasSameColumnFilters: boolean
-  shouldUseGlobalFilter: boolean
-  joinOperator: typeof JOIN_OPERATORS.MIXED | typeof JOIN_OPERATORS.AND
+	processedFilters: ExtendedColumnFilter<TData>[]
+	hasOrFilters: boolean
+	hasSameColumnFilters: boolean
+	shouldUseGlobalFilter: boolean
+	joinOperator: typeof JOIN_OPERATORS.MIXED | typeof JOIN_OPERATORS.AND
 } {
-  // Check for explicit OR operators
-  const hasOrFilters = filters.some(
-    (filter, index) => index > 0 && filter.joinOperator === JOIN_OPERATORS.OR,
-  )
+	// Check for explicit OR operators
+	const hasOrFilters = filters.some(
+		(filter, index) => index > 0 && filter.joinOperator === JOIN_OPERATORS.OR,
+	)
 
-  // Check for multiple filters on the same column (UX: should use OR logic)
-  const columnIds = filters.map(f => f.id)
-  const hasSameColumnFilters = columnIds.length !== new Set(columnIds).size
+	// Check for multiple filters on the same column (UX: should use OR logic)
+	const columnIds = filters.map((f) => f.id)
+	const hasSameColumnFilters = columnIds.length !== new Set(columnIds).size
 
-  // Process filters: convert same-column AND to OR for better UX
-  const processedFilters = hasSameColumnFilters
-    ? filters.map((filter, index) => {
-        // If this is not the first filter and it's on the same column as a previous filter,
-        // convert AND to OR for better UX (same column filters should use OR logic)
-        const previousFilters = filters.slice(0, index)
-        const hasSameColumnBefore = previousFilters.some(
-          f => f.id === filter.id,
-        )
-        if (hasSameColumnBefore && filter.joinOperator === JOIN_OPERATORS.AND) {
-          return { ...filter, joinOperator: JOIN_OPERATORS.OR }
-        }
-        return filter
-      })
-    : filters
+	// Process filters: convert same-column AND to OR for better UX
+	const processedFilters = hasSameColumnFilters
+		? filters.map((filter, index) => {
+				// If this is not the first filter and it's on the same column as a previous filter,
+				// convert AND to OR for better UX (same column filters should use OR logic)
+				const previousFilters = filters.slice(0, index)
+				const hasSameColumnBefore = previousFilters.some(
+					(f) => f.id === filter.id,
+				)
+				if (hasSameColumnBefore && filter.joinOperator === JOIN_OPERATORS.AND) {
+					return { ...filter, joinOperator: JOIN_OPERATORS.OR }
+				}
+				return filter
+			})
+		: filters
 
-  const shouldUseGlobalFilter = hasOrFilters || hasSameColumnFilters
-  const joinOperator = shouldUseGlobalFilter
-    ? JOIN_OPERATORS.MIXED
-    : JOIN_OPERATORS.AND
+	const shouldUseGlobalFilter = hasOrFilters || hasSameColumnFilters
+	const joinOperator = shouldUseGlobalFilter
+		? JOIN_OPERATORS.MIXED
+		: JOIN_OPERATORS.AND
 
-  return {
-    processedFilters,
-    hasOrFilters,
-    hasSameColumnFilters,
-    shouldUseGlobalFilter,
-    joinOperator,
-  }
+	return {
+		processedFilters,
+		hasOrFilters,
+		hasSameColumnFilters,
+		shouldUseGlobalFilter,
+		joinOperator,
+	}
 }

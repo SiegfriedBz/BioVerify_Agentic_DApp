@@ -1,19 +1,22 @@
-import { networkMessage, sendTelegramNotification } from "@packages/notifications"
+import {
+	networkMessage,
+	sendTelegramNotification,
+} from "@packages/notifications"
 import { LlmVerdictSchema } from "@packages/schema"
 import { HumanMessage, SystemMessage } from "langchain"
-import 'server-only'
+import "server-only"
 import { createChatModel } from "../../../model/factory"
-import { ReviewsState } from "../state"
+import type { ReviewsState } from "../state"
 
 export const llmVerdictNode = async (
-  state: ReviewsState,
+	state: ReviewsState,
 ): Promise<Partial<ReviewsState>> => {
-  const { publicationId, humanReviews, network } = state
+	const { publicationId, humanReviews, network } = state
 
-  const llm = createChatModel()
-  const structuredLlm = llm.withStructuredOutput(LlmVerdictSchema)
+	const llm = createChatModel()
+	const structuredLlm = llm.withStructuredOutput(LlmVerdictSchema)
 
-  const systemMsg = new SystemMessage(`
+	const systemMsg = new SystemMessage(`
     You are the Lead Forensic Editor for BioVerify. 
     Analyze the ${humanReviews.length} peer reviews for Publication ${publicationId}.
     
@@ -24,29 +27,30 @@ export const llmVerdictNode = async (
     Note: You can NOT leave the decision as "pending".
   `)
 
-  const humanMsg = new HumanMessage(
-    `Review Data:\n${humanReviews.map(r =>
-      `Reviewer ${r.address}: [${r.verdict?.decision.toUpperCase()}] - ${r.verdict?.reason}`
-    ).join("\n")}`
-  )
+	const humanMsg = new HumanMessage(
+		`Review Data:\n${humanReviews
+			.map(
+				(r) =>
+					`Reviewer ${r.address}: [${r.verdict?.decision.toUpperCase()}] - ${r.verdict?.reason}`,
+			)
+			.join("\n")}`,
+	)
 
-  const response = await structuredLlm.invoke([systemMsg, humanMsg])
+	const response = await structuredLlm.invoke([systemMsg, humanMsg])
 
-  // Notify the community
-  const message =
-    `🤖 *BioVerify Alert: AI Analysis Complete*\n\n` +
-    `*Network:* #${networkMessage(network)}\n` +
-    `*Publication:* #${state.publicationId}\n` +
-    `*Phase:* Automated Integrity Check\n\n` +
-    `⚖️ *Decision:* \n` +
-    `\`${response.decision.toUpperCase()}\`\n\n` +
-    `📖 *Reasoning:* \n` +
-    `> ${response.reason}\n\n` +
-    `🛠️ _Protocol moving to next lifecycle stage..._`
+	// Notify the community
+	const message =
+		`🤖 *BioVerify Alert: AI Analysis Complete*\n\n` +
+		`*Network:* #${networkMessage(network)}\n` +
+		`*Publication:* #${state.publicationId}\n` +
+		`*Phase:* Automated Integrity Check\n\n` +
+		`⚖️ *Decision:* \n` +
+		`\`${response.decision.toUpperCase()}\`\n\n` +
+		`📖 *Reasoning:* \n` +
+		`> ${response.reason}\n\n` +
+		`🛠️ _Protocol moving to next lifecycle stage..._`
 
-  await sendTelegramNotification(message)
+	await sendTelegramNotification(message)
 
-  return { llmVerdict: response }
+	return { llmVerdict: response }
 }
-
-

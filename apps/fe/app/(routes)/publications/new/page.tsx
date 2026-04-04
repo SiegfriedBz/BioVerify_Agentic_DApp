@@ -1,5 +1,5 @@
-import { TypographyH2, TypographyP } from "@/app/_components/typography"
 import { Suspense } from "react"
+import { TypographyH2, TypographyP } from "@/app/_components/typography"
 import { ChainStatsSkeleton } from "./_components/chain-stats-skeleton"
 import { ChainStatsWrapper } from "./_components/chain-stats-wrapper"
 import { SubmitPublicationFormSkeleton } from "./_components/submit-publication-form-skeleton"
@@ -13,7 +13,8 @@ export default function Page() {
 					New Publication Submission
 				</TypographyH2>
 				<TypographyP className="text-muted-foreground mt-0!">
-					Anchor your findings on the BioVerify ledger. Ensure your data hashes are correct before staking.
+					Anchor your findings on the BioVerify ledger. Ensure your data hashes
+					are correct before staking.
 				</TypographyP>
 			</header>
 

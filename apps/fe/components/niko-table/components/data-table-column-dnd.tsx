@@ -1,12 +1,12 @@
 "use client"
 
 import {
-  TableColumnDndProvider,
-  type TableColumnDndProviderProps,
-  TableDraggableHeader,
-  type TableDraggableHeaderProps,
-  TableDragAlongCell,
-  type TableDragAlongCellProps,
+	TableColumnDndProvider,
+	type TableColumnDndProviderProps,
+	TableDragAlongCell,
+	type TableDragAlongCellProps,
+	TableDraggableHeader,
+	type TableDraggableHeaderProps,
 } from "../filters/table-column-dnd"
 
 // ============================================================================
@@ -14,8 +14,8 @@ import {
 // ============================================================================
 
 export type DataTableColumnDndProviderProps = Omit<
-  TableColumnDndProviderProps,
-  never
+	TableColumnDndProviderProps,
+	never
 >
 
 /**
@@ -41,9 +41,9 @@ export type DataTableColumnDndProviderProps = Omit<
  * </DataTableRoot>
  */
 export function DataTableColumnDndProvider(
-  props: DataTableColumnDndProviderProps,
+	props: DataTableColumnDndProviderProps,
 ) {
-  return <TableColumnDndProvider {...props} />
+	return <TableColumnDndProvider {...props} />
 }
 
 DataTableColumnDndProvider.displayName = "DataTableColumnDndProvider"
@@ -53,7 +53,7 @@ DataTableColumnDndProvider.displayName = "DataTableColumnDndProvider"
 // ============================================================================
 
 export type DataTableDraggableHeaderProps<TData, TValue> =
-  TableDraggableHeaderProps<TData, TValue>
+	TableDraggableHeaderProps<TData, TValue>
 
 /**
  * Context-aware draggable header cell for column DnD.
@@ -64,9 +64,9 @@ export type DataTableDraggableHeaderProps<TData, TValue> =
  * </DataTableDraggableHeader>
  */
 export function DataTableDraggableHeader<TData, TValue>(
-  props: DataTableDraggableHeaderProps<TData, TValue>,
+	props: DataTableDraggableHeaderProps<TData, TValue>,
 ) {
-  return <TableDraggableHeader<TData, TValue> {...props} />
+	return <TableDraggableHeader<TData, TValue> {...props} />
 }
 
 DataTableDraggableHeader.displayName = "DataTableDraggableHeader"
@@ -76,7 +76,7 @@ DataTableDraggableHeader.displayName = "DataTableDraggableHeader"
 // ============================================================================
 
 export type DataTableDragAlongCellProps<TData, TValue> =
-  TableDragAlongCellProps<TData, TValue>
+	TableDragAlongCellProps<TData, TValue>
 
 /**
  * Context-aware cell that follows column drag position.
@@ -87,9 +87,9 @@ export type DataTableDragAlongCellProps<TData, TValue> =
  * </DataTableDragAlongCell>
  */
 export function DataTableDragAlongCell<TData, TValue>(
-  props: DataTableDragAlongCellProps<TData, TValue>,
+	props: DataTableDragAlongCellProps<TData, TValue>,
 ) {
-  return <TableDragAlongCell<TData, TValue> {...props} />
+	return <TableDragAlongCell<TData, TValue> {...props} />
 }
 
 DataTableDragAlongCell.displayName = "DataTableDragAlongCell"

@@ -1,11 +1,11 @@
 "use client"
 
-import { SidebarMenuButton } from "@/components/ui/sidebar"
 import { ChainIdToNetwork } from "@packages/utils"
 import { useAppKit, useAppKitAccount, useDisconnect } from "@reown/appkit/react"
 import { LogOutIcon, WalletIcon } from "lucide-react"
-import { FC } from "react"
+import type { FC } from "react"
 import { useChainId } from "wagmi"
+import { SidebarMenuButton } from "@/components/ui/sidebar"
 import { NetworkSimpleBadge } from "../network-badge"
 
 export const ConnectButton: FC = () => {

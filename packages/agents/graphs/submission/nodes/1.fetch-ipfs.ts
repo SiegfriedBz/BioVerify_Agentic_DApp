@@ -1,6 +1,6 @@
-import { IpfsPublication, Manifest } from "@packages/schema"
+import type { IpfsPublication, Manifest } from "@packages/schema"
 import { fetchIpfs } from "@packages/utils"
-import 'server-only'
+import "server-only"
 import type { SubmissionState } from "../state"
 
 export const fetchIpfsNode = async (
@@ -16,4 +16,3 @@ export const fetchIpfsNode = async (
 
 	return { publication: { abstract } }
 }
-

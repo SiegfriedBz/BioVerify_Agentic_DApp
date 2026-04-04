@@ -1,13 +1,13 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Field, FieldError } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { AuthorRoleSchema, NetworkSchema } from "@packages/schema"
 import { AuthorRoleLabel, NetworkLabel } from "@packages/utils"
 import { Trash2Icon } from "lucide-react"
 import type { FC } from "react"
 import { Controller, useFormContext } from "react-hook-form"
+import { Button } from "@/components/ui/button"
+import { Field, FieldError } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 
 const AUTHOR_ROLE_OPTIONS = AuthorRoleSchema.options.map((val) => {
 	return {

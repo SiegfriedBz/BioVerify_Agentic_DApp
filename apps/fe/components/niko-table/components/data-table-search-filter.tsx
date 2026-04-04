@@ -2,13 +2,13 @@
 
 import { useDataTable } from "../core"
 import {
-  TableSearchFilter,
-  type TableSearchFilterProps,
+	TableSearchFilter,
+	type TableSearchFilterProps,
 } from "../filters/table-search-filter"
 
 type DataTableSearchFilterProps<TData> = Omit<
-  TableSearchFilterProps<TData>,
-  "table"
+	TableSearchFilterProps<TData>,
+	"table"
 >
 
 /**
@@ -37,10 +37,10 @@ type DataTableSearchFilterProps<TData> = Omit<
  * />
  */
 export function DataTableSearchFilter<TData>(
-  props: DataTableSearchFilterProps<TData>,
+	props: DataTableSearchFilterProps<TData>,
 ) {
-  const { table } = useDataTable<TData>()
-  return <TableSearchFilter table={table} {...props} />
+	const { table } = useDataTable<TData>()
+	return <TableSearchFilter table={table} {...props} />
 }
 
 /**

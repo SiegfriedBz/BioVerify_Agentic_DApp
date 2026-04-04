@@ -3,41 +3,49 @@
 /**
  * @title ReviewForm
  * @notice Provides a secure interface for reviewers to submit their technical validation of a research publication.
- * @dev This component implements the EIP-712 signing flow to authenticate human reviews before they are 
+ * @dev This component implements the EIP-712 signing flow to authenticate human reviews before they are
  * injected into the LangGraph state machine. It handles:
  * 1. Form validation via Zod & React Hook Form.
  * 2. Cryptographic signing of the verdict (Decision + Reason + Metadata).
  * 3. Triggering the server-side LangGraph resumption (resumeReviewersAgent).
  */
 
+import { zodResolver } from "@hookform/resolvers/zod"
+import { HumanDecisionSchema } from "@packages/schema"
+import { ChainIdToNetwork } from "@packages/utils"
+import {
+	CheckCircle2Icon,
+	Loader2Icon,
+	SendIcon,
+	XCircleIcon,
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { type FC, useMemo } from "react"
+import { Controller, useForm } from "react-hook-form"
+import { toast } from "sonner"
+import * as z from "zod"
 import { usePublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
 import { useSubmitReview } from "@/_hooks/cqrs/commands/use-submit-review"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { ReviewerRoleBadge } from "@/app/_components/reviewer-role-badge"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card"
+import {
+	Field,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
 } from "@/components/ui/field"
-import {
-  InputGroup,
-  InputGroupTextarea
-} from "@/components/ui/input-group"
+import { InputGroup, InputGroupTextarea } from "@/components/ui/input-group"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { HumanDecisionSchema } from "@packages/schema"
-import { ChainIdToNetwork } from "@packages/utils"
-import { CheckCircle2Icon, Loader2Icon, SendIcon, XCircleIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { FC, useMemo } from "react"
-import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
-import * as z from "zod"
 
 /**
  * @notice Parameters required to resume the LangGraph Review Agent.
@@ -48,169 +56,195 @@ import * as z from "zod"
  */
 
 const formSchema = z.object({
-  decision: z.enum(["pass", "fail"]),
-  reason: z.string().min(12, "Justification must be at least 12 characters.")
+	decision: z.enum(["pass", "fail"]),
+	reason: z.string().min(12, "Justification must be at least 12 characters."),
 })
 
 type formSchemaT = z.infer<typeof formSchema>
 
 export const ReviewForm: FC = () => {
-  const router = useRouter()
-  const form = useForm<formSchemaT>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      decision: HumanDecisionSchema.enum.fail,
-      reason: ""
-    },
-  })
+	const router = useRouter()
+	const form = useForm<formSchemaT>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {
+			decision: HumanDecisionSchema.enum.fail,
+			reason: "",
+		},
+	})
 
-  const { publication } = usePublicationDetailContext()
-  const { walletAddress,
-    walletChainId } = useAuthFromWallet()
+	const { publication } = usePublicationDetailContext()
+	const { walletAddress, walletChainId } = useAuthFromWallet()
 
-  const { mutateAsync, isPending } = useSubmitReview()
+	const { mutateAsync, isPending } = useSubmitReview()
 
-  const isSeniorReviewer = useMemo(() => {
-    return publication?.seniorReviewer?.toLowerCase() === walletAddress?.toLowerCase()
-  }, [publication, walletAddress])
+	const isSeniorReviewer = useMemo(() => {
+		return (
+			publication?.seniorReviewer?.toLowerCase() ===
+			walletAddress?.toLowerCase()
+		)
+	}, [publication, walletAddress])
 
-  const onSubmit = async (data: formSchemaT) => {
-    if (!publication) return toast.error("Publication not found.")
-    if (!walletAddress || !walletChainId) return toast.error("Connect wallet first")
+	const onSubmit = async (data: formSchemaT) => {
+		if (
+			!publication?.cid ||
+			!publication.chainId ||
+			!publication.seniorReviewer
+		) {
+			return toast.error("Publication not found.")
+		}
 
-    // Safety check: Ensure user is on the right network before starting
-    if (walletChainId !== publication.chainId) {
-      return toast.error(`Switch to ${ChainIdToNetwork[publication.chainId as number]} to submit`)
-    }
+		if (!walletAddress || !walletChainId)
+			return toast.error("Connect wallet first")
 
-    try {
-      // use mutateAsync to wait for the whole process (signing + agent handoff)
-      await mutateAsync({
-        decision: data.decision,
-        reason: data.reason,
-        reviewer: walletAddress,
-        publication: {
-          pubId: Number(publication.pubId!),
-          cid: publication.cid!,
-          chainId: publication.chainId!,
-          seniorReviewer: publication.seniorReviewer!
-        },
-      })
+		// Safety check: Ensure user is on the right network before starting
+		if (walletChainId !== publication.chainId) {
+			return toast.error(
+				`Switch to ${ChainIdToNetwork[publication.chainId as number]} to submit`,
+			)
+		}
 
-      // The hook has already fired toast.success() at this point.
-      // We add small delay before redirecting to allow the 
-      // user to read the success toast and give the DB a head start.
-      setTimeout(() => {
-        router.push("/reviews")
-      }, 2_500)
+		try {
+			// use mutateAsync to wait for the whole process (signing + agent handoff)
+			await mutateAsync({
+				decision: data.decision,
+				reason: data.reason,
+				reviewer: walletAddress,
+				publication: {
+					pubId: Number(publication.pubId),
+					cid: publication.cid,
+					chainId: publication.chainId,
+					seniorReviewer: publication.seniorReviewer,
+				},
+			})
 
-    } catch (e) {
-      console.error("Review Submission flow interrupted")
-    }
-  }
+			// The hook has already fired toast.success() at this point.
+			// We add small delay before redirecting to allow the
+			// user to read the success toast and give the DB a head start.
+			setTimeout(() => {
+				router.push("/reviews")
+			}, 2_500)
+		} catch (_err) {
+			toast.error("Review Submission flow interrupted")
+		}
+	}
 
+	return (
+		<Card className="border-border shadow-md overflow-hidden">
+			<CardHeader className="bg-muted/30 border-b pb-4">
+				<CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+					Submit Verdict
+				</CardTitle>
+				<ReviewerRoleBadge
+					isSeniorReviewer={isSeniorReviewer}
+					className="-ms-2"
+				/>
+			</CardHeader>
+			<CardContent className="p-6 space-y-6">
+				<form id="form-review" onSubmit={form.handleSubmit(onSubmit)}>
+					<FieldGroup>
+						<Controller
+							name="decision"
+							control={form.control}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid} className="space-y-3">
+									<FieldLabel
+										htmlFor="decision"
+										className="text-[10px] font-bold uppercase text-muted-foreground/80"
+									>
+										Decision
+									</FieldLabel>
+									<ToggleGroup
+										type="single"
+										className="grid grid-cols-2 gap-4"
+										onValueChange={field.onChange}
+									>
+										<ToggleGroupItem
+											value={HumanDecisionSchema.enum.pass}
+											className="h-20 flex flex-col gap-2 border-2 data-[state=on]:border-primary data-[state=on]:bg-primary/5"
+										>
+											<CheckCircle2Icon className="h-5 w-5 text-green-500" />
+											<span className="text-xs font-bold uppercase">Valid</span>
+										</ToggleGroupItem>
+										<ToggleGroupItem
+											value={HumanDecisionSchema.enum.fail}
+											className="h-20 flex flex-col gap-2 border-2 data-[state=on]:border-destructive data-[state=on]:bg-destructive/5"
+										>
+											<XCircleIcon className="h-5 w-5 text-destructive" />
+											<span className="text-xs font-bold uppercase">
+												Invalid
+											</span>
+										</ToggleGroupItem>
+									</ToggleGroup>
+								</Field>
+							)}
+						/>
 
-  return (
-    <Card className="border-border shadow-md overflow-hidden">
-      <CardHeader className="bg-muted/30 border-b pb-4">
-        <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          Submit Verdict
-        </CardTitle>
-        <ReviewerRoleBadge isSeniorReviewer={isSeniorReviewer} className="-ms-2" />
-      </CardHeader>
-      <CardContent className="p-6 space-y-6">
-        <form id="form-review" onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <Controller
-              name="decision"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="space-y-3">
-                  <FieldLabel htmlFor="decision" className="text-[10px] font-bold uppercase text-muted-foreground/80">
-                    Decision
-                  </FieldLabel>
-                  <ToggleGroup
-                    type="single"
-                    className="grid grid-cols-2 gap-4"
-                    onValueChange={field.onChange}
-                  >
-                    <ToggleGroupItem
-                      value={HumanDecisionSchema.enum.pass}
-                      className="h-20 flex flex-col gap-2 border-2 data-[state=on]:border-primary data-[state=on]:bg-primary/5"
-                    >
-                      <CheckCircle2Icon className="h-5 w-5 text-green-500" />
-                      <span className="text-xs font-bold uppercase">Valid</span>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value={HumanDecisionSchema.enum.fail}
-                      className="h-20 flex flex-col gap-2 border-2 data-[state=on]:border-destructive data-[state=on]:bg-destructive/5"
-                    >
-                      <XCircleIcon className="h-5 w-5 text-destructive" />
-                      <span className="text-xs font-bold uppercase">Invalid</span>
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </Field>
-              )}
-            />
+						<Controller
+							name="reason"
+							control={form.control}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid} className="space-y-3">
+									<FieldLabel
+										htmlFor="reason"
+										className="text-[10px] font-bold uppercase text-muted-foreground/80"
+									>
+										Reason
+									</FieldLabel>
+									<InputGroup>
+										<InputGroupTextarea
+											{...field}
+											id="reason"
+											placeholder="Provide technical feedback for the author..."
+											rows={6}
+											className="min-h-30 resize-none bg-muted/20"
+											aria-invalid={fieldState.invalid}
+										/>
+									</InputGroup>
+									<FieldDescription>
+										Include steps to reproduce, expected behavior, and what
+										actually happened.
+									</FieldDescription>
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+					</FieldGroup>
+				</form>
+			</CardContent>
 
-            <Controller
-              name="reason"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="space-y-3">
-                  <FieldLabel htmlFor="reason" className="text-[10px] font-bold uppercase text-muted-foreground/80">
-                    Reason
-                  </FieldLabel>
-                  <InputGroup>
-                    <InputGroupTextarea
-                      {...field}
-                      id="reason"
-                      placeholder="Provide technical feedback for the author..."
-                      rows={6}
-                      className="min-h-30 resize-none bg-muted/20"
-                      aria-invalid={fieldState.invalid}
-                    />
-                  </InputGroup>
-                  <FieldDescription>
-                    Include steps to reproduce, expected behavior, and what
-                    actually happened.
-                  </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-          </FieldGroup>
-        </form>
-      </CardContent>
-
-      <CardFooter>
-        <ButtonGroup className="w-full">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => form.reset()}
-            className="h-12 cursor-pointer"
-            disabled={isPending}
-          >
-            Reset
-          </Button>
-          <ButtonGroupSeparator />
-          <Button
-            type="submit"
-            form="form-review"
-            className="font-bold h-12 cursor-pointer grow"
-            disabled={isPending}
-          >
-            {isPending ? (
-              <><Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
-            ) : (
-              <><SendIcon className="mr-2 h-4 w-4" /> Broadcast Review</>
-            )}
-          </Button>
-        </ButtonGroup>
-      </CardFooter>
-    </Card>
-  )
+			<CardFooter>
+				<ButtonGroup className="w-full">
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => form.reset()}
+						className="h-12 cursor-pointer"
+						disabled={isPending}
+					>
+						Reset
+					</Button>
+					<ButtonGroupSeparator />
+					<Button
+						type="submit"
+						form="form-review"
+						className="font-bold h-12 cursor-pointer grow"
+						disabled={isPending}
+					>
+						{isPending ? (
+							<>
+								<Loader2Icon className="mr-2 h-4 w-4 animate-spin" />{" "}
+								Processing...
+							</>
+						) : (
+							<>
+								<SendIcon className="mr-2 h-4 w-4" /> Broadcast Review
+							</>
+						)}
+					</Button>
+				</ButtonGroup>
+			</CardFooter>
+		</Card>
+	)
 }

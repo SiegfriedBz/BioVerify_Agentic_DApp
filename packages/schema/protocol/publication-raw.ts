@@ -3,11 +3,11 @@ import { z } from "zod"
 import { publicationDbSchema } from "../db"
 
 export const PublicationStatusSchema = z.enum([
-  "SUBMITTED",      // 0
-  "EARLY_SLASHED",  // 1
-  "IN_REVIEW",      // 2
-  "SLASHED",        // 3
-  "PUBLISHED"       // 4
+	"SUBMITTED", // 0
+	"EARLY_SLASHED", // 1
+	"IN_REVIEW", // 2
+	"SLASHED", // 3
+	"PUBLISHED", // 4
 ])
 export type PublicationStatus = z.infer<typeof PublicationStatusSchema>
 

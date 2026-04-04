@@ -2,13 +2,13 @@
 
 import { useDataTable } from "../core"
 import {
-  TableClearFilter,
-  type TableClearFilterProps,
+	TableClearFilter,
+	type TableClearFilterProps,
 } from "../filters/table-clear-filter"
 
 type DataTableClearFilterProps<TData> = Omit<
-  TableClearFilterProps<TData>,
-  "table"
+	TableClearFilterProps<TData>,
+	"table"
 >
 
 /**
@@ -42,10 +42,10 @@ type DataTableClearFilterProps<TData> = Omit<
  * </DataTableClearFilter>
  */
 export function DataTableClearFilter<TData>(
-  props: DataTableClearFilterProps<TData>,
+	props: DataTableClearFilterProps<TData>,
 ) {
-  const { table } = useDataTable<TData>()
-  return <TableClearFilter table={table} {...props} />
+	const { table } = useDataTable<TData>()
+	return <TableClearFilter table={table} {...props} />
 }
 
 DataTableClearFilter.displayName = "DataTableClearFilter"

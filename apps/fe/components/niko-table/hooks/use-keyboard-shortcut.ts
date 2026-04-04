@@ -1,57 +1,57 @@
-import { useEffect, useCallback } from "react"
+import { useCallback, useEffect } from "react"
 
 export interface UseKeyboardShortcutOptions {
-  /**
-   * The key to listen for (e.g., 'f', 's', 'Enter')
-   */
-  key: string
+	/**
+	 * The key to listen for (e.g., 'f', 's', 'Enter')
+	 */
+	key: string
 
-  /**
-   * Function to call when the shortcut is triggered
-   */
-  onTrigger: () => void
+	/**
+	 * Function to call when the shortcut is triggered
+	 */
+	onTrigger: () => void
 
-  /**
-   * Whether the shortcut is enabled
-   * @default true
-   */
-  enabled?: boolean
+	/**
+	 * Whether the shortcut is enabled
+	 * @default true
+	 */
+	enabled?: boolean
 
-  /**
-   * Whether to require Shift key
-   * @default false
-   */
-  requireShift?: boolean
+	/**
+	 * Whether to require Shift key
+	 * @default false
+	 */
+	requireShift?: boolean
 
-  /**
-   * Whether to require Ctrl/Cmd key
-   * @default false
-   */
-  requireCtrl?: boolean
+	/**
+	 * Whether to require Ctrl/Cmd key
+	 * @default false
+	 */
+	requireCtrl?: boolean
 
-  /**
-   * Whether to require Alt key
-   * @default false
-   */
-  requireAlt?: boolean
+	/**
+	 * Whether to require Alt key
+	 * @default false
+	 */
+	requireAlt?: boolean
 
-  /**
-   * Whether to prevent default browser behavior
-   * @default true
-   */
-  preventDefault?: boolean
+	/**
+	 * Whether to prevent default browser behavior
+	 * @default true
+	 */
+	preventDefault?: boolean
 
-  /**
-   * Whether to stop event propagation
-   * @default false
-   */
-  stopPropagation?: boolean
+	/**
+	 * Whether to stop event propagation
+	 * @default false
+	 */
+	stopPropagation?: boolean
 
-  /**
-   * Condition function to determine if shortcut should trigger
-   * Useful for checking if modals are open, inputs are focused, etc.
-   */
-  condition?: () => boolean
+	/**
+	 * Condition function to determine if shortcut should trigger
+	 * Useful for checking if modals are open, inputs are focused, etc.
+	 */
+	condition?: () => boolean
 }
 
 /**
@@ -81,82 +81,82 @@ export interface UseKeyboardShortcutOptions {
  * ```
  */
 export function useKeyboardShortcut({
-  key,
-  onTrigger,
-  enabled = true,
-  requireShift = false,
-  requireCtrl = false,
-  requireAlt = false,
-  preventDefault = true,
-  stopPropagation = false,
-  condition,
+	key,
+	onTrigger,
+	enabled = true,
+	requireShift = false,
+	requireCtrl = false,
+	requireAlt = false,
+	preventDefault = true,
+	stopPropagation = false,
+	condition,
 }: UseKeyboardShortcutOptions) {
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      // Skip if disabled
-      if (!enabled) return
+	const handleKeyDown = useCallback(
+		(event: KeyboardEvent) => {
+			// Skip if disabled
+			if (!enabled) return
 
-      // Skip if wrong key
-      if (event.key.toLowerCase() !== key.toLowerCase()) return
+			// Skip if wrong key
+			if (event.key.toLowerCase() !== key.toLowerCase()) return
 
-      // Skip if modifier requirements not met
-      if (requireShift && !event.shiftKey) return
-      if (requireCtrl && !(event.ctrlKey || event.metaKey)) return
-      if (requireAlt && !event.altKey) return
+			// Skip if modifier requirements not met
+			if (requireShift && !event.shiftKey) return
+			if (requireCtrl && !(event.ctrlKey || event.metaKey)) return
+			if (requireAlt && !event.altKey) return
 
-      // Skip if modifiers are present when not required
-      if (!requireShift && event.shiftKey) return
-      if (!requireCtrl && (event.ctrlKey || event.metaKey)) return
-      if (!requireAlt && event.altKey) return
+			// Skip if modifiers are present when not required
+			if (!requireShift && event.shiftKey) return
+			if (!requireCtrl && (event.ctrlKey || event.metaKey)) return
+			if (!requireAlt && event.altKey) return
 
-      // Skip if custom condition fails
-      if (condition && !condition()) return
+			// Skip if custom condition fails
+			if (condition && !condition()) return
 
-      // Skip if user is typing in an input field
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement ||
-        (event.target as HTMLElement)?.isContentEditable
-      ) {
-        return
-      }
+			// Skip if user is typing in an input field
+			if (
+				event.target instanceof HTMLInputElement ||
+				event.target instanceof HTMLTextAreaElement ||
+				event.target instanceof HTMLSelectElement ||
+				(event.target as HTMLElement)?.isContentEditable
+			) {
+				return
+			}
 
-      // Prevent default behavior if requested
-      if (preventDefault) {
-        event.preventDefault()
-      }
+			// Prevent default behavior if requested
+			if (preventDefault) {
+				event.preventDefault()
+			}
 
-      // Stop propagation if requested
-      if (stopPropagation) {
-        event.stopPropagation()
-      }
+			// Stop propagation if requested
+			if (stopPropagation) {
+				event.stopPropagation()
+			}
 
-      // Trigger the callback
-      onTrigger()
-    },
-    [
-      key,
-      onTrigger,
-      enabled,
-      requireShift,
-      requireCtrl,
-      requireAlt,
-      preventDefault,
-      stopPropagation,
-      condition,
-    ],
-  )
+			// Trigger the callback
+			onTrigger()
+		},
+		[
+			key,
+			onTrigger,
+			enabled,
+			requireShift,
+			requireCtrl,
+			requireAlt,
+			preventDefault,
+			stopPropagation,
+			condition,
+		],
+	)
 
-  useEffect(() => {
-    if (!enabled) return
+	useEffect(() => {
+		if (!enabled) return
 
-    window.addEventListener("keydown", handleKeyDown)
+		window.addEventListener("keydown", handleKeyDown)
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [handleKeyDown, enabled])
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown)
+		}
+	}, [handleKeyDown, enabled])
 }
 
 /**
@@ -172,77 +172,77 @@ export function useKeyboardShortcut({
  * ```
  */
 export function useKeyboardShortcuts(shortcuts: UseKeyboardShortcutOptions[]) {
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      // Check each shortcut
-      for (const shortcut of shortcuts) {
-        const {
-          key,
-          onTrigger,
-          enabled = true,
-          requireShift = false,
-          requireCtrl = false,
-          requireAlt = false,
-          preventDefault = true,
-          stopPropagation = false,
-          condition,
-        } = shortcut
+	const handleKeyDown = useCallback(
+		(event: KeyboardEvent) => {
+			// Check each shortcut
+			for (const shortcut of shortcuts) {
+				const {
+					key,
+					onTrigger,
+					enabled = true,
+					requireShift = false,
+					requireCtrl = false,
+					requireAlt = false,
+					preventDefault = true,
+					stopPropagation = false,
+					condition,
+				} = shortcut
 
-        // Skip if disabled
-        if (!enabled) continue
+				// Skip if disabled
+				if (!enabled) continue
 
-        // Skip if wrong key
-        if (event.key.toLowerCase() !== key.toLowerCase()) continue
+				// Skip if wrong key
+				if (event.key.toLowerCase() !== key.toLowerCase()) continue
 
-        // Skip if modifier requirements not met
-        if (requireShift && !event.shiftKey) continue
-        if (requireCtrl && !(event.ctrlKey || event.metaKey)) continue
-        if (requireAlt && !event.altKey) continue
+				// Skip if modifier requirements not met
+				if (requireShift && !event.shiftKey) continue
+				if (requireCtrl && !(event.ctrlKey || event.metaKey)) continue
+				if (requireAlt && !event.altKey) continue
 
-        // Skip if modifiers are present when not required
-        if (!requireShift && event.shiftKey) continue
-        if (!requireCtrl && (event.ctrlKey || event.metaKey)) continue
-        if (!requireAlt && event.altKey) continue
+				// Skip if modifiers are present when not required
+				if (!requireShift && event.shiftKey) continue
+				if (!requireCtrl && (event.ctrlKey || event.metaKey)) continue
+				if (!requireAlt && event.altKey) continue
 
-        // Skip if custom condition fails
-        if (condition && !condition()) continue
+				// Skip if custom condition fails
+				if (condition && !condition()) continue
 
-        // Skip if user is typing in an input field
-        if (
-          event.target instanceof HTMLInputElement ||
-          event.target instanceof HTMLTextAreaElement ||
-          event.target instanceof HTMLSelectElement ||
-          (event.target as HTMLElement)?.isContentEditable
-        ) {
-          continue
-        }
+				// Skip if user is typing in an input field
+				if (
+					event.target instanceof HTMLInputElement ||
+					event.target instanceof HTMLTextAreaElement ||
+					event.target instanceof HTMLSelectElement ||
+					(event.target as HTMLElement)?.isContentEditable
+				) {
+					continue
+				}
 
-        // Prevent default behavior if requested
-        if (preventDefault) {
-          event.preventDefault()
-        }
+				// Prevent default behavior if requested
+				if (preventDefault) {
+					event.preventDefault()
+				}
 
-        // Stop propagation if requested
-        if (stopPropagation) {
-          event.stopPropagation()
-        }
+				// Stop propagation if requested
+				if (stopPropagation) {
+					event.stopPropagation()
+				}
 
-        // Trigger the callback and break (only one shortcut should trigger)
-        onTrigger()
-        break
-      }
-    },
-    [shortcuts],
-  )
+				// Trigger the callback and break (only one shortcut should trigger)
+				onTrigger()
+				break
+			}
+		},
+		[shortcuts],
+	)
 
-  useEffect(() => {
-    const hasEnabledShortcuts = shortcuts.some(s => s.enabled !== false)
-    if (!hasEnabledShortcuts) return
+	useEffect(() => {
+		const hasEnabledShortcuts = shortcuts.some((s) => s.enabled !== false)
+		if (!hasEnabledShortcuts) return
 
-    window.addEventListener("keydown", handleKeyDown)
+		window.addEventListener("keydown", handleKeyDown)
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [handleKeyDown, shortcuts])
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown)
+		}
+	}, [handleKeyDown, shortcuts])
 }
