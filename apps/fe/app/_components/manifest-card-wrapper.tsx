@@ -1,9 +1,9 @@
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import type { Manifest } from "@packages/schema"
 import { fetchIpfs } from "@packages/utils"
 import { FileTextIcon, FingerprintIcon } from "lucide-react"
 import type { FC } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { TypographyH3, TypographyP, TypographySmall } from "./typography"
 
 type Props = {
