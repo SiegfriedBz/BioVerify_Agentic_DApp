@@ -1,16 +1,17 @@
 "use client"
 
-import { CheckIcon, Share2Icon } from "lucide-react"
-import { type FC, useState } from "react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { CheckIcon, Share2Icon } from "lucide-react"
+import { ComponentProps, type FC, useState } from "react"
+import { toast } from "sonner"
 
-type Props = {
+type Props = Omit<ComponentProps<typeof Button>, "onClick"> & {
 	id: string
 }
 
 export const ShareReportButton: FC<Props> = (props) => {
-	const { id } = props
+	const { id, size = "sm", variant = "outline", className, ...rest } = props
 	const [copied, setCopied] = useState(false)
 
 	const handleShare = async () => {
@@ -31,10 +32,14 @@ export const ShareReportButton: FC<Props> = (props) => {
 
 	return (
 		<Button
-			variant="outline"
-			size="sm"
+			{...rest}
+			variant={variant}
+			size={size}
 			onClick={handleShare}
-			className="gap-2 h-8 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer"
+			className={cn(
+				"gap-2 h-8 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer",
+				className,
+			)}
 		>
 			{copied ? (
 				<CheckIcon className="h-3 w-3 text-green-500" />

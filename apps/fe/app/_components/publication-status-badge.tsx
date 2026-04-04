@@ -1,10 +1,10 @@
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import {
 	type PublicationStatus,
 	PublicationStatusSchema,
 } from "@packages/schema"
 import type { ComponentProps, FC } from "react"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
 
 const publicationStatusToColor: Record<PublicationStatus, string> = {
 	[PublicationStatusSchema.enum.SUBMITTED]: "bg-blue-400",
@@ -45,7 +45,7 @@ export const PublicationStatusBadge: FC<Props> = (props) => {
 			className={cn("flex items-center gap-x-2", className)}
 		>
 			<span
-				className={cn("rounded-full size-4", publicationStatusToColor[status])}
+				className={cn("rounded-full size-2", publicationStatusToColor[status])}
 			/>
 			<span>{publicationStatusToMessage[status]}</span>
 		</Badge>
