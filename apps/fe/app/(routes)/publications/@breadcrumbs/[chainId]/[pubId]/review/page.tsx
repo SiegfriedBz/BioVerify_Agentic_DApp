@@ -12,7 +12,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 type Props = {
-	params: Promise<{ chainId: string; pubId: string }> // "chainId-pubId"
+	params: Promise<{ chainId: string; pubId: string }>
 }
 
 export default async function Page(props: Props) {

@@ -18,7 +18,6 @@ export default function Page() {
 					</BreadcrumbLink>
 				</BreadcrumbItem>
 				<BreadcrumbSeparator />
-
 				<BreadcrumbItem>
 					<BreadcrumbPage>Submit New Publication</BreadcrumbPage>
 				</BreadcrumbItem>

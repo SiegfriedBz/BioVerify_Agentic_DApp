@@ -9,8 +9,10 @@ export default function Page() {
 	return (
 		<>
 			<header className="flex flex-col gap-1 border-b border-border pb-6">
-				<TypographyH1>New Publication Submission</TypographyH1>
-				<TypographyP className="text-muted-foreground text-sm">
+				<TypographyH1 className="text-3xl font-bold tracking-tight">
+					New Publication Submission
+				</TypographyH1>
+				<TypographyP className="text-muted-foreground mt-0!">
 					Anchor your findings on the BioVerify ledger. Ensure your data hashes
 					are correct before staking.
 				</TypographyP>
