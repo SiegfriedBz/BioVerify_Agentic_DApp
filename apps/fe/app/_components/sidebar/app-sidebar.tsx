@@ -1,6 +1,3 @@
-import { BookCheckIcon, BookPlusIcon, LayoutDashboardIcon } from "lucide-react"
-import Link from "next/link"
-import type { FC } from "react"
 import {
 	Sidebar,
 	SidebarContent,
@@ -13,6 +10,9 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar"
+import { BookCheckIcon, BookPlusIcon, LayoutDashboardIcon } from "lucide-react"
+import Link from "next/link"
+import type { FC } from "react"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 
@@ -60,7 +60,7 @@ export const AppSidebar: FC = () => {
 						<SidebarMenu>
 							<SidebarMenuItem>
 								<SidebarMenuButton asChild tooltip="Dashboard">
-									<Link href="/dashboard">
+									<Link href="/publications">
 										<LayoutDashboardIcon />
 										<span>Dashboard</span>
 									</Link>
@@ -78,9 +78,9 @@ export const AppSidebar: FC = () => {
 
 							<SidebarMenuItem>
 								<SidebarMenuButton asChild tooltip="Review">
-									<Link href="/reviews">
+									<Link href="/publications/assignments">
 										<BookCheckIcon />
-										<span>Reviews</span>
+										<span>Assignments</span>
 									</Link>
 								</SidebarMenuButton>
 							</SidebarMenuItem>
