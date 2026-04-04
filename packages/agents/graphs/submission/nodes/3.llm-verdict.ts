@@ -1,18 +1,18 @@
 import { HumanMessage, SystemMessage } from "langchain"
-import 'server-only'
+import "server-only"
 import z from "zod"
 import { createChatModel } from "../../../model/factory"
 import type { SubmissionState } from "../state"
 
 const StructuredVerdictSchema = z.object({
 	decision: z.enum(["pass", "fail"]),
-	reason: z.string().min(15)
+	reason: z.string().min(15),
 })
 
 // SYSTEM MESSAGE: Defines the ROLE and the RULES
 // V1
 // const systemMsg = new SystemMessage(`
-//     You are a Research Integrity Auditor for the BioVerify Protocol. 
+//     You are a Research Integrity Auditor for the BioVerify Protocol.
 //     Your goal is to ensure the submitted work is not a direct copy-paste of existing academic literature.
 
 //     EVALUATION RULES:
@@ -47,31 +47,29 @@ const systemMsg = new SystemMessage(`
 export const llmNode = async (
 	state: SubmissionState,
 ): Promise<Partial<SubmissionState>> => {
-
 	const { publication, sources } = state
 
 	if (!publication?.abstract) return state
 
-	const humanMsg = new HumanMessage([
-		`### SUBMISSION ABSTRACT ###`,
-		`"${publication.abstract}"`,
-		`\n### SEMANTIC SCHOLAR SEARCH RESULTS ###`,
-		`${JSON.stringify(sources, null, 2)}`,
-		`\nPerform a forensic audit. Is this submission original or a copy?`
-	].join("\n"))
+	const humanMsg = new HumanMessage(
+		[
+			`### SUBMISSION ABSTRACT ###`,
+			`"${publication.abstract}"`,
+			`\n### SEMANTIC SCHOLAR SEARCH RESULTS ###`,
+			`${JSON.stringify(sources, null, 2)}`,
+			`\nPerform a forensic audit. Is this submission original or a copy?`,
+		].join("\n"),
+	)
 
 	const llm = createChatModel()
 	const structuredLlm = llm.withStructuredOutput(StructuredVerdictSchema)
 
-	const response = await structuredLlm.invoke([
-		systemMsg,
-		humanMsg
-	])
+	const response = await structuredLlm.invoke([systemMsg, humanMsg])
 
 	return {
 		verdict: {
 			decision: response.decision,
-			reason: response.reason
-		}
+			reason: response.reason,
+		},
 	}
 }

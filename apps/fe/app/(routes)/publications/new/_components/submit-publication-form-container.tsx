@@ -1,12 +1,12 @@
 "use client"
 
+import type { Protocol } from "@packages/schema"
+import { ChainIdToNetwork } from "@packages/utils"
+import { useRouter } from "next/navigation"
+import type { FC } from "react"
 import { useProtocolByChain } from "@/_hooks/cqrs/queries/use-protocol-by-chain"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { FetchError } from "@/app/_components/fetch-error"
-import { Protocol } from "@packages/schema"
-import { ChainIdToNetwork } from "@packages/utils"
-import { useRouter } from "next/navigation"
-import { FC } from "react"
 import { SubmitPublicationForm } from "./submit-publication-form"
 
 type Props = {
@@ -32,7 +32,7 @@ export const SubmitPublicationFormContainer: FC<Props> = (props) => {
 
 	const { data, isFetching, isError, refetch } = useProtocolByChain({
 		initialData: validatedInitialData,
-		chainId: activeChainId
+		chainId: activeChainId,
 	})
 
 	if (!activeChainId) {

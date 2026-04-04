@@ -1,17 +1,15 @@
-import { getAuthFromCookies } from "@/_services/wagmi/get-auth-from-cookies"
 import { getStatsByChain } from "@packages/cqrs"
 import { redirect } from "next/navigation"
+import { getAuthFromCookies } from "@/_services/wagmi/get-auth-from-cookies"
 import { ChainStatsContainer } from "./chain-stats-container"
 
 export const ChainStatsWrapper = async () => {
-  const { chainId } = await getAuthFromCookies()
+	const { chainId } = await getAuthFromCookies()
 
-  if (!chainId) {
-    redirect("/")
-  }
-  const stats = await getStatsByChain({ chainId })
+	if (!chainId) {
+		redirect("/")
+	}
+	const stats = await getStatsByChain({ chainId })
 
-  return <ChainStatsContainer server={{ initialData: stats, chainId }} />
+	return <ChainStatsContainer server={{ initialData: stats, chainId }} />
 }
-
-

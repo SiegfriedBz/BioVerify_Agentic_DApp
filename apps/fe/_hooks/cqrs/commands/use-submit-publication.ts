@@ -1,9 +1,9 @@
 "use client"
 
-import { reownConfig } from "@/_config/wagmi/wagmi-config"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { waitForTransactionReceipt, writeContract } from "@wagmi/core"
 import { toast } from "sonner"
+import { reownConfig } from "@/_config/wagmi/wagmi-config"
 import { useContractConfig } from "../../use-contract-config"
 import { publicationsKeys } from "../query-keys/publications-keys"
 
@@ -46,8 +46,11 @@ export const useSubmitPublication = () => {
 				queryClient.invalidateQueries({ queryKey: publicationsKeys.all })
 			}, 3000)
 		},
-		onError: (err: any) => {
-			toast.error(err.shortMessage || err.message || "Submission failed")
-		}
+		onError: (err: Error) => {
+			const shortMessage = (err as { shortMessage?: string }).shortMessage
+			const message =
+				shortMessage || err.message || "Publication Submission failed"
+			toast.error(message)
+		},
 	})
 }

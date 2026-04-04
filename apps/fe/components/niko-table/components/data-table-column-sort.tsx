@@ -1,26 +1,25 @@
 "use client"
 
-import React from "react"
-
-import {
-  TableColumnSortOptions,
-  TableColumnSortMenu,
-} from "../filters/table-column-sort"
+import type React from "react"
 import { useDataTable } from "../core"
+import {
+	TableColumnSortMenu,
+	TableColumnSortOptions,
+} from "../filters/table-column-sort"
 import { useColumnHeaderContext } from "./data-table-column-header"
 
 /**
  * Sorting options for column header menu using context.
  */
 export function DataTableColumnSortOptions<TData, TValue>(
-  props: Omit<
-    React.ComponentProps<typeof TableColumnSortOptions>,
-    "column" | "table"
-  >,
+	props: Omit<
+		React.ComponentProps<typeof TableColumnSortOptions>,
+		"column" | "table"
+	>,
 ) {
-  const { column } = useColumnHeaderContext<TData, TValue>(true)
-  const { table } = useDataTable<TData>()
-  return <TableColumnSortOptions column={column} table={table} {...props} />
+	const { column } = useColumnHeaderContext<TData, TValue>(true)
+	const { table } = useDataTable<TData>()
+	return <TableColumnSortOptions column={column} table={table} {...props} />
 }
 
 DataTableColumnSortOptions.displayName = "DataTableColumnSortOptions"
@@ -31,14 +30,14 @@ DataTableColumnSortOptions.displayName = "DataTableColumnSortOptions"
  * Standalone button variant for inline use outside dropdown menus.
  */
 export function DataTableColumnSortMenu<TData, TValue>(
-  props: Omit<
-    React.ComponentProps<typeof TableColumnSortMenu>,
-    "column" | "table"
-  >,
+	props: Omit<
+		React.ComponentProps<typeof TableColumnSortMenu>,
+		"column" | "table"
+	>,
 ) {
-  const { column } = useColumnHeaderContext<TData, TValue>(true)
-  const { table } = useDataTable<TData>()
-  return <TableColumnSortMenu column={column} table={table} {...props} />
+	const { column } = useColumnHeaderContext<TData, TValue>(true)
+	const { table } = useDataTable<TData>()
+	return <TableColumnSortMenu column={column} table={table} {...props} />
 }
 
 DataTableColumnSortMenu.displayName = "DataTableColumnSortMenu"

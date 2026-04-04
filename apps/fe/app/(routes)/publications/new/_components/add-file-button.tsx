@@ -1,8 +1,8 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import type { FC } from "react"
+import { Button } from "@/components/ui/button"
 
 type AddFileButtonProps = {
 	onAddFile: () => void

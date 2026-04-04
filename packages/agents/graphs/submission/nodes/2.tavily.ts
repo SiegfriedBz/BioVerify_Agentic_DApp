@@ -1,11 +1,14 @@
 import { env } from "@packages/env"
-import 'server-only'
+import "server-only"
 import type { SubmissionState } from "../state"
 
 const TAVILY_API_KEY = env.TAVILY_API_KEY ?? ""
-const TAVILY_SEARCH_URL = env.TAVILY_SEARCH_URL ?? "https://api.tavily.com/search"
+const TAVILY_SEARCH_URL =
+	env.TAVILY_SEARCH_URL ?? "https://api.tavily.com/search"
 
-export const tavilyNode = async (state: SubmissionState): Promise<Partial<SubmissionState>> => {
+export const tavilyNode = async (
+	state: SubmissionState,
+): Promise<Partial<SubmissionState>> => {
 	const abstract = state.publication?.abstract
 	if (!abstract) return { sources: [] }
 
@@ -19,12 +22,11 @@ export const tavilyNode = async (state: SubmissionState): Promise<Partial<Submis
 			api_key: TAVILY_API_KEY,
 			query,
 			search_depth: "advanced",
-			max_results: 5
-		})
+			max_results: 5,
+		}),
 	})
 
 	const { results } = await res.json()
 
 	return { sources: results || [] }
 }
-

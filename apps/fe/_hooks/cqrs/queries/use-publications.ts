@@ -1,23 +1,27 @@
 "use client"
 
-import { PublicationsResponse } from "@packages/schema"
+import type { PublicationsResponse } from "@packages/schema"
 import { useQuery } from "@tanstack/react-query"
-import { getPublications, type PublicationsQueryParams } from "../../../_api/queries"
+import {
+	getPublications,
+	type PublicationsQueryParams,
+} from "../../../_api/queries"
 import { publicationsKeys } from "../query-keys/publications-keys"
 
 type Props = {
-  initialData?: PublicationsResponse
-  searchQueryParams?: PublicationsQueryParams
+	initialData?: PublicationsResponse
+	searchQueryParams?: PublicationsQueryParams
 }
 
 export const usePublications = (props: Props) => {
-  const { initialData = { items: [], totalCount: 0 }, searchQueryParams } = props
+	const { initialData = { items: [], totalCount: 0 }, searchQueryParams } =
+		props
 
-  const { data, isFetching, isError, refetch } = useQuery({
-    queryKey: publicationsKeys.list(searchQueryParams ?? {}),
-    queryFn: () => getPublications(searchQueryParams),
-    initialData
-  })
+	const { data, isFetching, isError, refetch } = useQuery({
+		queryKey: publicationsKeys.list(searchQueryParams ?? {}),
+		queryFn: () => getPublications(searchQueryParams),
+		initialData,
+	})
 
-  return { data, isFetching, isError, refetch }
+	return { data, isFetching, isError, refetch }
 }

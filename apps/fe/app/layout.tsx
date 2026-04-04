@@ -1,8 +1,8 @@
-import { Providers } from "@/_context/providers"
-import { Toaster } from "@/components/ui/sonner"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { headers } from "next/headers"
+import { Providers } from "@/_context/providers"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
 	children,
-	breadcrumbs
+	breadcrumbs,
 }: Readonly<{
 	children: React.ReactNode
 	breadcrumbs: React.ReactNode

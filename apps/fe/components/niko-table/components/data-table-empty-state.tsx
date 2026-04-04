@@ -8,20 +8,20 @@ import { cn } from "@/lib/utils"
 // ============================================================================
 
 interface DataTableEmptyStateContextValue {
-  isFiltered: boolean
+	isFiltered: boolean
 }
 
 const DataTableEmptyStateContext =
-  React.createContext<DataTableEmptyStateContextValue | null>(null)
+	React.createContext<DataTableEmptyStateContextValue | null>(null)
 
 function useDataTableEmptyState() {
-  const context = React.useContext(DataTableEmptyStateContext)
-  if (!context) {
-    throw new Error(
-      "Empty state components must be used within DataTableEmptyBody",
-    )
-  }
-  return context
+	const context = React.useContext(DataTableEmptyStateContext)
+	if (!context) {
+		throw new Error(
+			"Empty state components must be used within DataTableEmptyBody",
+		)
+	}
+	return context
 }
 
 // ============================================================================
@@ -29,9 +29,9 @@ function useDataTableEmptyState() {
 // ============================================================================
 
 export interface DataTableEmptyStateProps {
-  children: React.ReactNode
-  isFiltered: boolean
-  className?: string
+	children: React.ReactNode
+	isFiltered: boolean
+	className?: string
 }
 
 /**
@@ -41,22 +41,22 @@ export interface DataTableEmptyStateProps {
  * @internal - Used by DataTableEmptyBody and DataTableVirtualizedEmptyBody
  */
 export function DataTableEmptyState({
-  children,
-  isFiltered,
-  className,
+	children,
+	isFiltered,
+	className,
 }: DataTableEmptyStateProps) {
-  return (
-    <DataTableEmptyStateContext.Provider value={{ isFiltered }}>
-      <div
-        className={cn(
-          "flex flex-col items-center justify-center gap-3 py-4",
-          className,
-        )}
-      >
-        {children}
-      </div>
-    </DataTableEmptyStateContext.Provider>
-  )
+	return (
+		<DataTableEmptyStateContext.Provider value={{ isFiltered }}>
+			<div
+				className={cn(
+					"flex flex-col items-center justify-center gap-3 py-4",
+					className,
+				)}
+			>
+				{children}
+			</div>
+		</DataTableEmptyStateContext.Provider>
+	)
 }
 
 // ============================================================================
@@ -64,8 +64,8 @@ export function DataTableEmptyState({
 // ============================================================================
 
 export interface DataTableEmptyIconProps {
-  children: React.ReactNode
-  className?: string
+	children: React.ReactNode
+	className?: string
 }
 
 /**
@@ -85,12 +85,12 @@ export interface DataTableEmptyIconProps {
  * </DataTableEmptyIcon>
  */
 export const DataTableEmptyIcon = React.memo(function DataTableEmptyIcon({
-  children,
-  className,
+	children,
+	className,
 }: DataTableEmptyIconProps) {
-  return (
-    <div className={cn("text-muted-foreground/50", className)}>{children}</div>
-  )
+	return (
+		<div className={cn("text-muted-foreground/50", className)}>{children}</div>
+	)
 })
 
 DataTableEmptyIcon.displayName = "DataTableEmptyIcon"
@@ -100,8 +100,8 @@ DataTableEmptyIcon.displayName = "DataTableEmptyIcon"
 // ============================================================================
 
 export interface DataTableEmptyMessageProps {
-  children: React.ReactNode
-  className?: string
+	children: React.ReactNode
+	className?: string
 }
 
 /**
@@ -123,23 +123,23 @@ export interface DataTableEmptyMessageProps {
  * </DataTableEmptyMessage>
  */
 export const DataTableEmptyMessage = React.memo(function DataTableEmptyMessage({
-  children,
-  className,
+	children,
+	className,
 }: DataTableEmptyMessageProps) {
-  const { isFiltered } = useDataTableEmptyState()
+	const { isFiltered } = useDataTableEmptyState()
 
-  if (isFiltered) return null
+	if (isFiltered) return null
 
-  return (
-    <div
-      className={cn(
-        "flex flex-col items-center gap-1 text-center text-muted-foreground",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  )
+	return (
+		<div
+			className={cn(
+				"flex flex-col items-center gap-1 text-center text-muted-foreground",
+				className,
+			)}
+		>
+			{children}
+		</div>
+	)
 })
 
 DataTableEmptyMessage.displayName = "DataTableEmptyMessage"
@@ -149,8 +149,8 @@ DataTableEmptyMessage.displayName = "DataTableEmptyMessage"
 // ============================================================================
 
 export interface DataTableEmptyFilteredMessageProps {
-  children: React.ReactNode
-  className?: string
+	children: React.ReactNode
+	className?: string
 }
 
 /**
@@ -169,25 +169,25 @@ export interface DataTableEmptyFilteredMessageProps {
  * </DataTableEmptyFilteredMessage>
  */
 export const DataTableEmptyFilteredMessage = React.memo(
-  function DataTableEmptyFilteredMessage({
-    children,
-    className,
-  }: DataTableEmptyFilteredMessageProps) {
-    const { isFiltered } = useDataTableEmptyState()
+	function DataTableEmptyFilteredMessage({
+		children,
+		className,
+	}: DataTableEmptyFilteredMessageProps) {
+		const { isFiltered } = useDataTableEmptyState()
 
-    if (!isFiltered) return null
+		if (!isFiltered) return null
 
-    return (
-      <div
-        className={cn(
-          "flex flex-col items-center gap-1 text-center text-muted-foreground",
-          className,
-        )}
-      >
-        {children}
-      </div>
-    )
-  },
+		return (
+			<div
+				className={cn(
+					"flex flex-col items-center gap-1 text-center text-muted-foreground",
+					className,
+				)}
+			>
+				{children}
+			</div>
+		)
+	},
 )
 
 DataTableEmptyFilteredMessage.displayName = "DataTableEmptyFilteredMessage"
@@ -197,8 +197,8 @@ DataTableEmptyFilteredMessage.displayName = "DataTableEmptyFilteredMessage"
 // ============================================================================
 
 export interface DataTableEmptyActionsProps {
-  children: React.ReactNode
-  className?: string
+	children: React.ReactNode
+	className?: string
 }
 
 /**
@@ -212,10 +212,10 @@ export interface DataTableEmptyActionsProps {
  * </DataTableEmptyActions>
  */
 export const DataTableEmptyActions = React.memo(function DataTableEmptyActions({
-  children,
-  className,
+	children,
+	className,
 }: DataTableEmptyActionsProps) {
-  return <div className={cn("mt-2 flex gap-2", className)}>{children}</div>
+	return <div className={cn("mt-2 flex gap-2", className)}>{children}</div>
 })
 
 DataTableEmptyActions.displayName = "DataTableEmptyActions"
@@ -225,8 +225,8 @@ DataTableEmptyActions.displayName = "DataTableEmptyActions"
 // ============================================================================
 
 export interface DataTableEmptyTitleProps {
-  children: React.ReactNode
-  className?: string
+	children: React.ReactNode
+	className?: string
 }
 
 /**
@@ -243,17 +243,17 @@ export interface DataTableEmptyTitleProps {
  * </DataTableEmptyMessage>
  */
 export const DataTableEmptyTitle = React.memo(function DataTableEmptyTitle({
-  children,
-  className,
+	children,
+	className,
 }: DataTableEmptyTitleProps) {
-  return <p className={cn("font-semibold", className)}>{children}</p>
+	return <p className={cn("font-semibold", className)}>{children}</p>
 })
 
 DataTableEmptyTitle.displayName = "DataTableEmptyTitle"
 
 export interface DataTableEmptyDescriptionProps {
-  children: React.ReactNode
-  className?: string
+	children: React.ReactNode
+	className?: string
 }
 
 /**
@@ -270,16 +270,16 @@ export interface DataTableEmptyDescriptionProps {
  * </DataTableEmptyMessage>
  */
 export const DataTableEmptyDescription = React.memo(
-  function DataTableEmptyDescription({
-    children,
-    className,
-  }: DataTableEmptyDescriptionProps) {
-    return (
-      <p className={cn("text-sm text-muted-foreground", className)}>
-        {children}
-      </p>
-    )
-  },
+	function DataTableEmptyDescription({
+		children,
+		className,
+	}: DataTableEmptyDescriptionProps) {
+		return (
+			<p className={cn("text-sm text-muted-foreground", className)}>
+				{children}
+			</p>
+		)
+	},
 )
 
 DataTableEmptyDescription.displayName = "DataTableEmptyDescription"

@@ -1,25 +1,23 @@
 {
-  "name": "@packages/db",
+	"name": "@packages/db",
 	"version": "0.3.0",
-  "private": true,
-  "author": "Siegfried Bozza",
-  "license": "MIT",
-  "main": "index.js",
-  "scripts": {
-    "db:push": "drizzle-kit push",
-    "db:seed": "tsx --conditions=react-server ./scripts/seed-protocol.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.23.0",
-  "dependencies": {
-    "@neondatabase/serverless": "^1.0.2",
-    "drizzle-orm": "^0.45.1",
-    "drizzle-kit": "^0.31.9",
-    "tsx": "^4.21.0",
-    "server-only": "^0.0.1",
-    "@packages/env": "workspace:*",
-    "@packages/schema": "workspace:*"
-  }
+	"private": true,
+	"author": "Siegfried Bozza",
+	"license": "MIT",
+	"main": "index.js",
+	"scripts": {
+		"db:push": "drizzle-kit push",
+		"db:seed": "tsx --conditions=react-server ./scripts/seed-protocol.ts"
+	},
+	"keywords": [],
+	"packageManager": "pnpm@10.23.0",
+	"dependencies": {
+		"@neondatabase/serverless": "^1.0.2",
+		"drizzle-orm": "^0.45.1",
+		"drizzle-kit": "^0.31.9",
+		"tsx": "^4.21.0",
+		"server-only": "^0.0.1",
+		"@packages/env": "workspace:*",
+		"@packages/schema": "workspace:*"
+	}
 }

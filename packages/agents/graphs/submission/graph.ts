@@ -1,5 +1,5 @@
 import { END, START, StateGraph } from "@langchain/langgraph"
-import 'server-only'
+import "server-only"
 import pgCheckpointer from "../../utils/agents-pool"
 import { fetchIpfsNode } from "./nodes/1.fetch-ipfs"
 import { discoveryNode } from "./nodes/2.discovery"
@@ -20,21 +20,21 @@ import { SubmissionStateSchema } from "./state"
  */
 
 const builder = new StateGraph(SubmissionStateSchema)
-  .addNode("fetchIpfsNode", fetchIpfsNode)
-  .addNode("discoveryNode", discoveryNode)
-  .addNode("llmNode", llmNode,)
+	.addNode("fetchIpfsNode", fetchIpfsNode)
+	.addNode("discoveryNode", discoveryNode)
+	.addNode("llmNode", llmNode)
 
-  .addEdge(START, "fetchIpfsNode")
-  .addEdge("fetchIpfsNode", "discoveryNode")
-  .addEdge("discoveryNode", "llmNode")
-  .addEdge("llmNode", END)
+	.addEdge(START, "fetchIpfsNode")
+	.addEdge("fetchIpfsNode", "discoveryNode")
+	.addEdge("discoveryNode", "llmNode")
+	.addEdge("llmNode", END)
 
 /**
  * Compiled Submission Graph
- * Thread-safe and persistent, allowing for asynchronous "Fire and Forget" 
+ * Thread-safe and persistent, allowing for asynchronous "Fire and Forget"
  * execution via Vercel's waitUntil.
  */
 export const submissionGraph = builder.compile({
-  /** Persistence Layer: Connects to Neon/Postgres */
-  checkpointer: pgCheckpointer,
+	/** Persistence Layer: Connects to Neon/Postgres */
+	checkpointer: pgCheckpointer,
 })

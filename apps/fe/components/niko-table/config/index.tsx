@@ -1,6 +1,6 @@
 export {
-  detectFeaturesFromChildren,
-  registerComponentFeatures,
-  getRegisteredComponents,
-  type FeatureRequirements,
+	detectFeaturesFromChildren,
+	type FeatureRequirements,
+	getRegisteredComponents,
+	registerComponentFeatures,
 } from "./feature-detection"

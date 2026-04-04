@@ -6,4 +6,3 @@ export const WalletSchema = z.object({
 	address: EthAddressSchema,
 	network: NetworkSchema,
 })
-
