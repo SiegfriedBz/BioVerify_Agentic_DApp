@@ -16,8 +16,8 @@ export default async function Page(props: Props) {
 	searchParamsCache.parse(searchParams)
 
 	return (
-		<>
-			<header className="flex flex-col gap-1 border-b border-border pb-6">
+		<div className="flex flex-col gap-8">
+			<header className="flex flex-col gap-1 border-b border-border">
 				<TypographyH1 className="text-left">Protocol Overview</TypographyH1>
 				<TypographyP className="text-muted-foreground text-sm">
 					Real-time system metrics and parameters.
@@ -31,6 +31,6 @@ export default async function Page(props: Props) {
 			<Suspense fallback={<PublicationsTableSkeleton />}>
 				<PublicationsTableWrapper />
 			</Suspense>
-		</>
+		</div>
 	)
 }
