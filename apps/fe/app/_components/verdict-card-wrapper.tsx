@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { fetchIpfs } from "@packages/utils"
 import { FingerprintIcon } from "lucide-react"
 import type { FC } from "react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { TypographyH3 } from "./typography"
 
 type Props = {
@@ -28,7 +28,9 @@ export const VerdictCardWrapper: FC<Props> = async (props: Props) => {
 
 				<div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground bg-background/50 px-3 py-1.5 rounded-md border border-border/30 w-fit shadow-sm">
 					<FingerprintIcon className="w-3 h-3 text-primary/60" />
-					<span className="truncate max-w-50 @lg:max-w-none">IPFS {verdictCid}</span>
+					<span className="truncate max-w-50 @lg:max-w-none">
+						IPFS {verdictCid}
+					</span>
 				</div>
 			</CardHeader>
 

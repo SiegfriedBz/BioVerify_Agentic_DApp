@@ -1,3 +1,7 @@
+import { getProtocolByChain, getPublicationById } from "@packages/cqrs"
+import { LandmarkIcon, MapPinCheckIcon, UsersIcon } from "lucide-react"
+import { notFound } from "next/navigation"
+import { type FC, Suspense } from "react"
 import { PublicationDetailsProvider } from "@/_context/publication-details-provider"
 import { ManifestCardSkeleton } from "@/app/_components/manifest-card-skeleton"
 import { ManifestCardWrapper } from "@/app/_components/manifest-card-wrapper"
@@ -6,10 +10,6 @@ import { TypographyH4 } from "@/app/_components/typography"
 import { VerdictCardSkeleton } from "@/app/_components/verdict-card-skeleton"
 import { VerdictCardWrapper } from "@/app/_components/verdict-card-wrapper"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { getProtocolByChain, getPublicationById } from "@packages/cqrs"
-import { LandmarkIcon, MapPinCheckIcon, UsersIcon } from "lucide-react"
-import { notFound } from "next/navigation"
-import { type FC, Suspense } from "react"
 import { EconomicsSidebarContentContainer } from "./economics-sidebar-content-container"
 import { ParticipantsSidebarContentContainer } from "./participants-sidebar-content-container"
 import { VerdictTimeLineContainer } from "./verdict-time-line-container"
@@ -62,7 +62,6 @@ export const PublicationDetailWrapper: FC<Props> = async (props) => {
 								<CardContent className="space-y-6 pt-2">
 									<VerdictTimeLineContainer />
 								</CardContent>
-
 							</Card>
 						</section>
 

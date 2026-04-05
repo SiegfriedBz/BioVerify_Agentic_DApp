@@ -1,10 +1,10 @@
 "use client"
 
-import { TypographyP, TypographySmall } from "@/app/_components/typography"
-import { cn } from "@/lib/utils"
 import type { PublicationStatus } from "@packages/schema"
 import { CircleDashedIcon, XCircleIcon } from "lucide-react"
 import type { FC } from "react"
+import { TypographyP, TypographySmall } from "@/app/_components/typography"
+import { cn } from "@/lib/utils"
 import { TIMELINE_STEPS } from "./time-line-steps"
 
 type Props = {
@@ -47,9 +47,9 @@ export const VerdictTimeline: FC<Props> = (props) => {
 											? "border-primary text-primary bg-primary/5"
 											: "border-border text-muted-foreground",
 									active &&
-									!failed &&
-									!reached &&
-									"ring-4 ring-primary/10 animate-pulse",
+										!failed &&
+										!reached &&
+										"ring-4 ring-primary/10 animate-pulse",
 								)}
 							>
 								<StepIcon

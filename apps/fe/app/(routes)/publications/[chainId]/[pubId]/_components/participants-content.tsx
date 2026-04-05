@@ -1,13 +1,13 @@
 "use client"
 
+import { type Publication, PublicationStatusSchema } from "@packages/schema"
+import { CircleOffIcon, DicesIcon, ShieldCheckIcon } from "lucide-react"
+import { type FC, useMemo } from "react"
 import { useMembersByIds } from "@/_hooks/cqrs/queries/use-members-by-ids"
 import { AddressDisplay } from "@/app/_components/address-display"
 import { FetchError } from "@/app/_components/fetch-error"
 import { TypographySmall } from "@/app/_components/typography"
 import { CardContent } from "@/components/ui/card"
-import { type Publication, PublicationStatusSchema } from "@packages/schema"
-import { CircleOffIcon, DicesIcon, ShieldCheckIcon } from "lucide-react"
-import { type FC, useMemo } from "react"
 
 type Props = { publication: Publication }
 
