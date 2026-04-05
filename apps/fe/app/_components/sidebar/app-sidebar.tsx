@@ -1,6 +1,5 @@
-import { BookCheckIcon, BookPlusIcon, LayoutDashboardIcon } from "lucide-react"
-import Link from "next/link"
-import type { FC } from "react"
+"use client"
+
 import {
 	Sidebar,
 	SidebarContent,
@@ -13,15 +12,31 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar"
+import type { LucideIcon } from "lucide-react"
+import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type { FC } from "react"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 
+const navItems: { href: string; icon: LucideIcon; label: string; tooltip: string }[] = [
+	{ href: "/publications", icon: LayoutDashboardIcon, label: "Publications", tooltip: "Publications" },
+	{ href: "/publications/new", icon: FlaskConicalIcon, label: "Submit Publication", tooltip: "Submit Publication" },
+	{ href: "/publications/assignments", icon: GavelIcon, label: "Reviewer Portal", tooltip: "Review" },
+]
+
+const navButtonClassName =
+	"hover:bg-[#343a42] data-[active=true]:border-l-2 data-[active=true]:border-[#00d1ff] data-[active=true]:rounded-l-none"
+
 export const AppSidebar: FC = () => {
+	const pathname = usePathname()
+
 	return (
 		<Sidebar variant="floating" collapsible="icon">
 			<SidebarHeader className="h-16 border-b border-border/50 flex flex-col justify-center px-4">
 				<Link href="/" className="flex items-center gap-2 overflow-hidden">
-					<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-black">
+					<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00d1ff] text-[#003543] font-black">
 						B
 					</div>
 					<span className="font-bold text-xl tracking-tight truncate group-data-[collapsible=icon]:hidden">
@@ -33,7 +48,7 @@ export const AppSidebar: FC = () => {
 			<SidebarContent>
 				{/* Connection Management Section */}
 				<SidebarGroup>
-					<SidebarGroupLabel>Wallet</SidebarGroupLabel>
+					<SidebarGroupLabel className="text-[#bbc9cf]">Wallet</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
@@ -55,35 +70,24 @@ export const AppSidebar: FC = () => {
 
 				{/* Navigation Section */}
 				<SidebarGroup>
-					<SidebarGroupLabel>Protocol</SidebarGroupLabel>
+					<SidebarGroupLabel className="text-[#bbc9cf]">Protocol</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							<SidebarMenuItem>
-								<SidebarMenuButton asChild tooltip="Dashboard">
-									<Link href="/publications">
-										<LayoutDashboardIcon />
-										<span>Dashboard</span>
-									</Link>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
-
-							<SidebarMenuItem>
-								<SidebarMenuButton asChild tooltip="Submit Publication">
-									<Link href="/publications/new">
-										<BookPlusIcon />
-										<span>Submit Publication</span>
-									</Link>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
-
-							<SidebarMenuItem>
-								<SidebarMenuButton asChild tooltip="Review">
-									<Link href="/publications/assignments">
-										<BookCheckIcon />
-										<span>Assignments</span>
-									</Link>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
+							{navItems.map(({ href, icon: Icon, label, tooltip }) => (
+								<SidebarMenuItem key={href}>
+									<SidebarMenuButton
+										asChild
+										tooltip={tooltip}
+										isActive={pathname === href}
+										className={navButtonClassName}
+									>
+										<Link href={href}>
+											<Icon />
+											<span>{label}</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							))}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
