@@ -1,6 +1,6 @@
-import { getAuthFromCookies } from "@/_services/wagmi/get-auth-from-cookies"
 import { redirect } from "next/navigation"
 import { type FC, Suspense } from "react"
+import { getAuthFromCookies } from "@/_services/wagmi/get-auth-from-cookies"
 import { ReviewerAssignmentsSkeleton } from "./reviewer-assignments-skeleton"
 import { ReviewerAssignmentsWrapper } from "./reviewer-assignments-wrapper"
 import { ReviewerStatsSkeleton } from "./reviewer-stats-skeleton"

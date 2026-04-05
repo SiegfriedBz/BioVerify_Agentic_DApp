@@ -1,10 +1,10 @@
 "use client"
 
+import { CheckIcon, Share2Icon } from "lucide-react"
+import { type ComponentProps, type FC, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { CheckIcon, Share2Icon } from "lucide-react"
-import { ComponentProps, type FC, useState } from "react"
-import { toast } from "sonner"
 
 type Props = Omit<ComponentProps<typeof Button>, "onClick"> & {
 	id: string

@@ -1,9 +1,9 @@
 "use client"
 
-import { usePublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
-import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { AlertCircle, CheckCircle2, Lock } from "lucide-react"
 import type { FC, PropsWithChildren } from "react"
+import { usePublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
+import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 
 export const ReviewerGuard: FC<PropsWithChildren> = (props) => {
 	const { children } = props

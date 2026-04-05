@@ -1,11 +1,11 @@
 "use client"
 
-import { PublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
-import { usePublicationDetail } from "@/_hooks/cqrs/queries/use-publication-detail"
-import { PublicationDetailSkeleton } from "@/app/(routes)/publications/[chainId]/[pubId]/_components/publication-detail-skeleton"
-import { FetchError } from "@/app/_components/fetch-error"
 import type { Publication } from "@packages/schema"
 import { type FC, type PropsWithChildren, useMemo } from "react"
+import { PublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
+import { usePublicationDetail } from "@/_hooks/cqrs/queries/use-publication-detail"
+import { FetchError } from "@/app/_components/fetch-error"
+import { PublicationDetailSkeleton } from "@/app/(routes)/publications/[chainId]/[pubId]/_components/publication-detail-skeleton"
 
 type Props = {
 	initialPublication: Publication

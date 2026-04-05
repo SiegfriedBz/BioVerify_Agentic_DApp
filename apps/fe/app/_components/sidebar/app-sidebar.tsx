@@ -1,3 +1,6 @@
+import { BookCheckIcon, BookPlusIcon, LayoutDashboardIcon } from "lucide-react"
+import Link from "next/link"
+import type { FC } from "react"
 import {
 	Sidebar,
 	SidebarContent,
@@ -10,9 +13,6 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar"
-import { BookCheckIcon, BookPlusIcon, LayoutDashboardIcon } from "lucide-react"
-import Link from "next/link"
-import type { FC } from "react"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 

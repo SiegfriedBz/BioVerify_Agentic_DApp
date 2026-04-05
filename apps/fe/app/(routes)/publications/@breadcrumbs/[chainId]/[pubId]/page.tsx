@@ -1,3 +1,6 @@
+import { ChainIdToNetwork } from "@packages/utils"
+import Link from "next/link"
+import { notFound } from "next/navigation"
 import { NetworkToMessage } from "@/app/_components/network-badge"
 import {
 	Breadcrumb,
@@ -7,9 +10,6 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { ChainIdToNetwork } from "@packages/utils"
-import Link from "next/link"
-import { notFound } from "next/navigation"
 
 type Props = {
 	params: Promise<{ chainId: string; pubId: string }>

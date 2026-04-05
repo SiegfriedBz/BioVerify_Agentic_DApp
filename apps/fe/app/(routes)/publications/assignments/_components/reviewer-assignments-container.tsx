@@ -1,12 +1,12 @@
 "use client"
 
+import type { MemberAssignments } from "@packages/cqrs"
+import { ClipboardListIcon, InboxIcon } from "lucide-react"
+import type { FC } from "react"
 import { useMemberAssignments } from "@/_hooks/cqrs/queries/use-member-assignments"
 import { useMemberByChain } from "@/_hooks/cqrs/queries/use-member-by-chain"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { FetchError } from "@/app/_components/fetch-error"
-import type { MemberAssignments } from "@packages/cqrs"
-import { ClipboardListIcon, InboxIcon } from "lucide-react"
-import type { FC } from "react"
 import { ReviewerTable } from "./table/reviewer-table"
 
 type Props = {

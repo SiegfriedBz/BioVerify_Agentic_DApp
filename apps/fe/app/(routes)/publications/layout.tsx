@@ -1,6 +1,6 @@
-import { SideProvider } from "@/_context/side-provider"
 import { headers } from "next/headers"
 import { Toaster } from "sonner"
+import { SideProvider } from "@/_context/side-provider"
 
 export default async function Layout({
 	children,

@@ -1,10 +1,10 @@
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
 import {
 	type PublicationStatus,
 	PublicationStatusSchema,
 } from "@packages/schema"
 import type { ComponentProps, FC } from "react"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 const publicationStatusToColor: Record<PublicationStatus, string> = {
 	[PublicationStatusSchema.enum.SUBMITTED]: "bg-blue-400",
