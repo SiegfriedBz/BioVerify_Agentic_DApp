@@ -39,10 +39,14 @@ type BaseProps = {
 	network: NetworkT
 }
 
-type NetworkBadgeProps = ComponentProps<typeof Badge> & BaseProps
+type NetworkBadgeProps = ComponentProps<typeof Badge> &
+	BaseProps & {
+		/** When true, the chain icon uses a subtle pulse (e.g. pending on-chain state). */
+		pulseIcon?: boolean
+	}
 
 export const NetworkBadge: FC<NetworkBadgeProps> = (props) => {
-	const { network, className, ...rest } = props
+	const { network, pulseIcon = false, className, ...rest } = props
 
 	const Icon = NetworkToIcon[network]
 
@@ -52,7 +56,11 @@ export const NetworkBadge: FC<NetworkBadgeProps> = (props) => {
 			variant="ghost"
 			className={cn("gap-x-2 border-primary/10 bg-muted/30", className)}
 		>
-			<Icon variant="branded" size={64} className="animate-pulse" />
+			<Icon
+				variant="branded"
+				size={64}
+				className={cn(pulseIcon && "animate-pulse")}
+			/>
 			<span className="font-mono text-[10px] uppercase font-bold">
 				{NetworkToMessage[network]}
 			</span>
