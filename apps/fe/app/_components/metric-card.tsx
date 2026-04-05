@@ -8,25 +8,54 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
+type IconTone = "primary" | "secondary" | "error" | "warning"
+
 type Props = {
 	label: string
 	value: string | number
 	icon: LucideIcon
 	description?: string
+	/** Card + label emphasis for validation states (e.g. chain liquidity). */
 	status?: "default" | "warning" | "error"
+	/** Icon and icon circle only; card shell stays neutral unless `status` is warning/error. */
+	iconTone?: IconTone
+}
+
+const iconToneClasses: Record<IconTone, { wrap: string; icon: string }> = {
+	primary: { wrap: "bg-primary/10", icon: "text-primary" },
+	secondary: { wrap: "bg-secondary/20", icon: "text-secondary" },
+	error: { wrap: "bg-destructive/20", icon: "text-[var(--error)]" },
+	warning: { wrap: "bg-amber-500/20", icon: "text-amber-600" },
 }
 
 export const MetricCard: FC<Props> = (props) => {
-	const { label, value, icon: Icon, description, status = "default" } = props
+	const {
+		label,
+		value,
+		icon: Icon,
+		description,
+		status = "default",
+		iconTone: iconToneProp,
+	} = props
 
-	const statusClasses = {
+	const cardStatusClasses = {
 		default: "border-border hover:ring-primary/20",
 		warning: "border-amber-500/50 bg-amber-500/5 ring-1 ring-amber-500/20",
 		error: "border-destructive/50 bg-destructive/5 ring-1 ring-destructive/20",
 	}
 
+	const resolvedIconTone: IconTone =
+		status === "warning"
+			? "warning"
+			: status === "error"
+				? "error"
+				: (iconToneProp ?? "primary")
+
+	const { wrap: iconWrapClass, icon: iconClass } =
+		iconToneClasses[resolvedIconTone]
+
 	return (
-		<Card className={cn("transition-all shadow-sm", statusClasses[status])}>
+		<Card className={cn("transition-all shadow-sm", cardStatusClasses[status])}>
 			<CardContent className="p-6">
 				<div className="flex items-center justify-between pb-3">
 					<TypographySmall
@@ -41,26 +70,8 @@ export const MetricCard: FC<Props> = (props) => {
 					>
 						{label}
 					</TypographySmall>
-					<div
-						className={cn(
-							"rounded-full p-2",
-							status === "warning"
-								? "bg-amber-500/20"
-								: status === "error"
-									? "bg-destructive/20"
-									: "bg-primary/10",
-						)}
-					>
-						<Icon
-							className={cn(
-								"h-5 w-5",
-								status === "warning"
-									? "text-amber-600"
-									: status === "error"
-										? "text-destructive"
-										: "text-primary",
-							)}
-						/>
+					<div className={cn("rounded-full p-2", iconWrapClass)}>
+						<Icon className={cn("h-5 w-5", iconClass)} />
 					</div>
 				</div>
 

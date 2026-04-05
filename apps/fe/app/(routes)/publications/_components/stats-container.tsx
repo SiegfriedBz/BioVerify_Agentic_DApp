@@ -54,12 +54,14 @@ export const StatsContainer = (props: Props) => {
 					label="Slashed Pool - ETH"
 					value={stats.slashedPool}
 					icon={ShieldAlertIcon}
+					iconTone="error"
 					description="Revenue from protocol integrity"
 				/>
 				<MetricCard
 					label="Total Research"
 					value={stats.totalPublications}
 					icon={FlaskConicalIcon}
+					iconTone="secondary"
 					description="Publications across all chains"
 				/>
 				<MetricCard
