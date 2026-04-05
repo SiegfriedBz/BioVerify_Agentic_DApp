@@ -1,10 +1,5 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
-import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import type { FC } from "react"
 import {
 	Sidebar,
 	SidebarContent,
@@ -17,6 +12,11 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar"
+import type { LucideIcon } from "lucide-react"
+import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type { FC } from "react"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 
@@ -26,25 +26,25 @@ const navItems: {
 	label: string
 	tooltip: string
 }[] = [
-	{
-		href: "/publications",
-		icon: LayoutDashboardIcon,
-		label: "Publications",
-		tooltip: "Publications",
-	},
-	{
-		href: "/publications/new",
-		icon: FlaskConicalIcon,
-		label: "Submit Publication",
-		tooltip: "Submit Publication",
-	},
-	{
-		href: "/publications/assignments",
-		icon: GavelIcon,
-		label: "Reviewer Portal",
-		tooltip: "Review",
-	},
-]
+		{
+			href: "/publications",
+			icon: LayoutDashboardIcon,
+			label: "Publications",
+			tooltip: "Publications",
+		},
+		{
+			href: "/publications/new",
+			icon: FlaskConicalIcon,
+			label: "Submit Publication",
+			tooltip: "Submit Publication",
+		},
+		{
+			href: "/publications/assignments",
+			icon: GavelIcon,
+			label: "Reviewer Portal",
+			tooltip: "Review",
+		},
+	]
 
 const navButtonClassName =
 	"hover:bg-[#343a42] data-[active=true]:border-l-2 data-[active=true]:border-[#00d1ff] data-[active=true]:rounded-l-none"
