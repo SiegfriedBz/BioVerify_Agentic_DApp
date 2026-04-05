@@ -1,5 +1,10 @@
 "use client"
 
+import type { LucideIcon } from "lucide-react"
+import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type { FC } from "react"
 import {
 	Sidebar,
 	SidebarContent,
@@ -12,18 +17,33 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar"
-import type { LucideIcon } from "lucide-react"
-import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import type { FC } from "react"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 
-const navItems: { href: string; icon: LucideIcon; label: string; tooltip: string }[] = [
-	{ href: "/publications", icon: LayoutDashboardIcon, label: "Publications", tooltip: "Publications" },
-	{ href: "/publications/new", icon: FlaskConicalIcon, label: "Submit Publication", tooltip: "Submit Publication" },
-	{ href: "/publications/assignments", icon: GavelIcon, label: "Reviewer Portal", tooltip: "Review" },
+const navItems: {
+	href: string
+	icon: LucideIcon
+	label: string
+	tooltip: string
+}[] = [
+	{
+		href: "/publications",
+		icon: LayoutDashboardIcon,
+		label: "Publications",
+		tooltip: "Publications",
+	},
+	{
+		href: "/publications/new",
+		icon: FlaskConicalIcon,
+		label: "Submit Publication",
+		tooltip: "Submit Publication",
+	},
+	{
+		href: "/publications/assignments",
+		icon: GavelIcon,
+		label: "Reviewer Portal",
+		tooltip: "Review",
+	},
 ]
 
 const navButtonClassName =
@@ -48,7 +68,9 @@ export const AppSidebar: FC = () => {
 			<SidebarContent>
 				{/* Connection Management Section */}
 				<SidebarGroup>
-					<SidebarGroupLabel className="text-[#bbc9cf]">Wallet</SidebarGroupLabel>
+					<SidebarGroupLabel className="text-[#bbc9cf]">
+						Wallet
+					</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
@@ -70,7 +92,9 @@ export const AppSidebar: FC = () => {
 
 				{/* Navigation Section */}
 				<SidebarGroup>
-					<SidebarGroupLabel className="text-[#bbc9cf]">Protocol</SidebarGroupLabel>
+					<SidebarGroupLabel className="text-[#bbc9cf]">
+						Protocol
+					</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{navItems.map(({ href, icon: Icon, label, tooltip }) => (
