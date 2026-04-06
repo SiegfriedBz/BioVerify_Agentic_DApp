@@ -287,7 +287,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 								className={cn(
 									"h-12 w-full cursor-pointer bg-primary font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90",
 									(isDisabled || isWrongNetwork) &&
-									"cursor-not-allowed opacity-60",
+										"cursor-not-allowed opacity-60",
 								)}
 							>
 								{isIpfsUploading ? (
