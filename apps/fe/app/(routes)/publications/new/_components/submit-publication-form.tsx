@@ -149,7 +149,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 
 				// 3. Success -> Redirect
 				setTimeout(() => {
-					router.push("/dashboard")
+					router.push("/publications")
 				}, 1_500)
 			} catch (e) {
 				// Error handled by mutation hook's onError
