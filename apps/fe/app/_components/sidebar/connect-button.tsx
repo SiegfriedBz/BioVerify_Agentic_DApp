@@ -1,11 +1,11 @@
 "use client"
 
+import { SidebarMenuButton } from "@/components/ui/sidebar"
 import { ChainIdToNetwork } from "@packages/utils"
 import { useAppKit, useAppKitAccount, useDisconnect } from "@reown/appkit/react"
 import { LogOutIcon, WalletIcon } from "lucide-react"
 import type { FC } from "react"
 import { useChainId } from "wagmi"
-import { SidebarMenuButton } from "@/components/ui/sidebar"
 import { NetworkSimpleBadge } from "../network-badge"
 
 export const ConnectButton: FC = () => {
@@ -21,7 +21,7 @@ export const ConnectButton: FC = () => {
 			<SidebarMenuButton
 				onClick={() => open()}
 				tooltip="Connect Wallet"
-				className="border-0 bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] font-semibold text-[#003543] shadow-[0_4px_20px_rgba(0,209,255,0.18)] transition-[filter,box-shadow] hover:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] hover:text-[#003543] hover:brightness-110 hover:shadow-[0_6px_24px_rgba(0,209,255,0.22)] active:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] active:text-[#003543] [&>svg]:text-[#003543] hover:[&>svg]:text-[#003543]"
+				className="border-0 bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] font-semibold text-[#003543] shadow-[0_4px_20px_rgba(0,209,255,0.18)] transition-[filter,box-shadow] group-data-[collapsible=icon]:justify-center hover:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] hover:text-[#003543] hover:brightness-110 hover:shadow-[0_6px_24px_rgba(0,209,255,0.22)] active:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] active:text-[#003543] [&>svg]:text-[#003543] hover:[&>svg]:text-[#003543]"
 			>
 				<WalletIcon />
 				<span>Connect Wallet</span>
@@ -32,7 +32,7 @@ export const ConnectButton: FC = () => {
 	return (
 		<SidebarMenuButton
 			onClick={() => disconnect()}
-			className="h-auto min-h-10 gap-2 py-2 hover:bg-[#343a42] active:bg-[#343a42]"
+			className="h-auto min-h-10 gap-2 py-2 group-data-[collapsible=icon]:justify-center hover:bg-[#343a42] active:bg-[#343a42]"
 			tooltip="Disconnect"
 		>
 			<WalletIcon className="size-4 shrink-0 text-[#a4e6ff]" />

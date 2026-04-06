@@ -1,10 +1,5 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
-import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import type { FC } from "react"
 import {
 	Sidebar,
 	SidebarContent,
@@ -16,7 +11,13 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
+	useSidebar,
 } from "@/components/ui/sidebar"
+import type { LucideIcon } from "lucide-react"
+import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { type FC, useCallback } from "react"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 
@@ -51,15 +52,24 @@ const navButtonClassName =
 
 export const AppSidebar: FC = () => {
 	const pathname = usePathname()
+	const { isMobile, setOpenMobile } = useSidebar()
+
+	const handleNavClick = useCallback(() => {
+		if (isMobile) setOpenMobile(false)
+	}, [isMobile, setOpenMobile])
 
 	return (
 		<Sidebar variant="floating" collapsible="icon">
-			<SidebarHeader className="h-16 border-b border-border/50 flex flex-col justify-center px-4">
-				<Link href="/" className="flex items-center gap-2 overflow-hidden">
-					<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00d1ff] text-[#003543] font-black">
+			<SidebarHeader className="flex h-16 flex-col justify-center border-b border-border/50 px-4 md:group-data-[collapsible=icon]:px-2">
+				<Link
+					href="/"
+					onClick={handleNavClick}
+					className="flex items-center gap-2 overflow-hidden md:group-data-[collapsible=icon]:w-full md:group-data-[collapsible=icon]:justify-center"
+				>
+					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] font-black tracking-tight text-[#003543] shadow-[0_4px_20px_rgba(0,209,255,0.18)] ring-1 ring-primary/20">
 						B
 					</div>
-					<span className="font-bold text-xl tracking-tight truncate group-data-[collapsible=icon]:hidden">
+					<span className="truncate bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] bg-clip-text font-bold text-xl tracking-tight text-transparent group-data-[collapsible=icon]:hidden">
 						BioVerify
 					</span>
 				</Link>
@@ -74,7 +84,6 @@ export const AppSidebar: FC = () => {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
-								{/* ConnectButton already handles its own internal SidebarMenuButton with tooltip */}
 								<ConnectButton />
 							</SidebarMenuItem>
 
@@ -82,7 +91,7 @@ export const AppSidebar: FC = () => {
 								<SidebarMenuButton asChild tooltip="Switch Network">
 									<SwitchChainButton
 										variant={"ghost"}
-										className="w-full cursor-pointer flex justify-start"
+										className="flex w-full cursor-pointer justify-start group-data-[collapsible=icon]:justify-center"
 									/>
 								</SidebarMenuButton>
 							</SidebarMenuItem>
@@ -105,7 +114,7 @@ export const AppSidebar: FC = () => {
 										isActive={pathname === href}
 										className={navButtonClassName}
 									>
-										<Link href={href}>
+										<Link href={href} onClick={handleNavClick}>
 											<Icon />
 											<span>{label}</span>
 										</Link>
