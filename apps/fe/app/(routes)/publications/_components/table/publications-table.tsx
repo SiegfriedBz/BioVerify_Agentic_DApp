@@ -1,10 +1,5 @@
 "use client"
 
-import type { Publication } from "@packages/schema"
-import { NetworkToChainId } from "@packages/utils"
-import { BookOpenTextIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { type FC, useCallback } from "react"
 import { useDataTableUrlState } from "@/_hooks/use-data-table-url-state"
 import {
 	NetworkToMessage,
@@ -16,7 +11,6 @@ import {
 	DataTableFacetedFilter,
 	DataTablePagination,
 	DataTableToolbarSection,
-	DataTableViewMenu,
 } from "@/components/niko-table/components"
 import {
 	DataTable,
@@ -25,6 +19,11 @@ import {
 	DataTableHeader,
 	DataTableRoot,
 } from "@/components/niko-table/core"
+import type { Publication } from "@packages/schema"
+import { NetworkToChainId } from "@packages/utils"
+import { BookOpenTextIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { type FC, useCallback } from "react"
 import { parsers } from "../../search-params"
 import { columns } from "./columns"
 
@@ -51,6 +50,9 @@ export const PublicationsTable: FC<Props> = (props) => {
 		onColumnFiltersChange,
 	} = useDataTableUrlState(parsers)
 
+	const pageSize = Math.max(1, urlState.pageSize ?? 10)
+	const pageCount = count === 0 ? 0 : Math.ceil(count / pageSize)
+
 	const onRowClick = useCallback(
 		(row: Publication) => {
 			if (!row.chainId || !row.pubId) return
@@ -74,7 +76,7 @@ export const PublicationsTable: FC<Props> = (props) => {
 				state={{
 					pagination: {
 						pageIndex: urlState.pageIndex,
-						pageSize: urlState.pageSize,
+						pageSize,
 					},
 					sorting: urlState.sort,
 					columnFilters: urlState.filters,
@@ -86,7 +88,7 @@ export const PublicationsTable: FC<Props> = (props) => {
 					manualFiltering: true,
 					manualSorting: true,
 					manualPagination: true,
-					pageCount: count,
+					pageCount,
 				}}
 			>
 				<DataTableToolbarSection className="w-full justify-between gap-4">
@@ -105,7 +107,6 @@ export const PublicationsTable: FC<Props> = (props) => {
 						/>
 						<DataTableClearFilter />
 					</div>
-					<DataTableViewMenu />
 				</DataTableToolbarSection>
 
 				<DataTable>
@@ -115,7 +116,7 @@ export const PublicationsTable: FC<Props> = (props) => {
 					</DataTableBody>
 				</DataTable>
 
-				<DataTablePagination />
+				<DataTablePagination totalCount={count} defaultPageSize={pageSize} />
 			</DataTableRoot>
 		</>
 	)
