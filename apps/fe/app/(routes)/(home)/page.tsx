@@ -1,12 +1,3 @@
-import {
-	ArrowRight,
-	DicesIcon,
-	GavelIcon,
-	LinkIcon,
-	UsersRoundIcon,
-} from "lucide-react"
-import Link from "next/link"
-import { Fragment, Suspense } from "react"
 import { HeroImage } from "@/app/_components/hero-image"
 import { HeroVideo } from "@/app/_components/hero-video"
 import {
@@ -19,6 +10,15 @@ import {
 } from "@/app/_components/typography"
 import { VideoSkeleton } from "@/app/_components/video-skeleton"
 import { Button } from "@/components/ui/button"
+import {
+	ArrowRightIcon,
+	DicesIcon,
+	GavelIcon,
+	LinkIcon,
+	UsersRoundIcon,
+} from "lucide-react"
+import Link from "next/link"
+import { Fragment, Suspense } from "react"
 
 const STATUS_DOT = {
 	sky: "bg-sky-400 shadow-[0_0_8px] shadow-sky-400/45",
@@ -70,8 +70,8 @@ const protocolSteps = [
 export default function Page() {
 	return (
 		<main className="flex w-full max-w-full grow flex-col items-center pb-16 lg:pb-24">
-			<section className="flex w-full max-w-6xl flex-col items-center gap-6 px-4 pt-6 text-center sm:px-6 md:flex-row md:items-center md:gap-10 md:pt-16 md:text-left lg:gap-12 lg:pt-24">
-				<div className="flex min-w-0 flex-1 flex-col items-center gap-6 md:items-start">
+			<section className="flex w-full max-w-6xl flex-col items-center gap-4 px-4 pt-6 text-center max-md:min-h-[calc(100svh-4rem)] sm:gap-6 sm:px-6 md:flex-row md:items-center md:gap-10 md:pt-16 md:text-left lg:gap-12 lg:pt-24">
+				<div className="flex min-w-0 flex-1 flex-col items-center gap-4 md:items-start md:gap-6">
 					<TypographySmall className="flex items-center gap-x-1.5 rounded-full bg-primary/15 px-3 py-1.5 uppercase tracking-widest text-primary">
 						<span
 							className="size-2 shrink-0 animate-pulse rounded-full bg-primary shadow-[0_0_12px] shadow-secondary/50"
@@ -100,7 +100,7 @@ export default function Page() {
 						>
 							<Link href="/publications/new" className="gap-2">
 								Submit Research
-								<ArrowRight className="size-4" aria-hidden />
+								<ArrowRightIcon className="size-4" aria-hidden />
 							</Link>
 						</Button>
 						<Button
@@ -122,7 +122,7 @@ export default function Page() {
 					</div>
 				</div>
 
-				<div className="mt-2 w-full min-w-0 md:mt-0 md:flex-1 md:min-w-0">
+				<div className="mt-4 w-full min-w-0 md:mt-0 md:flex-1 md:min-w-0">
 					<div className="block w-full md:hidden">
 						<HeroImage />
 					</div>
@@ -240,7 +240,7 @@ export default function Page() {
 					>
 						<Link href="/publications" className="gap-2">
 							Get Started
-							<ArrowRight className="size-4" aria-hidden />
+							<ArrowRightIcon className="size-4" aria-hidden />
 						</Link>
 					</Button>
 				</div>
