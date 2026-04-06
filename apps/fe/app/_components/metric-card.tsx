@@ -1,5 +1,3 @@
-import type { LucideIcon } from "lucide-react"
-import type { FC } from "react"
 import {
 	TypographyH4,
 	TypographyP,
@@ -7,6 +5,8 @@ import {
 } from "@/app/_components/typography"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import type { LucideIcon } from "lucide-react"
+import type { FC } from "react"
 
 type IconTone = "primary" | "secondary" | "error" | "warning"
 
@@ -24,7 +24,7 @@ type Props = {
 const iconToneClasses: Record<IconTone, { wrap: string; icon: string }> = {
 	primary: { wrap: "bg-primary/10", icon: "text-primary" },
 	secondary: { wrap: "bg-secondary/20", icon: "text-secondary" },
-	error: { wrap: "bg-destructive/20", icon: "text-[var(--error)]" },
+	error: { wrap: "bg-[var(--error)]/20", icon: "text-[var(--error)]" },
 	warning: { wrap: "bg-amber-500/20", icon: "text-amber-600" },
 }
 

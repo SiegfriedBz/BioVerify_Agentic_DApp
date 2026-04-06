@@ -1,11 +1,11 @@
 "use client"
 
-import type { ChainStats } from "@packages/cqrs"
-import { LandmarkIcon, UsersIcon } from "lucide-react"
 import { useChainStats } from "@/_hooks/cqrs/queries/use-chain-stats"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { FetchError } from "@/app/_components/fetch-error"
 import { MetricCard } from "@/app/_components/metric-card"
+import type { ChainStats } from "@packages/cqrs"
+import { LandmarkIcon, UsersIcon } from "lucide-react"
 import { ChainStatsSkeleton } from "./chain-stats-skeleton"
 
 type Props = {
@@ -42,7 +42,7 @@ export const ChainStatsContainer = (props: Props) => {
 	if (!stats) return null
 
 	return (
-		<div className="space-y-4 container">
+		<div className="space-y-4">
 			<div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
 				{/* Reward Pool Card with requirement info */}
 				<MetricCard
