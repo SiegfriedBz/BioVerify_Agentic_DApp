@@ -1,9 +1,5 @@
 "use client"
 
-import { Coins } from "lucide-react"
-import type { FC } from "react"
-import { Controller, useFormContext } from "react-hook-form"
-import { formatEther } from "viem"
 import {
 	Field,
 	FieldDescription,
@@ -11,12 +7,18 @@ import {
 	FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Coins } from "lucide-react"
+import type { FC } from "react"
+import { Controller, useFormContext } from "react-hook-form"
+import { formatEther } from "viem"
 
 type Props = {
 	minStakeWei: bigint
 }
 
-export const StakeAmountInput: FC<Props> = ({ minStakeWei }) => {
+export const StakeAmountInput: FC<Props> = (props) => {
+	const { minStakeWei } = props
+
 	const { control } = useFormContext()
 	const minStakeEth = formatEther(minStakeWei)
 

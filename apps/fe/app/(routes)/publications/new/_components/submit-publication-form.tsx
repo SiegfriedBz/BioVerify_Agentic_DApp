@@ -19,7 +19,7 @@ import { NetworkToChainId } from "@packages/utils"
 import { switchChain } from "@wagmi/core"
 import { Loader2Icon, ShieldCheckIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { type FC, useCallback } from "react"
+import { type FC, startTransition, useCallback } from "react"
 import {
 	type DefaultValues,
 	FormProvider,
@@ -149,7 +149,9 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 
 				// 3. Success -> Redirect
 				setTimeout(() => {
-					router.push("/publications")
+					startTransition(() => {
+						router.push("/publications")
+					})
 				}, 1_500)
 			} catch (e) {
 				// Error handled by mutation hook's onError
@@ -287,7 +289,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 								className={cn(
 									"h-12 w-full cursor-pointer bg-primary font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90",
 									(isDisabled || isWrongNetwork) &&
-										"cursor-not-allowed opacity-60",
+									"cursor-not-allowed opacity-60",
 								)}
 							>
 								{isIpfsUploading ? (
