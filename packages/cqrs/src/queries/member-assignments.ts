@@ -4,35 +4,46 @@ import {
 	type Publication,
 	publicationDbSchema,
 } from "@packages/schema"
-import { and, eq, sql } from "drizzle-orm"
+import { and, count, desc, eq, sql } from "drizzle-orm"
 
-export type MemberAssignments = Publication[]
+export type MemberAssignmentsResponse = {
+	items: Publication[]
+	totalCount: number
+}
 
-type Params = {
+export type MemberAssignmentsQueryParams = {
 	userAddress: string
+	/** When set with `limit`, applies server-side pagination. Omit for full list (client-side table). */
+	limit?: number
+	offset?: number
 }
 
 export async function getMemberAssignments(
-	params: Params,
-): Promise<MemberAssignments> {
-	const { userAddress } = params
+	params: MemberAssignmentsQueryParams,
+): Promise<MemberAssignmentsResponse> {
+	const { userAddress, limit, offset = 0 } = params
 	const address = userAddress.toLowerCase()
 
+	const reviewerClause = sql`${address} = ANY(${publicationDbSchema.reviewers}) OR ${publicationDbSchema.seniorReviewer} = ${address}`
+
+	const whereClause = and(eq(publicationDbSchema.status, 2), reviewerClause)
+
 	try {
-		// 1. Database-level filtering
-		// Filters for: Status = IN_REVIEW (2) AND (User is in reviewers array OR is seniorReviewer)
-		const rawItems = await db
+		const listQuery = db
 			.select()
 			.from(publicationDbSchema)
-			.where(
-				and(
-					eq(publicationDbSchema.status, 2),
-					sql`${address} = ANY(${publicationDbSchema.reviewers}) OR ${publicationDbSchema.seniorReviewer} = ${address}`,
-				),
-			)
+			.where(whereClause)
+			.orderBy(desc(publicationDbSchema.createdAt))
 
-		// 2. Map results
-		const assignments = rawItems.reduce((acc: Publication[], raw) => {
+		const [itemsRaw, [totalRes]] = await Promise.all([
+			limit === undefined ? listQuery : listQuery.limit(limit).offset(offset),
+			db
+				.select({ value: count() })
+				.from(publicationDbSchema)
+				.where(whereClause),
+		])
+
+		const items = itemsRaw.reduce((acc: Publication[], raw) => {
 			try {
 				acc.push(mapPublication(raw))
 			} catch (e) {
@@ -41,9 +52,12 @@ export async function getMemberAssignments(
 			return acc
 		}, [])
 
-		return assignments
+		return {
+			items,
+			totalCount: totalRes.value,
+		}
 	} catch (error) {
 		console.error("[CQRS] getMemberAssignments Failed:", error)
-		return []
+		return { items: [], totalCount: 0 }
 	}
 }

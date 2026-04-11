@@ -10,7 +10,7 @@ import { type FC, useMemo } from "react"
 import { formatEther, parseEther } from "viem"
 import { TypographyP, TypographySmall } from "@/app/_components/typography"
 import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton" //
+import { Skeleton } from "@/components/ui/skeleton"
 
 type Props = {
 	userStakeInput: string
@@ -43,7 +43,7 @@ export const FeeCalculator: FC<Props> = ({
 					Submission Audit
 				</TypographySmall>
 				{isInsufficient && (
-					<div className="flex items-center gap-1 text-destructive animate-pulse">
+					<div className="flex items-center gap-1 text-error animate-pulse">
 						<AlertCircleIcon className="h-3 w-3" />
 						<span className="text-[9px] font-bold uppercase">
 							Below Min Stake
@@ -98,7 +98,7 @@ export const FeeCalculator: FC<Props> = ({
 						</div>
 					</div>
 					<span
-						className={`font-mono text-sm ${isInsufficient ? "text-destructive font-bold" : ""}`}
+						className={`font-mono text-sm ${isInsufficient ? "text-error font-bold" : ""}`}
 					>
 						{userStakeInput || "0.00"} ETH
 					</span>

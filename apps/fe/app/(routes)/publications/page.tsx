@@ -1,6 +1,6 @@
-import { TypographyH1, TypographyP } from "@/app/_components/typography"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { TypographyH1, TypographyP } from "@/app/_components/typography"
 import { PublicationsTableSkeleton } from "./_components/publications-table-skeleton"
 import { StatsSkeleton } from "./_components/stats-skeleton"
 import { StatsWrapper } from "./_components/stats-wrapper"
@@ -16,11 +16,11 @@ export default async function Page(props: Props) {
 	searchParamsCache.parse(searchParams)
 
 	return (
-		<>
-			<header className="flex flex-col gap-1 border-b border-border pb-6">
+		<div className="flex flex-col gap-8">
+			<header className="flex flex-col gap-1 border-b border-border">
 				<TypographyH1 className="text-left">Protocol Overview</TypographyH1>
 				<TypographyP className="text-muted-foreground text-sm">
-					Real-time system metrics and parameters.
+					System metrics and submitted publications.
 				</TypographyP>
 			</header>
 
@@ -31,6 +31,6 @@ export default async function Page(props: Props) {
 			<Suspense fallback={<PublicationsTableSkeleton />}>
 				<PublicationsTableWrapper />
 			</Suspense>
-		</>
+		</div>
 	)
 }

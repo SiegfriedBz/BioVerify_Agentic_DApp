@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import type { FC } from "react"
 import { PublicationDetailsProvider } from "@/_context/publication-details-provider"
 import { ExecuteReviewWrapper } from "./execute-review-wrapper"
+import { PublicationStatusGuard } from "./publication-status-guard"
 import { ReviewerGuard } from "./reviewer-guard"
 
 type Props = { id: string } // chainId-pubId
@@ -18,9 +19,11 @@ export const ReviewerGuardWrapper: FC<Props> = async (props) => {
 
 	return (
 		<PublicationDetailsProvider initialPublication={publication}>
-			<ReviewerGuard>
-				<ExecuteReviewWrapper rootCid={publication.cid} />
-			</ReviewerGuard>
+			<PublicationStatusGuard>
+				<ReviewerGuard>
+					<ExecuteReviewWrapper rootCid={publication.cid} />
+				</ReviewerGuard>
+			</PublicationStatusGuard>
 		</PublicationDetailsProvider>
 	)
 }

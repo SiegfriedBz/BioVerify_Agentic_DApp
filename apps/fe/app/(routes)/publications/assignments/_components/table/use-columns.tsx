@@ -1,17 +1,18 @@
 "use client"
 
-import { useMySwitchChain } from "@/_hooks/use-my-switch-chain"
-import { AddressDisplay } from "@/app/_components/address-display"
-import { NetworkBadge } from "@/app/_components/network-badge"
-import { SwitchChainButton } from "@/app/_components/switch-chain-button"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import type { Publication } from "@packages/schema"
 import { ChainIdToNetwork, NetworkToChainId } from "@packages/utils"
 import type { ColumnDef } from "@tanstack/react-table"
 import { BookOpenCheckIcon, CircleSlash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import type { FC } from "react"
+import { type FC, useCallback } from "react"
+import { useMySwitchChain } from "@/_hooks/use-my-switch-chain"
+import { AddressDisplay } from "@/app/_components/address-display"
+import { NetworkBadge } from "@/app/_components/network-badge"
+import { ReviewerRoleBadge } from "@/app/_components/reviewer-role-badge"
+import { SwitchChainButton } from "@/app/_components/switch-chain-button"
+import { TypographySmall } from "@/app/_components/typography"
+import { Button } from "@/components/ui/button"
 
 type Params = {
 	userAddress: string
@@ -23,20 +24,30 @@ export const useColumns = (params: Params): ColumnDef<Publication>[] => {
 	return [
 		{
 			accessorKey: "chainId",
-			header: "Network",
+			header: () => (
+				<TypographySmall className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">
+					Network
+				</TypographySmall>
+			),
 			cell: ({ row }) => {
 				const chainId = row.original?.chainId
 				if (!chainId) {
 					return <CircleSlash2Icon />
 				}
 
-				return <NetworkBadge network={ChainIdToNetwork[chainId]} />
+				return (
+					<NetworkBadge network={ChainIdToNetwork[chainId]} pulseIcon={true} />
+				)
 			},
 		},
 
 		{
 			accessorKey: "pubId",
-			header: "Publication",
+			header: () => (
+				<TypographySmall className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">
+					Publication
+				</TypographySmall>
+			),
 			cell: ({ row }) => {
 				const pubId = row.original?.pubId
 				if (!pubId) {
@@ -47,24 +58,26 @@ export const useColumns = (params: Params): ColumnDef<Publication>[] => {
 			},
 		},
 		{
-			header: "Role",
+			accessorKey: "role",
+			header: () => (
+				<TypographySmall className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">
+					Your Role
+				</TypographySmall>
+			),
 			cell: ({ row }) => {
 				const isSenior =
 					row.original.seniorReviewer?.toLowerCase() ===
 					userAddress.toLowerCase()
-				return (
-					<Badge
-						variant={isSenior ? "default" : "secondary"}
-						className="text-[10px] uppercase"
-					>
-						{isSenior ? "Senior Editor" : "Peer Reviewer"}
-					</Badge>
-				)
+				return <ReviewerRoleBadge isSeniorReviewer={isSenior} />
 			},
 		},
 		{
 			accessorKey: "publisher",
-			header: "Publisher",
+			header: () => (
+				<TypographySmall className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">
+					Publisher
+				</TypographySmall>
+			),
 			cell: ({ row }) => <AddressDisplay address={row.getValue("publisher")} />,
 		},
 		{
@@ -77,7 +90,6 @@ export const useColumns = (params: Params): ColumnDef<Publication>[] => {
 type ActionCellProps = {
 	publication: Publication
 }
-// Action Cell to handle Chain Switching
 const ActionCell: FC<ActionCellProps> = (props) => {
 	const { publication } = props
 
@@ -87,14 +99,17 @@ const ActionCell: FC<ActionCellProps> = (props) => {
 	const activeChainId = currentNetwork ? NetworkToChainId[currentNetwork] : null
 	const isWrongNetwork = activeChainId !== publication.chainId
 
-	const handleAction = (e: React.MouseEvent) => {
-		e.stopPropagation()
-		if (!publication.chainId || !publication.pubId) return
+	const handleAction = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation()
+			if (!publication.chainId || !publication.pubId) return
 
-		router.push(
-			`/publications/${publication.chainId}/${publication.pubId}/review`,
-		)
-	}
+			router.push(
+				`/publications/${publication.chainId}/${publication.pubId}/review`,
+			)
+		},
+		[router, publication],
+	)
 
 	return (
 		<div className="flex justify-end">
@@ -106,12 +121,12 @@ const ActionCell: FC<ActionCellProps> = (props) => {
 				/>
 			) : (
 				<Button
-					size="sm"
+					size="lg"
 					onClick={handleAction}
-					className="cursor-pointer font-bold text-[11px] items-center gap-x-2"
+					className="cursor-pointer bg-primary font-semibold tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
 				>
 					<BookOpenCheckIcon />
-					Review
+					Review Publication
 				</Button>
 			)}
 		</div>

@@ -12,6 +12,7 @@
 		"fe:dev": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/fe dev",
 		"inngest:dev": "npx inngest-cli@latest dev",
 		"inngest:sync": "dotenv -f .env -- npx inngest-cli@latest apps sync --url $APP_URL/api/inngest",
+		"inngest:syncb": "dotenv -f .env -- npx inngest-cli@latest apps sync --app-url https://bio-verify-ai-dapp-1br2u7icj-siegfriedbzs-projects.vercel.app/api/inngest",
 		"fe:build": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/fe build",
 		"fe:start": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/fe start",
 		"contract:compile": "pnpm env:check && dotenv -f .env -- pnpm --filter @apps/contracts exec forge compile",

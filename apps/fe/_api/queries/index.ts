@@ -13,7 +13,7 @@ import {
 	getPublications,
 	getStatsByChain,
 	getStatsGlobal,
-	type MemberAssignments,
+	type MemberAssignmentsResponse,
 	type PublicationsQueryParams,
 } from "@packages/cqrs"
 
@@ -29,6 +29,6 @@ export {
 	getPublications,
 	getStatsByChain,
 	getStatsGlobal,
-	type MemberAssignments,
+	type MemberAssignmentsResponse,
 	type PublicationsQueryParams,
 }

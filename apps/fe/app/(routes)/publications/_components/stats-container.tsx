@@ -39,7 +39,11 @@ export const StatsContainer = (props: Props) => {
 			<div className="flex items-center gap-2 px-1">
 				<GlobeIcon className="h-3 w-3 text-muted-foreground animate-pulse" />
 				<span className="text-[10px] font-medium uppercase tracking-tighter text-muted-foreground">
-					Aggregated data from {stats.networkCount} Active Networks
+					Aggregated data from{" "}
+					<span className="text-primary font-semibold">
+						{stats.networkCount}
+					</span>{" "}
+					Active Networks
 				</span>
 			</div>
 
@@ -54,12 +58,14 @@ export const StatsContainer = (props: Props) => {
 					label="Slashed Pool - ETH"
 					value={stats.slashedPool}
 					icon={ShieldAlertIcon}
+					iconTone="error"
 					description="Revenue from protocol integrity"
 				/>
 				<MetricCard
 					label="Total Research"
 					value={stats.totalPublications}
 					icon={FlaskConicalIcon}
+					iconTone="secondary"
 					description="Publications across all chains"
 				/>
 				<MetricCard

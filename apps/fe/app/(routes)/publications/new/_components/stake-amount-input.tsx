@@ -16,7 +16,9 @@ type Props = {
 	minStakeWei: bigint
 }
 
-export const StakeAmountInput: FC<Props> = ({ minStakeWei }) => {
+export const StakeAmountInput: FC<Props> = (props) => {
+	const { minStakeWei } = props
+
 	const { control } = useFormContext()
 	const minStakeEth = formatEther(minStakeWei)
 

@@ -1,6 +1,6 @@
-import { TypographyH1, TypographyP } from "@/app/_components/typography"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
+import { TypographyH1, TypographyP } from "@/app/_components/typography"
 import { ExecuteReviewWrapperSkeleton } from "./_components/execute-review-wrapper-skeleton"
 import { ReviewerGuardWrapper } from "./_components/reviewer-guard-wrapper"
 
@@ -21,7 +21,7 @@ export default async function Page(props: Props) {
 	return (
 		<>
 			<header className="flex flex-col gap-1 border-b border-border pb-6">
-				<TypographyH1>Review Assignment</TypographyH1>
+				<TypographyH1>Review Publication</TypographyH1>
 				<TypographyP className="text-muted-foreground text-sm">
 					Evaluate the technical merit and data integrity of the submitted
 					research manifest.

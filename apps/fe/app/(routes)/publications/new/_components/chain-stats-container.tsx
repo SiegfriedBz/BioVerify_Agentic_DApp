@@ -42,7 +42,7 @@ export const ChainStatsContainer = (props: Props) => {
 	if (!stats) return null
 
 	return (
-		<div className="space-y-4 container">
+		<div className="space-y-4">
 			<div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
 				{/* Reward Pool Card with requirement info */}
 				<MetricCard

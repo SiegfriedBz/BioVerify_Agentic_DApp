@@ -753,12 +753,12 @@ export const bioVerifyAbi = [
 ]
 
 const bioVerifyConfigBaseSepolia: ContractConfig = {
-	address: "0xa5FD28966BE524490d855FBE6E3c830357197251",
+	address: "0x25105e1A014B54ca6cFC542ab3569e92C85BbC40",
 	abi: bioVerifyAbi as Abi,
 }
 
 const bioVerifyConfigEthSepolia: ContractConfig = {
-	address: "0x1DcB58429F02c627dC726C623A4A9e785ecac3c7",
+	address: "0x5C9C68e55A940502a982af528096c95550433003",
 	abi: bioVerifyAbi as Abi,
 }
 

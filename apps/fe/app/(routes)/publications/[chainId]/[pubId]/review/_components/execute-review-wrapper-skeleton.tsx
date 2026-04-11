@@ -1,6 +1,5 @@
 import type { FC } from "react"
 import { ManifestCardSkeleton } from "@/app/_components/manifest-card-skeleton"
-import { Skeleton } from "@/components/ui/skeleton"
 import { ReviewFormSkeleton } from "./review-form-skeleton"
 
 export const ExecuteReviewWrapperSkeleton: FC = () => {
@@ -10,13 +9,8 @@ export const ExecuteReviewWrapperSkeleton: FC = () => {
 			<ManifestCardSkeleton />
 
 			{/* Aside Column */}
-			<aside className="space-y-8 sticky top-8">
-				<section className="space-y-4">
-					<div className="px-1">
-						<Skeleton className="h-3 w-32" /> {/* "Reviewer Decision" label */}
-					</div>
-					<ReviewFormSkeleton />
-				</section>
+			<aside className="sticky top-8 space-y-4">
+				<ReviewFormSkeleton />
 			</aside>
 		</div>
 	)

@@ -1,5 +1,5 @@
-import { TooltipProvider } from "@/components/ui/tooltip"
 import type { FC, PropsWithChildren } from "react"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { ThemeProvider } from "./theme-provider"
 import { CustomWagmiProvider } from "./wagmi-provider"
 

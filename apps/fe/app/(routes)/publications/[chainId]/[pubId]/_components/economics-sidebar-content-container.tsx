@@ -3,13 +3,13 @@
 import type { Protocol } from "@packages/schema"
 import type { FC } from "react"
 import { usePublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
-import { EconomicsSidebar } from "./economics-sidebar"
+import { EconomicsSidebarContent } from "./economics-sidebar-content"
 
 type Props = {
 	protocol: Protocol // protocol constants
 }
 
-export const EconomicsSidebarContainer: FC<Props> = (props) => {
+export const EconomicsSidebarContentContainer: FC<Props> = (props) => {
 	const { protocol } = props
 
 	// Use smart polling hook
@@ -17,5 +17,7 @@ export const EconomicsSidebarContainer: FC<Props> = (props) => {
 
 	if (!publication) return null
 
-	return <EconomicsSidebar publication={publication} protocol={protocol} />
+	return (
+		<EconomicsSidebarContent publication={publication} protocol={protocol} />
+	)
 }

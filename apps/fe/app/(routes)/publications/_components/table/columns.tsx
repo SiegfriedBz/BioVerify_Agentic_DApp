@@ -3,7 +3,7 @@
 import { type Publication, PublicationStatusSchema } from "@packages/schema"
 import { ChainIdToNetwork } from "@packages/utils"
 import type { ColumnDef } from "@tanstack/react-table"
-import { CircleSlash2Icon } from "lucide-react"
+import { CircleOffIcon, CircleSlash2Icon, DicesIcon } from "lucide-react"
 import { AddressDisplay } from "@/app/_components/address-display"
 import { NetworkBadge, networkOptions } from "@/app/_components/network-badge"
 import {
@@ -29,6 +29,25 @@ export const columns: ColumnDef<Publication>[] = [
 	},
 
 	{
+		accessorKey: "status",
+		header: () => (
+			<TypographySmall className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">
+				Status
+			</TypographySmall>
+		),
+		cell: ({ row }) => (
+			<PublicationStatusBadge status={row.getValue("status")} />
+		),
+		meta: {
+			label: "Status",
+			variant: "select",
+			options: publicationStatusOptions,
+		},
+		enableColumnFilter: true,
+		enableGlobalFilter: true,
+	},
+
+	{
 		accessorKey: "chainId",
 		header: () => (
 			<TypographySmall className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">
@@ -37,11 +56,21 @@ export const columns: ColumnDef<Publication>[] = [
 		),
 		cell: ({ row }) => {
 			const chainId = row.original?.chainId
+			const status = row.original?.status
 			if (!chainId) {
 				return <CircleSlash2Icon />
 			}
 
-			return <NetworkBadge network={ChainIdToNetwork[chainId]} />
+			const pulseIcon =
+				status === PublicationStatusSchema.enum.SUBMITTED ||
+				status === PublicationStatusSchema.enum.IN_REVIEW
+
+			return (
+				<NetworkBadge
+					network={ChainIdToNetwork[chainId]}
+					pulseIcon={pulseIcon}
+				/>
+			)
 		},
 		meta: {
 			label: "Network",
@@ -70,30 +99,34 @@ export const columns: ColumnDef<Publication>[] = [
 		cell: ({ row }) => {
 			const { seniorReviewer, reviewers, status } = row.original
 
-			// Logic for Submission Agent Slash
-			if (
-				reviewers.length === 0 &&
-				status === PublicationStatusSchema.enum.SLASHED
-			) {
+			if (status === PublicationStatusSchema.enum.EARLY_SLASHED) {
 				return (
-					<div className="flex items-center gap-2">
-						<TypographySmall className="text-destructive/70 font-medium text-[10px]">
+					<div className="flex items-center gap-2 ">
+						<CircleOffIcon
+							className="h-3.5 w-3.5 shrink-0 text-(--error)/60"
+							aria-hidden
+						/>
+						<TypographySmall className="text-muted-foreground text-xs font-medium leading-snug">
 							Terminated by AI Shield
 						</TypographySmall>
 					</div>
 				)
 			}
 
-			// Logic for Awaiting VRF (Submitted or currently being screened)
 			if (reviewers.length === 0) {
 				return (
-					<TypographySmall className="text-muted-foreground/40 italic text-[10px]">
-						Awaiting VRF Selection...
-					</TypographySmall>
+					<div className="flex items-center gap-2">
+						<DicesIcon
+							className="h-3.5 w-3.5 shrink-0 text-primary/80 animate-pulse"
+							aria-hidden
+						/>
+						<TypographySmall className="text-muted-foreground text-xs font-medium leading-snug">
+							Awaiting VRF Selection...
+						</TypographySmall>
+					</div>
 				)
 			}
 
-			// Logic for Active Reviewers
 			return (
 				<div className="flex flex-col gap-1.5 py-1">
 					<div className="flex items-center gap-2">
@@ -117,24 +150,7 @@ export const columns: ColumnDef<Publication>[] = [
 			)
 		},
 	},
-	{
-		accessorKey: "status",
-		header: () => (
-			<TypographySmall className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">
-				Status
-			</TypographySmall>
-		),
-		cell: ({ row }) => (
-			<PublicationStatusBadge status={row.getValue("status")} />
-		),
-		meta: {
-			label: "Status",
-			variant: "select",
-			options: publicationStatusOptions,
-		},
-		enableColumnFilter: true,
-		enableGlobalFilter: true,
-	},
+
 	{
 		accessorKey: "lockedStake",
 		header: () => (
@@ -145,7 +161,7 @@ export const columns: ColumnDef<Publication>[] = [
 		cell: ({ row }) => {
 			const amount = row.original.lockedStake
 			return (
-				<div className="flex flex-col items-end gap-0">
+				<div className="flex flex-wrap items-baseline gap-1">
 					<span className="font-mono font-bold text-sm leading-none text-foreground">
 						{amount}
 					</span>

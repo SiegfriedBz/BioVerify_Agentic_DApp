@@ -1,82 +1,78 @@
 "use client"
 
-import { useMemberAssignments } from "@/_hooks/cqrs/queries/use-member-assignments"
+import { useIsFetching, useQueryClient } from "@tanstack/react-query"
+import { ClipboardListIcon, Loader2, RefreshCwIcon } from "lucide-react"
+import { type FC, useCallback } from "react"
 import { useMemberByChain } from "@/_hooks/cqrs/queries/use-member-by-chain"
-import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
-import { FetchError } from "@/app/_components/fetch-error"
-import type { MemberAssignments } from "@packages/cqrs"
-import { ClipboardListIcon, InboxIcon } from "lucide-react"
-import type { FC } from "react"
+import { assignmentKeys } from "@/_hooks/cqrs/query-keys/assignments-keys"
+import { Button } from "@/components/ui/button"
 import { ReviewerTable } from "./table/reviewer-table"
 
 type Props = {
-	server: {
-		initialData: MemberAssignments
-		userAddress: string
-		chainId: number
-	}
+	activeAddress: string
+	activeChainId: number
 }
 
 export const ReviewerAssignmentsContainer: FC<Props> = (props) => {
-	const { server } = props
-	const { walletAddress, walletChainId } = useAuthFromWallet()
+	const { activeAddress, activeChainId } = props
 
-	const activeAddress = walletAddress || server.userAddress
-	const activeChainId = walletChainId || server.chainId
-
-	// 1. Fetch member data
 	const { data: memberData } = useMemberByChain({
 		userAddress: activeAddress,
 		chainId: activeChainId,
 	})
 
-	const {
-		data: assignmentsData,
-		isError,
-		refetch,
-	} = useMemberAssignments({
-		userAddress: activeAddress,
-		initialData:
-			activeAddress.toLowerCase() === server.userAddress.toLowerCase()
-				? server.initialData
-				: undefined,
-	})
-
-	if (isError) return <FetchError refetch={refetch} />
-
-	// 2. Hide Assignments for non-members
 	if (!memberData) return null
-
-	const assignments = assignmentsData ?? []
-	const count = assignments.length
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center gap-2">
-				<ClipboardListIcon className="w-5 h-5 text-primary" />
-				<h3 className="text-xl font-bold tracking-tight">Active Assignments</h3>
+			<div className="flex items-center justify-between gap-3">
+				<div className="flex items-center gap-2">
+					<ClipboardListIcon className="h-5 w-5 text-primary" />
+					<h3 className="text-xl font-bold tracking-tight">
+						Active Assignments
+					</h3>
+				</div>
+				<RefreshButton userAddress={activeAddress} />
 			</div>
 
-			{count > 0 ? (
-				<ReviewerTable
-					assignments={assignments}
-					count={count}
-					userAddress={activeAddress}
-				/>
-			) : (
-				<div className="flex flex-col items-center justify-center py-20 border-2 border-dashed rounded-2xl bg-muted/5">
-					<div className="p-4 rounded-full bg-muted/20 mb-4">
-						<InboxIcon className="size-12 text-muted-foreground/40" />
-					</div>
-					<p className="font-semibold text-muted-foreground">Standing By</p>
-					<p className="text-sm text-muted-foreground/60 max-w-70 text-center mt-1">
-						You are currently in the active pool.
-						<span className="inline-flex">
-							New publications will appear here when assigned.
-						</span>
-					</p>
-				</div>
-			)}
+			<ReviewerTable userAddress={activeAddress} />
 		</div>
+	)
+}
+
+type RefreshButtonProps = {
+	userAddress: string
+}
+const RefreshButton: FC<RefreshButtonProps> = (props) => {
+	const { userAddress } = props
+
+	const queryClient = useQueryClient()
+
+	const assignmentsFetching =
+		useIsFetching({
+			queryKey: assignmentKeys.all,
+		}) > 0
+
+	const handleRefreshAssignments = useCallback(() => {
+		void queryClient.invalidateQueries({
+			queryKey: assignmentKeys.byUser(userAddress.toLowerCase()),
+		})
+	}, [queryClient, userAddress])
+
+	return (
+		<Button
+			type="button"
+			variant="ghost"
+			size="icon"
+			className="shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
+			onClick={handleRefreshAssignments}
+			aria-label="Refresh assignments"
+		>
+			{assignmentsFetching ? (
+				<Loader2 className="size-4 animate-spin" />
+			) : (
+				<RefreshCwIcon className="size-4" />
+			)}
+		</Button>
 	)
 }

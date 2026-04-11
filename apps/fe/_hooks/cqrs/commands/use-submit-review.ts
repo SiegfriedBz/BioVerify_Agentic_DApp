@@ -27,6 +27,8 @@ type ReviewArgs = {
 		chainId: number
 		seniorReviewer: string
 	}
+	/** Fires after EIP-712 signature, before agent handoff (for UI stage labels). */
+	onSigned?: () => void
 }
 
 export const useSubmitReview = () => {
@@ -34,7 +36,7 @@ export const useSubmitReview = () => {
 
 	return useMutation({
 		mutationFn: async (args: ReviewArgs) => {
-			const { decision, reason, reviewer, publication } = args
+			const { decision, reason, reviewer, publication, onSigned } = args
 			const network = ChainIdToNetwork[publication.chainId]
 
 			// 1. Sign (Client Side)
@@ -51,6 +53,7 @@ export const useSubmitReview = () => {
 				},
 			})
 
+			onSigned?.()
 			toast.info("Signature verified. Handing off to Agent...")
 
 			// 2. Execute SendReviewToAgent
