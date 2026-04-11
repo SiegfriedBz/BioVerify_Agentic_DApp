@@ -1,5 +1,8 @@
 "use client"
 
+import type { Publication } from "@packages/schema"
+import { InboxIcon } from "lucide-react"
+import type { FC } from "react"
 import { useMemberAssignments } from "@/_hooks/cqrs/queries/use-member-assignments"
 import { DataTablePagination } from "@/components/niko-table/components"
 import {
@@ -10,9 +13,6 @@ import {
 	DataTableRoot,
 } from "@/components/niko-table/core"
 import { Button } from "@/components/ui/button"
-import type { Publication } from "@packages/schema"
-import { InboxIcon } from "lucide-react"
-import type { FC } from "react"
 import { useColumns } from "./use-columns"
 
 type Props = {

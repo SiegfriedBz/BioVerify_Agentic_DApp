@@ -1,5 +1,3 @@
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
 import { NetworkSchema, type NetworkT } from "@packages/schema"
 import {
 	type IconComponentProps,
@@ -12,6 +10,8 @@ import type {
 	ForwardRefExoticComponent,
 	RefAttributes,
 } from "react"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 export const NetworkToMessage: Record<NetworkT, string> = {
 	[NetworkSchema.enum.base_sepolia]: "Base Sepolia",

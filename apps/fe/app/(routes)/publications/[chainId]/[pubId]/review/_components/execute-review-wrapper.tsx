@@ -1,7 +1,7 @@
+import { type FC, Suspense } from "react"
 import { ManifestCardSkeleton } from "@/app/_components/manifest-card-skeleton"
 import { ManifestCardWrapper } from "@/app/_components/manifest-card-wrapper"
 import { PublicationMainContentContainer } from "@/app/_components/publication-main-content-container"
-import { type FC, Suspense } from "react"
 import { ReviewForm } from "./review-form"
 import { ReviewPublicationSummary } from "./review-publication-summary"
 

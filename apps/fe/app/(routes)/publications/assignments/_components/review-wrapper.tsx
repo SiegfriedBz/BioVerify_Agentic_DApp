@@ -1,5 +1,5 @@
-import { getAuthFromCookies } from "@/_services/wagmi/get-auth-from-cookies"
 import type { FC } from "react"
+import { getAuthFromCookies } from "@/_services/wagmi/get-auth-from-cookies"
 import { ReviewerAssignmentsWalletGate } from "./reviewer-assignments-wallet-gate"
 
 /**

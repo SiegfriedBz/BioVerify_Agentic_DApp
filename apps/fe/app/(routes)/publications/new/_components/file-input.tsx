@@ -1,12 +1,12 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Field, FieldError } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { FileTypeSchema } from "@packages/schema"
 import { FileUpIcon, Trash2Icon } from "lucide-react"
 import type { FC } from "react"
 import { Controller, useFormContext } from "react-hook-form"
+import { Button } from "@/components/ui/button"
+import { Field, FieldError } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 
 type FileInputProps = {
 	index: number

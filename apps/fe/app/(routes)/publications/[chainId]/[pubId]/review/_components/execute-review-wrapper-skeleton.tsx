@@ -1,5 +1,5 @@
-import { ManifestCardSkeleton } from "@/app/_components/manifest-card-skeleton"
 import type { FC } from "react"
+import { ManifestCardSkeleton } from "@/app/_components/manifest-card-skeleton"
 import { ReviewFormSkeleton } from "./review-form-skeleton"
 
 export const ExecuteReviewWrapperSkeleton: FC = () => {

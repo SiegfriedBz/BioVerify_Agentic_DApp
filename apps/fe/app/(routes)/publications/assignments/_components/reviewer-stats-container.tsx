@@ -1,11 +1,11 @@
 "use client"
 
+import { ChainIdToNetwork } from "@packages/utils"
+import type { FC } from "react"
 import { useMemberByChain } from "@/_hooks/cqrs/queries/use-member-by-chain"
 import { FetchError } from "@/app/_components/fetch-error"
 import { NetworkBadge } from "@/app/_components/network-badge"
 import { TypographySmall } from "@/app/_components/typography"
-import { ChainIdToNetwork } from "@packages/utils"
-import type { FC } from "react"
 import { ClaimDialog } from "./claim/claim-dialog"
 import { PayReviewerStakeButton } from "./pay-reviewer-stake-button"
 import { ReviewerInsufficientStakeCard } from "./reviewer-insufficient-stake-card"

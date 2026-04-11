@@ -1,5 +1,11 @@
 "use client"
 
+import type { Publication } from "@packages/schema"
+import { ChainIdToNetwork, NetworkToChainId } from "@packages/utils"
+import type { ColumnDef } from "@tanstack/react-table"
+import { BookOpenCheckIcon, CircleSlash2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { type FC, useCallback } from "react"
 import { useMySwitchChain } from "@/_hooks/use-my-switch-chain"
 import { AddressDisplay } from "@/app/_components/address-display"
 import { NetworkBadge } from "@/app/_components/network-badge"
@@ -7,12 +13,6 @@ import { ReviewerRoleBadge } from "@/app/_components/reviewer-role-badge"
 import { SwitchChainButton } from "@/app/_components/switch-chain-button"
 import { TypographySmall } from "@/app/_components/typography"
 import { Button } from "@/components/ui/button"
-import type { Publication } from "@packages/schema"
-import { ChainIdToNetwork, NetworkToChainId } from "@packages/utils"
-import type { ColumnDef } from "@tanstack/react-table"
-import { BookOpenCheckIcon, CircleSlash2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { type FC, useCallback } from "react"
 
 type Params = {
 	userAddress: string

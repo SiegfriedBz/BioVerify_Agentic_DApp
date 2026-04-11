@@ -1,10 +1,10 @@
 "use client"
 
+import { Lock } from "lucide-react"
+import type { FC, PropsWithChildren } from "react"
 import { usePublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { TypographyH3 } from "@/app/_components/typography"
-import { Lock } from "lucide-react"
-import type { FC, PropsWithChildren } from "react"
 
 export const ReviewerGuard: FC<PropsWithChildren> = (props) => {
 	const { children } = props

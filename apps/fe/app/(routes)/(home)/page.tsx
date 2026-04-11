@@ -1,3 +1,12 @@
+import {
+	ArrowRightIcon,
+	DicesIcon,
+	GavelIcon,
+	LinkIcon,
+	UsersRoundIcon,
+} from "lucide-react"
+import Link from "next/link"
+import { Fragment, Suspense } from "react"
 import { HeroImage } from "@/app/_components/hero-image"
 import { HeroVideo } from "@/app/_components/hero-video"
 import {
@@ -10,15 +19,6 @@ import {
 } from "@/app/_components/typography"
 import { VideoSkeleton } from "@/app/_components/video-skeleton"
 import { Button } from "@/components/ui/button"
-import {
-	ArrowRightIcon,
-	DicesIcon,
-	GavelIcon,
-	LinkIcon,
-	UsersRoundIcon,
-} from "lucide-react"
-import Link from "next/link"
-import { Fragment, Suspense } from "react"
 
 const STATUS_DOT = {
 	sky: "bg-sky-400 shadow-[0_0_8px] shadow-sky-400/45",

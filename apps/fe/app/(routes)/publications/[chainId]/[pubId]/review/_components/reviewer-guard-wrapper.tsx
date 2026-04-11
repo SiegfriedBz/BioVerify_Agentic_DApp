@@ -1,7 +1,7 @@
-import { PublicationDetailsProvider } from "@/_context/publication-details-provider"
 import { getPublicationById } from "@packages/cqrs"
 import { notFound } from "next/navigation"
 import type { FC } from "react"
+import { PublicationDetailsProvider } from "@/_context/publication-details-provider"
 import { ExecuteReviewWrapper } from "./execute-review-wrapper"
 import { PublicationStatusGuard } from "./publication-status-guard"
 import { ReviewerGuard } from "./reviewer-guard"

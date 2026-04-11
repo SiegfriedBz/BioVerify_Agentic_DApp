@@ -1,7 +1,5 @@
 "use client"
 
-import { reownConfig } from "@/_config/wagmi/wagmi-config"
-import { sendReviewToAgent } from "@/_lib/commands/send-review-to-agent"
 import type { Publication } from "@packages/schema"
 import {
 	ChainIdToNetwork,
@@ -12,6 +10,8 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { signTypedData } from "@wagmi/core"
 import { toast } from "sonner"
+import { reownConfig } from "@/_config/wagmi/wagmi-config"
+import { sendReviewToAgent } from "@/_lib/commands/send-review-to-agent"
 import { assignmentKeys } from "../query-keys/assignments-keys"
 import { membersKeys } from "../query-keys/members-keys"
 import { publicationsKeys } from "../query-keys/publications-keys"

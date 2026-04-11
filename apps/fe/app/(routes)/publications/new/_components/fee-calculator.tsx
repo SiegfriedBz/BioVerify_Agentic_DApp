@@ -1,8 +1,5 @@
 "use client"
 
-import { TypographyP, TypographySmall } from "@/app/_components/typography"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
 	AlertCircleIcon,
 	FuelIcon,
@@ -11,6 +8,9 @@ import {
 } from "lucide-react"
 import { type FC, useMemo } from "react"
 import { formatEther, parseEther } from "viem"
+import { TypographyP, TypographySmall } from "@/app/_components/typography"
+import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type Props = {
 	userStakeInput: string

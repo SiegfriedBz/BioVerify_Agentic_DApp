@@ -1,11 +1,11 @@
+import type { NetworkT } from "@packages/schema"
+import { Shield } from "lucide-react"
+import type { FC } from "react"
 import { NetworkBadge } from "@/app/_components/network-badge"
 import { SwitchChainButton } from "@/app/_components/switch-chain-button"
 import { TypographyH3, TypographySmall } from "@/app/_components/typography"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import type { NetworkT } from "@packages/schema"
-import { Shield } from "lucide-react"
-import type { FC } from "react"
 import { PayReviewerStakeButton } from "./pay-reviewer-stake-button"
 
 type Props = {

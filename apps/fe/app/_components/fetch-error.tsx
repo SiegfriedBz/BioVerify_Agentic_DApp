@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import type { FC } from "react"
+import { Button } from "@/components/ui/button"
 
 type Props = {
 	refetch: () => Promise<unknown> | undefined

@@ -1,11 +1,11 @@
 "use client"
 
+import type { ChainStats } from "@packages/cqrs"
+import { LandmarkIcon, UsersIcon } from "lucide-react"
 import { useChainStats } from "@/_hooks/cqrs/queries/use-chain-stats"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { FetchError } from "@/app/_components/fetch-error"
 import { MetricCard } from "@/app/_components/metric-card"
-import type { ChainStats } from "@packages/cqrs"
-import { LandmarkIcon, UsersIcon } from "lucide-react"
 import { ChainStatsSkeleton } from "./chain-stats-skeleton"
 
 type Props = {

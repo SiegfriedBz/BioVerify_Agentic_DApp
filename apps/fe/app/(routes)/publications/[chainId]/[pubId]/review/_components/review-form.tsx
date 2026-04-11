@@ -10,6 +10,22 @@
  * 3. Triggering the server-side LangGraph resumption (resumeReviewersAgent or resumeSeniorReviewerAgent).
  */
 
+import { zodResolver } from "@hookform/resolvers/zod"
+import { HumanDecisionSchema } from "@packages/schema"
+import { ChainIdToNetwork } from "@packages/utils"
+import {
+	AlertCircle,
+	CheckCircle2,
+	CheckCircle2Icon,
+	SendIcon,
+	XCircleIcon,
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { type FC, startTransition, useMemo, useState } from "react"
+import { Controller, useForm } from "react-hook-form"
+import { toast } from "sonner"
+import type { Address } from "viem"
+import * as z from "zod"
 import { usePublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
 import { useSubmitReview } from "@/_hooks/cqrs/commands/use-submit-review"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
@@ -28,22 +44,6 @@ import { Field, FieldError, FieldGroup } from "@/components/ui/field"
 import { InputGroup, InputGroupTextarea } from "@/components/ui/input-group"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { HumanDecisionSchema } from "@packages/schema"
-import { ChainIdToNetwork } from "@packages/utils"
-import {
-	AlertCircle,
-	CheckCircle2,
-	CheckCircle2Icon,
-	SendIcon,
-	XCircleIcon,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-import { type FC, startTransition, useMemo, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
-import type { Address } from "viem"
-import * as z from "zod"
 
 const formSchema = z.object({
 	decision: z.enum(["pass", "fail"]),
@@ -135,10 +135,10 @@ export const ReviewForm: FC = () => {
 
 	const totalPeerReviews = publication
 		? Object.keys(publication.reviewersStatus).filter((addr) =>
-			publication.reviewers.some(
-				(r) => r.toLowerCase() === addr.toLowerCase(),
-			),
-		).length
+				publication.reviewers.some(
+					(r) => r.toLowerCase() === addr.toLowerCase(),
+				),
+			).length
 		: 0
 
 	const peerCount = publication?.reviewers.length ?? 0
@@ -209,8 +209,6 @@ export const ReviewForm: FC = () => {
 		)
 	}
 
-
-
 	return (
 		<Card className="overflow-hidden border-border shadow-md">
 			<CardHeader className="border-b bg-muted/30 pb-4">
@@ -224,7 +222,9 @@ export const ReviewForm: FC = () => {
 				{isSeniorStandby && (
 					<Alert className="border-l-4 border-tertiary bg-tertiary/15 text-tertiary dark:text-tertiary [&>svg]:text-tertiary">
 						<AlertCircle className="size-5" />
-						<AlertTitle className="font-semibold">Awaiting peer reviews</AlertTitle>
+						<AlertTitle className="font-semibold">
+							Awaiting peer reviews
+						</AlertTitle>
 						<AlertDescription className="text-foreground/80">
 							Submission opens once all peers have submitted. Your input will
 							only be required if the AI Agent detects conflicting verdicts

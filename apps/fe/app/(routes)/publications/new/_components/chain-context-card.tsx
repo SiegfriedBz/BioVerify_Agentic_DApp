@@ -1,10 +1,10 @@
 "use client"
 
+import type { NetworkT } from "@packages/schema"
+import type { FC } from "react"
 import { NetworkBadge, NetworkToMessage } from "@/app/_components/network-badge"
 import { TypographySmall } from "@/app/_components/typography"
 import { Button } from "@/components/ui/button"
-import type { NetworkT } from "@packages/schema"
-import type { FC } from "react"
 
 type Props = {
 	targetNetwork: NetworkT

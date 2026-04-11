@@ -1,10 +1,10 @@
 "use client"
 
-import { TypographyP } from "@/app/_components/typography"
-import { Button } from "@/components/ui/button"
 import { useAppKit } from "@reown/appkit/react"
 import { WalletIcon } from "lucide-react"
 import type { FC } from "react"
+import { TypographyP } from "@/app/_components/typography"
+import { Button } from "@/components/ui/button"
 
 /** Connect prompt when there is no wallet address + chain (see ReviewerAssignmentsWalletGate). */
 export const ReviewerGuestState: FC = () => {

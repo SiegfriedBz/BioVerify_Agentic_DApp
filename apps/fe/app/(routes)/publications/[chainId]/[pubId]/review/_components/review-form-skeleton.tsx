@@ -1,7 +1,7 @@
+import type { FC } from "react"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import type { FC } from "react"
 
 export const ReviewFormSkeleton: FC = () => {
 	return (

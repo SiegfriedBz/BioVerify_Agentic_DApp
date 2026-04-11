@@ -1,5 +1,9 @@
 "use client"
 
+import { type Publication, PublicationStatusSchema } from "@packages/schema"
+import { ChainIdToNetwork } from "@packages/utils"
+import type { ColumnDef } from "@tanstack/react-table"
+import { CircleOffIcon, CircleSlash2Icon, DicesIcon } from "lucide-react"
 import { AddressDisplay } from "@/app/_components/address-display"
 import { NetworkBadge, networkOptions } from "@/app/_components/network-badge"
 import {
@@ -8,10 +12,6 @@ import {
 } from "@/app/_components/publication-status-badge"
 import { TypographySmall } from "@/app/_components/typography"
 import { Badge } from "@/components/ui/badge"
-import { type Publication, PublicationStatusSchema } from "@packages/schema"
-import { ChainIdToNetwork } from "@packages/utils"
-import type { ColumnDef } from "@tanstack/react-table"
-import { CircleOffIcon, CircleSlash2Icon, DicesIcon } from "lucide-react"
 
 export const columns: ColumnDef<Publication>[] = [
 	{

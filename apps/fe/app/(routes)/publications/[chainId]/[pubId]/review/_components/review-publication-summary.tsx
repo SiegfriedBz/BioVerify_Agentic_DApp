@@ -1,5 +1,10 @@
 "use client"
 
+import { ChainIdToNetwork } from "@packages/utils"
+import { format } from "date-fns"
+import { ShieldCheckIcon } from "lucide-react"
+import type { FC } from "react"
+import { useMemo } from "react"
 import { usePublicationDetailContext } from "@/_hooks/context/use-publication-details-ctx"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { NetworkBadge } from "@/app/_components/network-badge"
@@ -7,11 +12,6 @@ import { ReviewerRoleBadge } from "@/app/_components/reviewer-role-badge"
 import { TypographyH4, TypographySmall } from "@/app/_components/typography"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { ChainIdToNetwork } from "@packages/utils"
-import { format } from "date-fns"
-import { ShieldCheckIcon } from "lucide-react"
-import type { FC } from "react"
-import { useMemo } from "react"
 
 export const ReviewPublicationSummary: FC = () => {
 	const { publication } = usePublicationDetailContext()

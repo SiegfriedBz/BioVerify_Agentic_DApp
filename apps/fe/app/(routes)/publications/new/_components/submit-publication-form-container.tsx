@@ -1,13 +1,13 @@
 "use client"
 
+import type { Protocol } from "@packages/schema"
+import { ChainIdToNetwork } from "@packages/utils"
+import type { FC } from "react"
 import { useProtocolByChain } from "@/_hooks/cqrs/queries/use-protocol-by-chain"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { FetchError } from "@/app/_components/fetch-error"
 import { TypographyP, TypographySmall } from "@/app/_components/typography"
 import { Button } from "@/components/ui/button"
-import type { Protocol } from "@packages/schema"
-import { ChainIdToNetwork } from "@packages/utils"
-import type { FC } from "react"
 import { SubmitPublicationForm } from "./submit-publication-form"
 
 type Props = {

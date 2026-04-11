@@ -2,6 +2,8 @@
 
 // CQRS bridge
 import {
+	type ChainStats,
+	type GlobalAggregateStats,
 	getMemberAssignments,
 	getMemberByChain,
 	getMembersByIds,
@@ -11,13 +13,13 @@ import {
 	getPublications,
 	getStatsByChain,
 	getStatsGlobal,
-	type ChainStats,
-	type GlobalAggregateStats,
 	type MemberAssignmentsResponse,
 	type PublicationsQueryParams,
 } from "@packages/cqrs"
 
 export {
+	type ChainStats,
+	type GlobalAggregateStats,
 	getMemberAssignments,
 	getMemberByChain,
 	getMembersByIds,
@@ -27,8 +29,6 @@ export {
 	getPublications,
 	getStatsByChain,
 	getStatsGlobal,
-	type ChainStats,
-	type GlobalAggregateStats,
 	type MemberAssignmentsResponse,
 	type PublicationsQueryParams,
 }

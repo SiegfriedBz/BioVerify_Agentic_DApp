@@ -1,7 +1,7 @@
 "use client"
 
-import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import type { FC } from "react"
+import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { ReviewerAssignmentsContainer } from "./reviewer-assignments-container"
 import { ReviewerGuestState } from "./reviewer-guest-state"
 import { ReviewerStatsContainer } from "./reviewer-stats-container"

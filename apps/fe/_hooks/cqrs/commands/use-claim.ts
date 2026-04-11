@@ -1,11 +1,11 @@
 "use client"
 
-import { reownConfig } from "@/_config/wagmi/wagmi-config"
-import { Member } from "@packages/schema"
+import type { Member } from "@packages/schema"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { waitForTransactionReceipt, writeContract } from "@wagmi/core"
 import { toast } from "sonner"
 import { formatEther, parseEther } from "viem"
+import { reownConfig } from "@/_config/wagmi/wagmi-config"
 import { useContractConfig } from "../../use-contract-config"
 import { membersKeys } from "../query-keys/members-keys"
 import { statsKeys } from "../query-keys/stats-keys"
@@ -57,8 +57,8 @@ export const useClaim = (params: Params) => {
 					const currentStakeWei = parseEther(oldData.availableStake)
 					const claimedStakeWei = variables.amountWei
 					const totalStakeWei =
-						currentStakeWei > claimedStakeWei ?
-							currentStakeWei - claimedStakeWei
+						currentStakeWei > claimedStakeWei
+							? currentStakeWei - claimedStakeWei
 							: 0n
 
 					return {
@@ -81,7 +81,8 @@ export const useClaim = (params: Params) => {
 		},
 		onError: (err: Error) => {
 			const shortMessage = (err as { shortMessage?: string }).shortMessage
-			const message = shortMessage || err.message || "Claim Stake/Rewards failed"
+			const message =
+				shortMessage || err.message || "Claim Stake/Rewards failed"
 			toast.error(message)
 		},
 	})
@@ -91,4 +92,3 @@ export const useClaim = (params: Params) => {
 		isPending,
 	}
 }
-

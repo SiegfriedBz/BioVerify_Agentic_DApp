@@ -1,5 +1,10 @@
 "use client"
 
+import type { LucideIcon } from "lucide-react"
+import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { type FC, useCallback } from "react"
 import {
 	Sidebar,
 	SidebarContent,
@@ -13,11 +18,6 @@ import {
 	SidebarRail,
 	useSidebar,
 } from "@/components/ui/sidebar"
-import type { LucideIcon } from "lucide-react"
-import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { type FC, useCallback } from "react"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 

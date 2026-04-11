@@ -1,8 +1,5 @@
 "use client"
 
-import { useGlobalStats } from "@/_hooks/cqrs/queries/use-global-stats"
-import { FetchError } from "@/app/_components/fetch-error"
-import { MetricCard } from "@/app/_components/metric-card"
 import type { GlobalAggregateStats } from "@packages/cqrs"
 import {
 	FlaskConicalIcon,
@@ -11,6 +8,9 @@ import {
 	ShieldAlertIcon,
 	UsersIcon,
 } from "lucide-react"
+import { useGlobalStats } from "@/_hooks/cqrs/queries/use-global-stats"
+import { FetchError } from "@/app/_components/fetch-error"
+import { MetricCard } from "@/app/_components/metric-card"
 import { StatsSkeleton } from "./stats-skeleton"
 
 type Props = {
@@ -39,7 +39,11 @@ export const StatsContainer = (props: Props) => {
 			<div className="flex items-center gap-2 px-1">
 				<GlobeIcon className="h-3 w-3 text-muted-foreground animate-pulse" />
 				<span className="text-[10px] font-medium uppercase tracking-tighter text-muted-foreground">
-					Aggregated data from <span className="text-primary font-semibold">{stats.networkCount}</span> Active Networks
+					Aggregated data from{" "}
+					<span className="text-primary font-semibold">
+						{stats.networkCount}
+					</span>{" "}
+					Active Networks
 				</span>
 			</div>
 

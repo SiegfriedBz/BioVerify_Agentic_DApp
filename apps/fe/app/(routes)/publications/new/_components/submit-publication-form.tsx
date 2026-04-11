@@ -1,14 +1,5 @@
 "use client"
 
-import { reownConfig } from "@/_config/wagmi/wagmi-config"
-import { useSubmitPublication } from "@/_hooks/cqrs/commands/use-submit-publication"
-import { useEffectiveSubmissionFee } from "@/_hooks/use-effective-submission-fee"
-import { useNetwork } from "@/_hooks/use-network"
-import { TypographySmall } from "@/app/_components/typography"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { FieldError } from "@/components/ui/field"
-import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
 	AuthorRoleSchema,
@@ -29,6 +20,15 @@ import {
 } from "react-hook-form"
 import { toast } from "sonner"
 import { parseEther } from "viem"
+import { reownConfig } from "@/_config/wagmi/wagmi-config"
+import { useSubmitPublication } from "@/_hooks/cqrs/commands/use-submit-publication"
+import { useEffectiveSubmissionFee } from "@/_hooks/use-effective-submission-fee"
+import { useNetwork } from "@/_hooks/use-network"
+import { TypographySmall } from "@/app/_components/typography"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { FieldError } from "@/components/ui/field"
+import { cn } from "@/lib/utils"
 import { pinManifest } from "../_api/pin-manifest"
 import {
 	SubmitPublicationFormSchema,
@@ -289,7 +289,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 								className={cn(
 									"h-12 w-full cursor-pointer bg-primary font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90",
 									(isDisabled || isWrongNetwork) &&
-									"cursor-not-allowed opacity-60",
+										"cursor-not-allowed opacity-60",
 								)}
 							>
 								{isIpfsUploading ? (

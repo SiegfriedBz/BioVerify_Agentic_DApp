@@ -1,11 +1,11 @@
 "use client"
 
-import { useMemberByChain } from "@/_hooks/cqrs/queries/use-member-by-chain"
-import { assignmentKeys } from "@/_hooks/cqrs/query-keys/assignments-keys"
-import { Button } from "@/components/ui/button"
 import { useIsFetching, useQueryClient } from "@tanstack/react-query"
 import { ClipboardListIcon, Loader2, RefreshCwIcon } from "lucide-react"
 import { type FC, useCallback } from "react"
+import { useMemberByChain } from "@/_hooks/cqrs/queries/use-member-by-chain"
+import { assignmentKeys } from "@/_hooks/cqrs/query-keys/assignments-keys"
+import { Button } from "@/components/ui/button"
 import { ReviewerTable } from "./table/reviewer-table"
 
 type Props = {

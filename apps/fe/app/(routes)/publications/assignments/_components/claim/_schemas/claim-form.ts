@@ -6,6 +6,4 @@ export const ClaimFormSchema = z.object({
 })
 
 export type ClaimFormSchemaT = z.infer<typeof ClaimFormSchema>
-export type ClaimFormSchemaValues = z.input<
-	typeof ClaimFormSchema
->
+export type ClaimFormSchemaValues = z.input<typeof ClaimFormSchema>

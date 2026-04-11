@@ -1,5 +1,8 @@
 "use client"
 
+import { Coins } from "lucide-react"
+import type { FC } from "react"
+import { Controller, useFormContext } from "react-hook-form"
 import {
 	Field,
 	FieldDescription,
@@ -7,9 +10,6 @@ import {
 	FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Coins } from "lucide-react"
-import type { FC } from "react"
-import { Controller, useFormContext } from "react-hook-form"
 
 type Props = {
 	maxClaimEth: string
@@ -50,9 +50,8 @@ export const ClaimAmountInput: FC<Props> = (props) => {
 					</div>
 
 					<FieldDescription className="mt-2 text-[10px] leading-tight text-muted-foreground/80">
-						Maximum amount is{" "}
-						<strong>{maxClaimEth} ETH</strong>. This amount is your current available stake
-						locked in the protocol on this network.
+						Maximum amount is <strong>{maxClaimEth} ETH</strong>. This amount is
+						your current available stake locked in the protocol on this network.
 					</FieldDescription>
 
 					{fieldState.invalid && <FieldError errors={[fieldState.error]} />}

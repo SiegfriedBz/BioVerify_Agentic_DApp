@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-react"
+import type { FC } from "react"
 import {
 	TypographyH4,
 	TypographyP,
@@ -5,8 +7,6 @@ import {
 } from "@/app/_components/typography"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import type { LucideIcon } from "lucide-react"
-import type { FC } from "react"
 
 type IconTone = "primary" | "secondary" | "error" | "warning"
 

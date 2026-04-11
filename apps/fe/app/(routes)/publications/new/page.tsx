@@ -1,5 +1,5 @@
-import { TypographyH1, TypographyP } from "@/app/_components/typography"
 import { Suspense } from "react"
+import { TypographyH1, TypographyP } from "@/app/_components/typography"
 import { ChainStatsSkeleton } from "./_components/chain-stats-skeleton"
 import { ChainStatsWrapper } from "./_components/chain-stats-wrapper"
 import { SubmitPublicationFormSkeleton } from "./_components/submit-publication-form-skeleton"
