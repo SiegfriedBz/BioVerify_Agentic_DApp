@@ -1,13 +1,14 @@
 "use client"
 
-import { type Publication, PublicationStatusSchema } from "@packages/schema"
-import { CircleOffIcon, DicesIcon, ShieldCheckIcon } from "lucide-react"
-import { type FC, useMemo } from "react"
 import { useMembersByIds } from "@/_hooks/cqrs/queries/use-members-by-ids"
 import { AddressDisplay } from "@/app/_components/address-display"
 import { FetchError } from "@/app/_components/fetch-error"
 import { TypographySmall } from "@/app/_components/typography"
 import { CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { type Publication, PublicationStatusSchema } from "@packages/schema"
+import { CircleOffIcon, DicesIcon, ShieldCheckIcon } from "lucide-react"
+import { type FC, useMemo } from "react"
 
 type Props = { publication: Publication }
 
@@ -39,9 +40,23 @@ export const ParticipantsContent: FC<Props> = (props: Props) => {
 
 	if (isFetching && reviewerIds.length > 0) {
 		return (
-			<div className="p-6 text-center animate-pulse text-[10px] text-muted-foreground uppercase">
-				Syncing Participants...
-			</div>
+			<CardContent className="space-y-6 pt-2">
+				<div className="space-y-3">
+					<div className="flex items-center gap-2">
+						<Skeleton className="h-3 w-3 rounded-sm" />
+						<Skeleton className="h-3 w-24" />
+					</div>
+					<Skeleton className="h-10 w-full rounded-lg" />
+				</div>
+
+				<div className="space-y-3">
+					<Skeleton className="h-3 w-20 ml-1" />
+					<div className="flex flex-col gap-2">
+						<Skeleton className="h-10 w-full rounded-lg" />
+						<Skeleton className="h-10 w-full rounded-lg" />
+					</div>
+				</div>
+			</CardContent>
 		)
 	}
 
