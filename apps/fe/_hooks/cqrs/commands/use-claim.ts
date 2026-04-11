@@ -1,58 +1,52 @@
 "use client"
 
 import { reownConfig } from "@/_config/wagmi/wagmi-config"
-import type { Member } from "@packages/schema"
+import { Member } from "@packages/schema"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { waitForTransactionReceipt, writeContract } from "@wagmi/core"
 import { toast } from "sonner"
 import { formatEther, parseEther } from "viem"
 import { useContractConfig } from "../../use-contract-config"
-import { useProtocolByChain } from "../queries/use-protocol-by-chain"
 import { membersKeys } from "../query-keys/members-keys"
 import { statsKeys } from "../query-keys/stats-keys"
+
+type ClaimArgs = {
+	amountWei: bigint
+}
 
 type Params = {
 	chainId: number
 	userAddress: string
 }
 
-export const usePayReviewerStake = (params: Params) => {
+export const useClaim = (params: Params) => {
 	const { chainId, userAddress } = params
 
 	const queryClient = useQueryClient()
 	const contractConfig = useContractConfig()
 
-	const { data: protocolData } = useProtocolByChain({ chainId })
-	const reviewerStake = protocolData?.reviewerStake ?? "0"
-
 	const { mutate, isPending } = useMutation({
-		mutationFn: async () => {
-			if (!reviewerStake) {
-				throw new Error(
-					"Protocol configuration is still loading or unavailable for this network.",
-				)
-			}
+		mutationFn: async (args: ClaimArgs) => {
+			const { amountWei } = args
 
+			// Trigger Wallet
 			const hash = await writeContract(reownConfig, {
 				...contractConfig,
-				functionName: "payReviewerStake",
-				value: parseEther(reviewerStake),
+				functionName: "claim",
+				args: [amountWei],
 			})
 
 			toast.info("Transaction sent! Waiting for confirmation...")
 
-			const receipt = await waitForTransactionReceipt(reownConfig, {
-				hash,
-			})
+			// Wait for Mining
+			const receipt = await waitForTransactionReceipt(reownConfig, { hash })
 
-			if (receipt.status === "reverted") {
-				throw new Error("Transaction reverted by the EVM")
-			}
+			if (receipt.status === "reverted") throw new Error("Transaction reverted")
 
 			return receipt
 		},
-		onSuccess: async () => {
-			toast.success("Stake deposited successfully!")
+		onSuccess: async (_data, variables) => {
+			toast.success("Claim confirmed on ledger!")
 
 			// 1. Optimistically update the cache immediately
 			queryClient.setQueryData(
@@ -61,8 +55,11 @@ export const usePayReviewerStake = (params: Params) => {
 					if (!oldData) return oldData
 
 					const currentStakeWei = parseEther(oldData.availableStake)
-					const addedStakeWei = parseEther(reviewerStake)
-					const totalStakeWei = currentStakeWei + addedStakeWei
+					const claimedStakeWei = variables.amountWei
+					const totalStakeWei =
+						currentStakeWei > claimedStakeWei ?
+							currentStakeWei - claimedStakeWei
+							: 0n
 
 					return {
 						...oldData,
@@ -84,7 +81,7 @@ export const usePayReviewerStake = (params: Params) => {
 		},
 		onError: (err: Error) => {
 			const shortMessage = (err as { shortMessage?: string }).shortMessage
-			const message = shortMessage || err.message || "Pay Reviewer Stake failed"
+			const message = shortMessage || err.message || "Claim Stake/Rewards failed"
 			toast.error(message)
 		},
 	})
@@ -94,3 +91,4 @@ export const usePayReviewerStake = (params: Params) => {
 		isPending,
 	}
 }
+

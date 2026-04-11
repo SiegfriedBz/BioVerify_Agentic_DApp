@@ -39,7 +39,7 @@ import {
 	XCircleIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { type FC, useMemo, useState } from "react"
+import { type FC, startTransition, useMemo, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import type { Address } from "viem"
@@ -135,15 +135,17 @@ export const ReviewForm: FC = () => {
 
 	const totalPeerReviews = publication
 		? Object.keys(publication.reviewersStatus).filter((addr) =>
-				publication.reviewers.some(
-					(r) => r.toLowerCase() === addr.toLowerCase(),
-				),
-			).length
+			publication.reviewers.some(
+				(r) => r.toLowerCase() === addr.toLowerCase(),
+			),
+		).length
 		: 0
 
 	const peerCount = publication?.reviewers.length ?? 0
 	const isSeniorStandby =
 		isSeniorReviewer && peerCount > 0 && totalPeerReviews < peerCount
+
+	const submitDisabled = isPending || isSeniorStandby
 
 	const onSubmit = async (data: formSchemaT) => {
 		if (
@@ -179,7 +181,9 @@ export const ReviewForm: FC = () => {
 			})
 
 			setTimeout(() => {
-				router.push("/publications/assignments")
+				startTransition(() => {
+					router.push("/publications/assignments")
+				})
 			}, 2_500)
 		} catch (_err) {
 			toast.error("Review Submission flow interrupted")
@@ -205,7 +209,7 @@ export const ReviewForm: FC = () => {
 		)
 	}
 
-	const submitDisabled = isPending || isSeniorStandby
+
 
 	return (
 		<Card className="overflow-hidden border-border shadow-md">
@@ -218,10 +222,10 @@ export const ReviewForm: FC = () => {
 			</CardHeader>
 			<CardContent className="space-y-6 p-6">
 				{isSeniorStandby && (
-					<Alert className="border-tertiary/20 bg-tertiary/10 text-tertiary dark:text-tertiary [&>svg]:text-tertiary">
-						<AlertCircle className="size-4" />
-						<AlertTitle>Awaiting peer reviews</AlertTitle>
-						<AlertDescription className="text-muted-foreground">
+					<Alert className="border-l-4 border-tertiary bg-tertiary/15 text-tertiary dark:text-tertiary [&>svg]:text-tertiary">
+						<AlertCircle className="size-5" />
+						<AlertTitle className="font-semibold">Awaiting peer reviews</AlertTitle>
+						<AlertDescription className="text-foreground/80">
 							Submission opens once all peers have submitted. Your input will
 							only be required if the AI Agent detects conflicting verdicts
 							among peer reviewers.

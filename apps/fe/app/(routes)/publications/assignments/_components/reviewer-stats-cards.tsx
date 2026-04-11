@@ -1,10 +1,10 @@
 "use client"
 
-import type { Member } from "@packages/schema"
-import type { FC } from "react"
 import { SyncIndicator } from "@/app/_components/sync-indicator"
 import { TypographySmall } from "@/app/_components/typography"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import type { Member } from "@packages/schema"
+import type { FC } from "react"
 
 type Props = {
 	member: Member
