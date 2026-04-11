@@ -1,21 +1,34 @@
+"use client"
+
+import { TypographyH3 } from "@/app/_components/typography"
+import { VerdictCardSkeleton } from "@/app/_components/verdict-card-skeleton"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { fetchIpfs } from "@packages/utils"
+import { useQuery } from "@tanstack/react-query"
 import { FingerprintIcon } from "lucide-react"
 import type { FC } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { TypographyH3 } from "./typography"
 
 type Props = {
 	verdictCid: string
+	initialVerdict?: string
 }
 
-export const VerdictCardWrapper: FC<Props> = async (props: Props) => {
-	const { verdictCid } = props
+export const VerdictCardContent: FC<Props> = (props) => {
+	const { verdictCid, initialVerdict } = props
 
-	if (!verdictCid) return null
+	const { data: verdict, isFetching } = useQuery({
+		queryKey: ["verdict", verdictCid],
+		queryFn: async () => {
+			const res = await fetchIpfs(verdictCid)
+			return res.text()
+		},
+		initialData: initialVerdict,
+		enabled: !!verdictCid,
+	})
 
-	// Fetching verdict
-	const data = await fetchIpfs(verdictCid)
-	const verdict: string = await data.text()
+	if (isFetching && !verdict) return <VerdictCardSkeleton />
+
+	if (!verdict) return null
 
 	return (
 		<Card className="overflow-hidden border-border bg-card shadow-sm">
