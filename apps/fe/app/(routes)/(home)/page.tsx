@@ -1,12 +1,3 @@
-import {
-	ArrowRightIcon,
-	DicesIcon,
-	GavelIcon,
-	LinkIcon,
-	UsersRoundIcon,
-} from "lucide-react"
-import Link from "next/link"
-import { Fragment, Suspense } from "react"
 import { HeroImage } from "@/app/_components/hero-image"
 import { HeroVideo } from "@/app/_components/hero-video"
 import {
@@ -19,6 +10,15 @@ import {
 } from "@/app/_components/typography"
 import { VideoSkeleton } from "@/app/_components/video-skeleton"
 import { Button } from "@/components/ui/button"
+import {
+	ArrowRight,
+	DicesIcon,
+	GavelIcon,
+	LinkIcon,
+	UsersRoundIcon,
+} from "lucide-react"
+import Link from "next/link"
+import { Fragment, Suspense } from "react"
 
 const STATUS_DOT = {
 	sky: "bg-sky-400 shadow-[0_0_8px] shadow-sky-400/45",
@@ -70,8 +70,8 @@ const protocolSteps = [
 export default function Page() {
 	return (
 		<main className="flex w-full max-w-full grow flex-col items-center pb-16 lg:pb-24">
-			<section className="flex w-full max-w-6xl flex-col items-center gap-4 px-4 pt-6 text-center max-md:min-h-[calc(100svh-4rem)] sm:gap-6 sm:px-6 md:flex-row md:items-center md:gap-10 md:pt-16 md:text-left lg:gap-12 lg:pt-24">
-				<div className="flex min-w-0 flex-1 flex-col items-center gap-4 md:items-start md:gap-6">
+			<section className="flex w-full max-w-6xl min-h-[calc(100svh-4rem)] flex-col items-center gap-4 px-4 pt-10 pb-6 text-center sm:gap-6 sm:px-6 md:flex-row md:items-center md:gap-10 md:pt-16 md:text-left lg:gap-12 lg:pt-24">
+				<div className="flex min-w-0 flex-col items-center gap-4 md:flex-1 md:items-start md:gap-6">
 					<TypographySmall className="flex items-center gap-x-1.5 rounded-full bg-primary/15 px-3 py-1.5 uppercase tracking-widest text-primary">
 						<span
 							className="size-2 shrink-0 animate-pulse rounded-full bg-primary shadow-[0_0_12px] shadow-secondary/50"
@@ -92,7 +92,7 @@ export default function Page() {
 						Scientific Decentralization through Agentic Consensus.
 					</TypographyP>
 
-					<div className="mt-0 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap md:justify-start">
+					<div className="mt-0 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center md:justify-start">
 						<Button
 							asChild
 							size="lg"
@@ -100,7 +100,7 @@ export default function Page() {
 						>
 							<Link href="/publications/new" className="gap-2">
 								Submit Research
-								<ArrowRightIcon className="size-4" aria-hidden />
+								<ArrowRight className="size-4" aria-hidden />
 							</Link>
 						</Button>
 						<Button
@@ -112,18 +112,10 @@ export default function Page() {
 							<Link href="/publications">View Dashboard</Link>
 						</Button>
 					</div>
-
-					<div className="mt-0 w-full max-w-2xl rounded-lg bg-muted/90 px-4 py-2 text-left backdrop-blur-sm sm:px-5 sm:py-4 md:max-w-none">
-						<TypographyP className="text-pretty text-sm leading-relaxed text-muted-foreground md:text-base md:leading-relaxed">
-							A meritocratic peer-review pipeline leveraging LangGraph agents
-							for forensic validation and Chainlink VRF for trustless reviewer
-							selection.
-						</TypographyP>
-					</div>
 				</div>
 
-				<div className="mt-4 w-full min-w-0 md:mt-0 md:flex-1 md:min-w-0">
-					<div className="block w-full md:hidden">
+				<div className="w-full min-w-0 max-md:flex max-md:flex-1 max-md:items-center md:mt-0 md:flex-1 md:min-w-0">
+					<div className="block w-full pt-4 md:hidden">
 						<HeroImage />
 					</div>
 					<div className="hidden w-full md:block">
@@ -138,6 +130,11 @@ export default function Page() {
 				<p className="text-center text-xs font-medium uppercase tracking-widest text-primary">
 					Process Architecture
 				</p>
+				<TypographyP className="mx-auto mt-2 max-w-2xl text-pretty text-center text-sm leading-relaxed text-muted-foreground md:text-base md:leading-relaxed">
+					A meritocratic peer-review pipeline leveraging LangGraph agents for
+					forensic validation and Chainlink VRF for trustless reviewer
+					selection.
+				</TypographyP>
 				<TypographyH2 className="mt-2 border-none pb-0 text-center md:mt-3">
 					Protocol Mechanism
 				</TypographyH2>
@@ -240,7 +237,7 @@ export default function Page() {
 					>
 						<Link href="/publications" className="gap-2">
 							Get Started
-							<ArrowRightIcon className="size-4" aria-hidden />
+							<ArrowRight className="size-4" aria-hidden />
 						</Link>
 					</Button>
 				</div>

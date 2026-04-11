@@ -24,7 +24,9 @@ export const ConnectButton: FC = () => {
 				className="border-0 bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] font-semibold text-[#003543] shadow-[0_4px_20px_rgba(0,209,255,0.18)] transition-[filter,box-shadow] group-data-[collapsible=icon]:justify-center hover:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] hover:text-[#003543] hover:brightness-110 hover:shadow-[0_6px_24px_rgba(0,209,255,0.22)] active:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] active:text-[#003543] [&>svg]:text-[#003543] hover:[&>svg]:text-[#003543]"
 			>
 				<WalletIcon />
-				<span className="group-data-[collapsible=icon]:hidden">Connect Wallet</span>
+				<span className="group-data-[collapsible=icon]:hidden">
+					Connect Wallet
+				</span>
 			</SidebarMenuButton>
 		)
 	}
