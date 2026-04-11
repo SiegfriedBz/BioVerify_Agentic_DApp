@@ -1,10 +1,5 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
-import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { type FC, useCallback } from "react"
 import {
 	Sidebar,
 	SidebarContent,
@@ -18,6 +13,11 @@ import {
 	SidebarRail,
 	useSidebar,
 } from "@/components/ui/sidebar"
+import type { LucideIcon } from "lucide-react"
+import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { type FC, useCallback } from "react"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 
@@ -27,25 +27,25 @@ const navItems: {
 	label: string
 	tooltip: string
 }[] = [
-	{
-		href: "/publications",
-		icon: LayoutDashboardIcon,
-		label: "Publications",
-		tooltip: "Publications",
-	},
-	{
-		href: "/publications/new",
-		icon: FlaskConicalIcon,
-		label: "Submit Publication",
-		tooltip: "Submit Publication",
-	},
-	{
-		href: "/publications/assignments",
-		icon: GavelIcon,
-		label: "Reviewer Portal",
-		tooltip: "Review",
-	},
-]
+		{
+			href: "/publications",
+			icon: LayoutDashboardIcon,
+			label: "Publications",
+			tooltip: "Publications",
+		},
+		{
+			href: "/publications/new",
+			icon: FlaskConicalIcon,
+			label: "Submit Publication",
+			tooltip: "Submit Publication",
+		},
+		{
+			href: "/publications/assignments",
+			icon: GavelIcon,
+			label: "Reviewer Portal",
+			tooltip: "Review",
+		},
+	]
 
 const navButtonClassName =
 	"hover:bg-[#343a42] data-[active=true]:border-l-2 data-[active=true]:border-[#00d1ff] data-[active=true]:rounded-l-none"
@@ -60,11 +60,11 @@ export const AppSidebar: FC = () => {
 
 	return (
 		<Sidebar variant="floating" collapsible="icon">
-			<SidebarHeader className="flex h-16 flex-col justify-center border-b border-border/50 px-4 md:group-data-[collapsible=icon]:px-2">
+			<SidebarHeader className="flex h-16 flex-col justify-center border-b border-border/50">
 				<Link
 					href="/"
 					onClick={handleNavClick}
-					className="flex items-center gap-2 overflow-hidden md:group-data-[collapsible=icon]:w-full md:group-data-[collapsible=icon]:justify-center"
+					className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
 				>
 					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] font-black tracking-tight text-[#003543] shadow-[0_4px_20px_rgba(0,209,255,0.18)] ring-1 ring-primary/20">
 						B
