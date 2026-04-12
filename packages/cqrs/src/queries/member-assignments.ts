@@ -4,7 +4,7 @@ import {
 	type Publication,
 	publicationDbSchema,
 } from "@packages/schema"
-import { and, count, desc, eq, sql } from "drizzle-orm"
+import { and, count, desc, eq, or, sql } from "drizzle-orm"
 
 export type MemberAssignmentsResponse = {
 	items: Publication[]
@@ -24,7 +24,10 @@ export async function getMemberAssignments(
 	const { userAddress, limit, offset = 0 } = params
 	const address = userAddress.toLowerCase()
 
-	const reviewerClause = sql`${address} = ANY(${publicationDbSchema.reviewers}) OR ${publicationDbSchema.seniorReviewer} = ${address}`
+	const reviewerClause = or(
+		sql`${address} = ANY(${publicationDbSchema.reviewers})`,
+		eq(publicationDbSchema.seniorReviewer, address),
+	)
 
 	const whereClause = and(eq(publicationDbSchema.status, 2), reviewerClause)
 
