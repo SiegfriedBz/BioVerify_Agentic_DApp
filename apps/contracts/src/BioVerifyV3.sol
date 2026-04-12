@@ -523,6 +523,7 @@ contract BioVerifyV3 is VRFConsumerBaseV2Plus, ReentrancyGuard {
         if (_newStatus == PublicationStatus.PUBLISHED) {
             // Publisher reward
             _unLockStakeAndReward(pub.publisher, _pubId, true);
+            _syncReviewerStatus(pub.publisher);
         } else if (_newStatus == PublicationStatus.SLASHED) {
             // Publisher Slash
             _unLockStakeAndSlash(pub.publisher, _pubId, true);
