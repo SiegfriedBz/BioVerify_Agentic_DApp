@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Fragment, Suspense } from "react"
+import { Footer } from "./_components/footer"
 
 const STATUS_DOT = {
 	sky: "bg-sky-400 shadow-[0_0_8px] shadow-sky-400/45",
@@ -69,8 +70,8 @@ const protocolSteps = [
 
 export default function Page() {
 	return (
-		<main className="flex w-full max-w-full grow flex-col items-center pb-16 lg:pb-24">
-			<section className="flex w-full max-w-6xl min-h-[calc(100svh-4rem)] flex-col items-center gap-4 px-4 pt-10 pb-6 text-center sm:gap-6 sm:px-6 md:flex-row md:items-center md:gap-10 md:pt-16 md:text-left lg:gap-12 lg:pt-24">
+		<div className="flex w-full max-w-full grow flex-col items-center pb-16 lg:pb-24">
+			<main className="flex w-full max-w-6xl min-h-[calc(100svh-4rem)] flex-col items-center gap-4 px-4 pt-10 pb-6 text-center sm:gap-6 sm:px-6 md:flex-row md:items-center md:gap-10 md:pt-16 md:text-left lg:gap-12 lg:pt-24">
 				<div className="flex min-w-0 flex-col items-center gap-4 md:flex-1 md:items-start md:gap-6">
 					<TypographySmall className="flex items-center gap-x-1.5 rounded-full bg-primary/15 px-3 py-1.5 uppercase tracking-widest text-primary">
 						<span
@@ -124,7 +125,7 @@ export default function Page() {
 						</Suspense>
 					</div>
 				</div>
-			</section>
+			</main>
 
 			<section className="mt-16 w-full max-w-6xl px-4 sm:px-6 md:mt-28">
 				<p className="text-center text-xs font-medium uppercase tracking-widest text-primary">
@@ -216,7 +217,7 @@ export default function Page() {
 				</div>
 			</section>
 
-			<section className="mt-16 w-full self-stretch border-t border-border/40 bg-linear-to-r from-primary/8 via-card to-secondary/12 px-4 py-10 sm:px-6 md:mt-24 md:py-14">
+			<main className="mt-16 w-full self-stretch border-t border-border/40 bg-linear-to-r from-primary/8 via-card to-secondary/12 px-4 py-10 sm:px-6 md:mt-24 md:py-14">
 				<div className="mx-auto flex max-w-6xl flex-col items-center gap-6 text-center md:flex-row md:items-center md:justify-between md:gap-10 md:text-left">
 					<div className="min-w-0 md:max-w-xl">
 						<p className="text-xs font-semibold uppercase tracking-widest text-primary">
@@ -241,7 +242,9 @@ export default function Page() {
 						</Link>
 					</Button>
 				</div>
-			</section>
-		</main>
+			</main>
+
+			<Footer />
+		</div>
 	)
 }

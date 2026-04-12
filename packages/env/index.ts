@@ -51,8 +51,6 @@ export const env = createEnv({
 		 * AI & FORENSIC TOOLS
 		 */
 		GEMINI_API_KEY: z.string(),
-		TAVILY_API_KEY: z.string(),
-		TAVILY_SEARCH_URL: z.url(),
 		EXA_AI_API_KEY: z.string(),
 		EXA_BASE_URL: z.url(),
 
@@ -103,6 +101,20 @@ export const env = createEnv({
 		 */
 		NEXT_PUBLIC_APP_URL: z.url(),
 		NEXT_PUBLIC_RAINBOWKIT_PROJECT_ID: z.string(),
+
+		/**
+		 * AUTHOR / SOCIAL
+		 */
+		NEXT_PUBLIC_GITHUB_URL: z.url().optional(),
+		NEXT_PUBLIC_LINKEDIN_URL: z.url().optional(),
+		NEXT_PUBLIC_PORTFOLIO_URL: z.url().optional(),
+		NEXT_PUBLIC_TELEGRAM_URL: z.url().optional(),
+
+		/**
+		 * DEPLOYED CONTRACTS (BLOCK EXPLORER)
+		 */
+		NEXT_PUBLIC_CONTRACT_BASE_SEPOLIA_URL: z.url().optional(),
+		NEXT_PUBLIC_CONTRACT_ETH_SEPOLIA_URL: z.url().optional(),
 	},
 
 	/**
@@ -125,6 +137,14 @@ export const env = createEnv({
 		NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 		NEXT_PUBLIC_RAINBOWKIT_PROJECT_ID:
 			process.env.NEXT_PUBLIC_RAINBOWKIT_PROJECT_ID,
+		NEXT_PUBLIC_GITHUB_URL: process.env.NEXT_PUBLIC_GITHUB_URL,
+		NEXT_PUBLIC_LINKEDIN_URL: process.env.NEXT_PUBLIC_LINKEDIN_URL,
+		NEXT_PUBLIC_PORTFOLIO_URL: process.env.NEXT_PUBLIC_PORTFOLIO_URL,
+		NEXT_PUBLIC_TELEGRAM_URL: process.env.NEXT_PUBLIC_TELEGRAM_URL,
+		NEXT_PUBLIC_CONTRACT_BASE_SEPOLIA_URL:
+			process.env.NEXT_PUBLIC_CONTRACT_BASE_SEPOLIA_URL,
+		NEXT_PUBLIC_CONTRACT_ETH_SEPOLIA_URL:
+			process.env.NEXT_PUBLIC_CONTRACT_ETH_SEPOLIA_URL,
 	},
 	emptyStringAsUndefined: true,
 	onValidationError: (errors) => {
