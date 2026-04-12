@@ -3,6 +3,7 @@
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarGroupLabel,
@@ -14,10 +15,16 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar"
 import type { LucideIcon } from "lucide-react"
-import { FlaskConicalIcon, GavelIcon, LayoutDashboardIcon } from "lucide-react"
+import {
+	ExternalLinkIcon,
+	FlaskConicalIcon,
+	GavelIcon,
+	LayoutDashboardIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { type FC, useCallback } from "react"
+import { contractLinks, socialLinks } from "../external-links"
 import { SwitchChainButton } from "../switch-chain-button"
 import { ConnectButton } from "./connect-button"
 
@@ -76,7 +83,6 @@ export const AppSidebar: FC = () => {
 			</SidebarHeader>
 
 			<SidebarContent>
-				{/* Connection Management Section */}
 				<SidebarGroup>
 					<SidebarGroupLabel className="text-[#bbc9cf]">
 						Wallet
@@ -99,7 +105,6 @@ export const AppSidebar: FC = () => {
 					</SidebarGroupContent>
 				</SidebarGroup>
 
-				{/* Navigation Section */}
 				<SidebarGroup>
 					<SidebarGroupLabel className="text-[#bbc9cf]">
 						Protocol
@@ -125,6 +130,60 @@ export const AppSidebar: FC = () => {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
+
+			<SidebarFooter className="border-t border-border/50 group-data-[collapsible=icon]:overflow-hidden">
+				{contractLinks.length > 0 && (
+					<SidebarGroup className="p-0">
+						<SidebarGroupLabel className="text-[#bbc9cf]">
+							Contracts
+						</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								{contractLinks.map(({ href, label, tooltip }) => (
+									<SidebarMenuItem key={label}>
+										<SidebarMenuButton
+											asChild
+											tooltip={tooltip}
+											className="hover:bg-[#343a42]"
+										>
+											<a href={href} target="_blank" rel="noopener noreferrer">
+												<ExternalLinkIcon className="size-4" />
+												<span>{label}</span>
+											</a>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								))}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				)}
+
+				{socialLinks.length > 0 && (
+					<SidebarGroup className="p-0">
+						<SidebarGroupLabel className="text-[#bbc9cf]">
+							Social
+						</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								{socialLinks.map(({ href, label, icon: Icon, tooltip }) => (
+									<SidebarMenuItem key={label}>
+										<SidebarMenuButton
+											asChild
+											tooltip={tooltip}
+											className="hover:bg-[#343a42]"
+										>
+											<a href={href} target="_blank" rel="noopener noreferrer">
+												<Icon className="size-4" />
+												<span>{label}</span>
+											</a>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								))}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				)}
+			</SidebarFooter>
 
 			<SidebarRail />
 		</Sidebar>
