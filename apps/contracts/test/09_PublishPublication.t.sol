@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import {Vm} from "forge-std/Vm.sol";
 import {TestHelpers} from "./01_Helpers.t.sol";
 import {
 
@@ -62,6 +63,7 @@ contract PublishPublicationTest is TestHelpers {
         _expectEmit_MemberLockedStakeOnPubId(publisher, 0, 0);
         _expectEmit_LockedStakeOnPubId(0, remainingLocked);
         _expectEmit_MemberAvailableStake(publisher, publisherStake);
+        _expectEmit_IsAvailableReviewer(publisher, true, 0);
 
         // --- 3. EXPECTATIONS: HONEST REVIEWERS ---
         for (uint256 i = 0; i < honestCount; i++) {
@@ -239,5 +241,54 @@ contract PublishPublicationTest is TestHelpers {
         vm.prank(aiAgentAddress);
         vm.expectRevert(abi.encodeWithSelector(BioVerify_InvalidPublicationId.selector, nonExistentId));
         bioVerify.publishPublication(nonExistentId, new address[](0), new address[](0), "verdict");
+    }
+
+    function test_PublishPublication_PublisherBecomesAvailableReviewer() public {
+        // --- 1. SETUP ---
+        _submitDefaultPub();
+        _fillValidReviewerPool();
+
+        vm.prank(aiAgentAddress);
+        uint256 requestId = bioVerify.pickReviewers(0);
+
+        uint256[] memory words = new uint256[](vrfNumWords);
+        for (uint256 i = 0; i < vrfNumWords; ++i) {
+            words[i] = i;
+        }
+        vrfCoordinatorMock.fulfillRandomWordsWithOverride(requestId, address(bioVerify), words);
+
+        // --- 2. Build all-honest reviewer arrays ---
+        address[] memory honest = new address[](vrfNumWords);
+        for (uint256 i = 0; i < vrfNumWords; i++) {
+            honest[i] = makeAddr(string(abi.encodePacked("reviewer_", i)));
+        }
+        address[] memory negligent = new address[](0);
+
+        // --- 3. EXECUTION ---
+        vm.recordLogs();
+        vm.prank(aiAgentAddress);
+        bioVerify.publishPublication(0, honest, negligent, FAKE_VERDICT_CID);
+
+        // --- 4. ASSERTION ---
+        // Publisher's returned stake (publisherStake) >= reviewerStake,
+        // so _syncReviewerStatus must mark them as available for future review cycles.
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 eventSig = keccak256("IsAvailableReviewer(address,bool,uint256)");
+
+        bool foundPublisherEvent = false;
+        for (uint256 i = 0; i < entries.length; i++) {
+            if (entries[i].topics[0] != eventSig) continue;
+
+            address member = address(uint160(uint256(entries[i].topics[1])));
+            if (member == publisher) {
+                (bool isAvailable, uint256 newActiveReviews) = abi.decode(entries[i].data, (bool, uint256));
+                assertEq(member, publisher, "Event reviewer must be publisher");
+                assertTrue(isAvailable, "Publisher must become available reviewer after publication");
+                assertEq(newActiveReviews, 0, "Publisher must have 0 active reviews");
+                foundPublisherEvent = true;
+                break;
+            }
+        }
+        assertTrue(foundPublisherEvent, "IsAvailableReviewer event must be emitted for publisher");
     }
 }
