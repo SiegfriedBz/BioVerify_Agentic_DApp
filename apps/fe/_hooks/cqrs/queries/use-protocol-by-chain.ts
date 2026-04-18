@@ -14,8 +14,8 @@ export const useProtocolByChain = (params: Params) => {
 	const { initialData, chainId } = params
 
 	return useQuery<Protocol | null, Error>({
-		queryKey: protocolsKeys.byChain(chainId ?? 0),
-		queryFn: () => getProtocolByChain({ chainId: chainId ?? null }),
+		queryKey: protocolsKeys.byChain(chainId ?? 84532),
+		queryFn: () => getProtocolByChain({ chainId: chainId ?? 84532 }),
 		// Omit when null/undefined so v5 does not treat "no seed" as `data: null` success.
 		...(initialData != null ? { initialData } : {}),
 		enabled: !!chainId,

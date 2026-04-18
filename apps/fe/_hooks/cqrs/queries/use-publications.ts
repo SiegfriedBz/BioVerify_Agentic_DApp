@@ -18,7 +18,7 @@ export const usePublications = (props: Props) => {
 		props
 
 	const { data, isFetching, isError, refetch } = useQuery({
-		queryKey: publicationsKeys.list(searchQueryParams ?? {}),
+		queryKey: publicationsKeys.all,
 		queryFn: () => getPublications(searchQueryParams),
 		initialData,
 	})
