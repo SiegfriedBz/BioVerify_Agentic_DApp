@@ -8,15 +8,23 @@ import { SubmissionStateSchema } from "./state"
 
 /**
  * BIOVERIFY AI SUBMISSION GRAPH
- * * This LangGraph orchestrates the autonomous pre-validation of scientific submissions.
+ *
+ * This LangGraph orchestrates the autonomous pre-validation of scientific submissions.
  * It serves as a decentralized "Proof of Originality" filter, ensuring that only
  * novel research enters the peer-review staking pool.
- * * Pipeline:
- * 1. IPFS Ingestion: Resolution of the multi-layer manifest (Metadata -> Abstract).
- * 2. Forensic Search: Multi-source web crawling to detect existing literature.
- * 3. AI Verdict: LLM-driven plagiarism analysis and "Slashing" decision logic.
- * * @triggered-by Alchemy Webhooks (On-Chain BioVerify_SubmitPublication event)
- * @outcomes "pass" (proceed to VRF selection) | "fail" (immediate protocol slash)
+ *
+ * Pipeline:
+ * 1. fetchIpfsNode: IPFS Ingestion. Resolves the multi-layer manifest
+ *    (rootCid -> Metadata -> Abstract text).
+ * 2. discoveryNode: Forensic Search. Exa AI neural search for prior academic
+ *    publications matching the abstract. Returns up to 5 scored sources.
+ * 3. llmNode: AI Verdict. LLM-driven plagiarism analysis with structured output.
+ *    Produces { decision: "pass" | "fail", reason }.
+ *
+ * @triggered-by On-chain SubmitPublication event (Alchemy -> CQRS -> Inngest pipeline)
+ * @outcomes Post-graph, agent-start.ts branches:
+ *   "pass" -> pickReviewersCommand (Chainlink VRF selection)
+ *   "fail" -> earlySlashPublicationCommand (immediate publisher slash)
  */
 
 const builder = new StateGraph(SubmissionStateSchema)
