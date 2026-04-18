@@ -60,19 +60,21 @@ export const startSubmissionAgent = async (params: Params) => {
 			console.log(
 				`[Submission Agent] Initiating early slash for #${publicationId}`,
 			)
-			// CQRS Command
 			await earlySlashPublicationCommand({
 				network,
 				publicationId,
 				reason: finalState.verdict.reason ?? "",
 				rootCid,
 			})
-		} else {
+		} else if (finalState.verdict.decision === HumanDecisionSchema.enum.pass) {
 			console.log(
 				`[Submission Agent] Passing validation for #${publicationId}. Picking reviewers...`,
 			)
-			// CQRS Command
 			await pickReviewersCommand({ network, publicationId, rootCid })
+		} else {
+			throw new Error(
+				`Unexpected verdict "${finalState.verdict.decision}" for Pub #${publicationId}. Aborting.`,
+			)
 		}
 	} catch (error: any) {
 		console.error(
