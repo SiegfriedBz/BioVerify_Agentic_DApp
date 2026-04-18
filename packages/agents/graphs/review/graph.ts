@@ -15,20 +15,26 @@ import { type ReviewsState, ReviewsStateAnnotation } from "./state"
  * =====================================================================
  * This LangGraph orchestrates the autonomous peer-review verification pipeline
  * for scientific publications, combining AI forensics with human authority.
- * * FLOW LOGIC:
- * 1. humanReviewsNode: Gatekeeper. Waits for the required quorum of
- * cryptographically verified human reviews (EIP-712).
- * 2. llmVerdictNode: Forensic Auditor. Analyzes human consensus and technical
- * integrity. Can result in 'pass', 'fail', or 'escalate'.
- * 3. seniorReviewNode: Escalation Path. If the AI detects ambiguity or high-stakes
- * fraud risks, it pauses for a "Senior Editor" (Reputation-weighted human).
- * 4. llmFinalVerdictNode: Forensic Secretary. Implements "Human-Finality". It
- * synthesizes the final verdict, ensuring the Senior Reviewer's decision
- * is enforced while cleaning up reasoning for on-chain storage.
- * 5. settlementNode: Execution Layer. Triggers the blockchain settlement
- * (publish/slash) based on the finalized consensus.
- * * @outcomes
- * - PASS: Publisher recovers stake; Honest reviewers rewarded; Dissenters slashed.
+ *
+ * FLOW LOGIC:
+ * 1. humanReviewsNode: Gatekeeper. HITL interrupt that self-loops until ALL
+ *    assigned peer reviewers have submitted EIP-712-signed reviews.
+ * 2. llmVerdictNode: Forensic Auditor. Analyzes collected human reviews for
+ *    consensus and red flags. Produces 'pass', 'fail', or 'escalate'.
+ * 3. seniorReviewNode: Escalation Path (conditional — only on 'escalate',
+ *    i.e. conflicting peer verdicts). HITL interrupt that waits for the
+ *    Senior Reviewer's (reputation-weighted human) EIP-712-signed decision.
+ * 4. llmFinalVerdictNode: Forensic Secretary. Implements "Human-Finality".
+ *    - If not escalated: passes through the existing AI verdict unchanged.
+ *    - If escalated: enforces the Senior Reviewer's decision while polishing
+ *      the reasoning for on-chain storage.
+ * 5. settlementNode: Execution Layer. Partitions reviewers into honest
+ *    (aligned with final decision) and negligent (opposed). The Senior
+ *    Reviewer is unconditionally classified as honest. Triggers on-chain
+ *    settlement: publishPublication (pass) or slashPublication (fail).
+ *
+ * @outcomes
+ * - PASS: Publisher recovers stake; Honest reviewers rewarded; Negligent reviewers slashed.
  * - FAIL: Publisher slashed; Honest reviewers rewarded; Negligent reviewers slashed.
  */
 
