@@ -1,5 +1,5 @@
 import { createSelectSchema } from "drizzle-zod"
-import { z } from "zod"
+import type { z } from "zod"
 import { memberDbSchema } from "../db"
 
 // RAW Data (DB)

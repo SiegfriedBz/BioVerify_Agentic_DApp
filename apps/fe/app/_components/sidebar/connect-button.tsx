@@ -4,7 +4,7 @@ import { SidebarMenuButton } from "@/components/ui/sidebar"
 import { ChainIdToNetwork } from "@packages/utils"
 import { useAppKit, useAppKitAccount, useDisconnect } from "@reown/appkit/react"
 import { LogOutIcon, WalletIcon } from "lucide-react"
-import { FC } from "react"
+import type { FC } from "react"
 import { useChainId } from "wagmi"
 import { NetworkSimpleBadge } from "../network-badge"
 
@@ -21,10 +21,12 @@ export const ConnectButton: FC = () => {
 			<SidebarMenuButton
 				onClick={() => open()}
 				tooltip="Connect Wallet"
-				className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground font-semibold"
+				className="border-0 bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] font-semibold text-[#003543] shadow-[0_4px_20px_rgba(0,209,255,0.18)] transition-[filter,box-shadow] group-data-[collapsible=icon]:justify-center hover:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] hover:text-[#003543] hover:brightness-110 hover:shadow-[0_6px_24px_rgba(0,209,255,0.22)] active:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] active:text-[#003543] [&>svg]:text-[#003543] hover:[&>svg]:text-[#003543]"
 			>
 				<WalletIcon />
-				<span>Connect Wallet</span>
+				<span className="group-data-[collapsible=icon]:hidden">
+					Connect Wallet
+				</span>
 			</SidebarMenuButton>
 		)
 	}
@@ -32,21 +34,21 @@ export const ConnectButton: FC = () => {
 	return (
 		<SidebarMenuButton
 			onClick={() => disconnect()}
-			className="h-auto py-2"
+			className="h-auto min-h-10 gap-2 py-2 group-data-[collapsible=icon]:justify-center hover:bg-[#343a42] active:bg-[#343a42]"
 			tooltip="Disconnect"
 		>
-			<WalletIcon className="shrink-0" />
+			<WalletIcon className="size-4 shrink-0 text-[#a4e6ff]" />
 
-			<div className="flex flex-col items-start flex-1 overflow-hidden group-data-[collapsible=icon]:hidden">
-				<span className="text-[11px] font-mono truncate w-full leading-tight">
-					{address?.slice(0, 6)}...{address?.slice(-4)}
+			<div className="flex min-w-0 flex-1 flex-col items-stretch gap-1 overflow-hidden group-data-[collapsible=icon]:hidden">
+				<span className="w-full truncate font-mono text-xs leading-tight tracking-[-0.02em] text-sidebar-foreground">
+					{address?.slice(0, 6)}…{address?.slice(-4)}
 				</span>
-				<div className="transform scale-90 origin-left -ml-1 mt-0.5">
+				<div className="flex w-full min-w-0">
 					<NetworkSimpleBadge network={ChainIdToNetwork[activeChainId]} />
 				</div>
 			</div>
 
-			<LogOutIcon className="ml-auto h-4 w-4 shrink-0 opacity-50 transition-opacity hover:opacity-100 group-data-[collapsible=icon]:hidden" />
+			<LogOutIcon className="ml-auto size-4 shrink-0 text-[#bbc9cf] opacity-80 transition-[color,opacity] group-hover/menu-item:text-[#a4e6ff] group-hover/menu-item:opacity-100 group-data-[collapsible=icon]:hidden" />
 		</SidebarMenuButton>
 	)
 }

@@ -3,8 +3,9 @@
 import React from "react"
 import { cn } from "@/lib/utils"
 
-export interface DataTableToolbarSectionProps extends React.ComponentProps<"div"> {
-  children?: React.ReactNode
+export interface DataTableToolbarSectionProps
+	extends React.ComponentProps<"div"> {
+	children?: React.ReactNode
 }
 
 /**
@@ -41,20 +42,20 @@ export interface DataTableToolbarSectionProps extends React.ComponentProps<"div"
  */
 
 const DataTableToolbarSectionInternal = React.forwardRef<
-  HTMLDivElement,
-  DataTableToolbarSectionProps
+	HTMLDivElement,
+	DataTableToolbarSectionProps
 >(({ children, className, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      role="toolbar"
-      aria-orientation="horizontal"
-      className={cn("flex w-full flex-wrap items-center gap-2 p-1", className)}
-      {...props}
-    >
-      {children}
-    </div>
-  )
+	return (
+		<div
+			ref={ref}
+			role="toolbar"
+			aria-orientation="horizontal"
+			className={cn("flex w-full flex-wrap items-center gap-2 p-1", className)}
+			{...props}
+		>
+			{children}
+		</div>
+	)
 })
 
 DataTableToolbarSectionInternal.displayName = "DataTableToolbarSectionInternal"
@@ -71,7 +72,7 @@ DataTableToolbarSectionInternal.displayName = "DataTableToolbarSectionInternal"
  * WHAT: Only re-renders when props (children, className, etc.) actually change.
  */
 export const DataTableToolbarSection = React.memo(
-  DataTableToolbarSectionInternal,
+	DataTableToolbarSectionInternal,
 )
 
 DataTableToolbarSection.displayName = "DataTableToolbarSection"

@@ -1,7 +1,7 @@
 import { Command } from "@langchain/langgraph"
-import { HumanFullReview, HumanReview, NetworkT } from "@packages/schema"
+import type { HumanFullReview, HumanReview, NetworkT } from "@packages/schema"
 import { verifyRewiewEip712 } from "@packages/utils-server"
-import 'server-only'
+import "server-only"
 import { reviewersGraph } from "./graph"
 
 type Params = {
@@ -19,33 +19,42 @@ export const resumeReviewersAgent = async (params: Params) => {
 	const config = { configurable: { thread_id: threadId } }
 
 	// 1. Cryptographic Verification (EIP-712)
-	const isValid = await verifyRewiewEip712({ network, threadId, review, signature })
-	if (!isValid) throw new Error("Unauthorized: Cryptographic signature is invalid.")
+	const isValid = await verifyRewiewEip712({
+		network,
+		threadId,
+		review,
+		signature,
+	})
+	if (!isValid)
+		throw new Error("Unauthorized: Cryptographic signature is invalid.")
 
 	// 2. Authorization Check
 	// Fetch persisted state to ensure the signer is an assigned reviewer
 	const state = await reviewersGraph.getState(config)
-	const assignedAddresses = state.values.humanReviews?.map((r: HumanReview) =>
-		r.address.toLowerCase()
-	) || []
+	const assignedAddresses =
+		state.values.humanReviews?.map((r: HumanReview) =>
+			r.address.toLowerCase(),
+		) || []
 
 	console.log("PRODUCTION_AUTH_CHECK:", {
 		signer: review.address.toLowerCase(),
 		assignedAddresses,
 		storedReviews: state.values?.humanReviews,
-		allStateKeys: Object.keys(state.values || {})
+		allStateKeys: Object.keys(state.values || {}),
 	})
 
 	if (!assignedAddresses.includes(review.address.toLowerCase())) {
-		throw new Error("Forbidden: Address not assigned as Peer Reviewer for this publication.")
+		throw new Error(
+			"Forbidden: Address not assigned as Peer Reviewer for this publication.",
+		)
 	}
 
 	// 3. Resume Graph
 	// Command triggers the 'interrupt' in humanReviewsNode to return this payload
 	return await reviewersGraph.invoke(
 		new Command({
-			resume: { review }
+			resume: { review },
 		}),
-		config
+		config,
 	)
 }

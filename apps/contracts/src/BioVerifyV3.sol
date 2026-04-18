@@ -523,6 +523,7 @@ contract BioVerifyV3 is VRFConsumerBaseV2Plus, ReentrancyGuard {
         if (_newStatus == PublicationStatus.PUBLISHED) {
             // Publisher reward
             _unLockStakeAndReward(pub.publisher, _pubId, true);
+            _syncReviewerStatus(pub.publisher);
         } else if (_newStatus == PublicationStatus.SLASHED) {
             // Publisher Slash
             _unLockStakeAndSlash(pub.publisher, _pubId, true);
@@ -671,11 +672,8 @@ contract BioVerifyV3 is VRFConsumerBaseV2Plus, ReentrancyGuard {
     function _syncReviewerStatus(address _member) private {
         Member storage member = addressToMember[_member];
 
-        // How many reviews can the member afford
-        uint256 maxReviews = member.availableStake / I_REVIEWER_STAKE;
+        bool shouldBeInPool = member.availableStake >= I_REVIEWER_STAKE;
         uint256 currentReviews = reviewerCurrentActiveReviewsCount[_member];
-
-        bool shouldBeInPool = maxReviews > currentReviews;
         bool isInPool = reviewerPoolIndex[_member] > 0;
 
         if (shouldBeInPool && !isInPool) {

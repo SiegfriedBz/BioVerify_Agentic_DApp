@@ -4,7 +4,7 @@ import { z } from "zod"
 
 const VerdictSchema = z.object({
 	decision: z.enum(["pass", "fail", "pending"]).default("pending"),
-	reason: z.string().optional()
+	reason: z.string().optional(),
 })
 
 const SubmissionBase = {
@@ -16,7 +16,7 @@ const SubmissionBase = {
 		abstract: true,
 	}).optional(),
 	// the sources fetched by tavily
-	sources: z.array(z.any()).prefault([])
+	sources: z.array(z.any()).prefault([]),
 }
 
 export const SubmissionSchema = z.object(SubmissionBase)

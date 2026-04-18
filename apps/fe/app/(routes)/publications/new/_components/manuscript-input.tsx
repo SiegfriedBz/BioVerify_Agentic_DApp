@@ -1,5 +1,7 @@
 "use client"
 
+import type { FC } from "react"
+import { Controller, useFormContext } from "react-hook-form"
 import {
 	Field,
 	FieldDescription,
@@ -7,8 +9,6 @@ import {
 	FieldLabel,
 } from "@/components/ui/field"
 import { InputGroup, InputGroupTextarea } from "@/components/ui/input-group"
-import type { FC } from "react"
-import { Controller, useFormContext } from "react-hook-form"
 
 export const ManuscriptInput: FC = () => {
 	const { control } = useFormContext()

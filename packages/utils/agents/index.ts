@@ -1,14 +1,14 @@
 export enum AgentType {
-  SUBMISSION = "SUBMISSION",
-  REVIEW = "REVIEW",
+	SUBMISSION = "SUBMISSION",
+	REVIEW = "REVIEW",
 }
 
 const DELIMITER = "::"
 
 type Params = {
-  type: AgentType,
-  publicationId: string | number,
-  rootCid: string
+	type: AgentType
+	publicationId: string | number
+	rootCid: string
 }
 
 /**
@@ -17,25 +17,23 @@ type Params = {
  */
 
 export const getThreadId = (params: Params): string => {
-  const { type,
-    publicationId,
-    rootCid } = params
-  return [type, publicationId.toString(), rootCid].join(DELIMITER)
+	const { type, publicationId, rootCid } = params
+	return [type, publicationId.toString(), rootCid].join(DELIMITER)
 }
 
 /**
  * Reverses a threadId back into its constituent parts.
  */
 export const parseThreadId = (threadId: string) => {
-  const [type, publicationId, rootCid] = threadId.split(DELIMITER)
+	const [type, publicationId, rootCid] = threadId.split(DELIMITER)
 
-  if (!type || !publicationId || !rootCid) {
-    throw new Error(`Invalid threadId format: ${threadId}`)
-  }
+	if (!type || !publicationId || !rootCid) {
+		throw new Error(`Invalid threadId format: ${threadId}`)
+	}
 
-  return {
-    type: type as AgentType,
-    publicationId,
-    rootCid,
-  }
+	return {
+		type: type as AgentType,
+		publicationId,
+		rootCid,
+	}
 }

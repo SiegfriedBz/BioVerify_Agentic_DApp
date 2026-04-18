@@ -2,13 +2,13 @@
 
 import { useDataTable } from "../core"
 import {
-  TableExportButton,
-  type TableExportButtonProps,
+	TableExportButton,
+	type TableExportButtonProps,
 } from "../filters/table-export-button"
 
 export type DataTableExportButtonProps<TData> = Omit<
-  TableExportButtonProps<TData>,
-  "table"
+	TableExportButtonProps<TData>,
+	"table"
 >
 
 /**
@@ -23,11 +23,11 @@ export type DataTableExportButtonProps<TData> = Omit<
  * ```
  */
 export function DataTableExportButton<TData>({
-  ...props
+	...props
 }: DataTableExportButtonProps<TData>) {
-  const { table } = useDataTable<TData>()
+	const { table } = useDataTable<TData>()
 
-  return <TableExportButton table={table} {...props} />
+	return <TableExportButton table={table} {...props} />
 }
 
 DataTableExportButton.displayName = "DataTableExportButton"

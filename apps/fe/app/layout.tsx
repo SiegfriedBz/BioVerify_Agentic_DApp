@@ -1,12 +1,16 @@
-import { Providers } from "@/_context/providers"
-import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "@/_context/theme-provider"
+import { Analytics } from "@vercel/analytics/next"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { headers } from "next/headers"
+import { Geist_Mono, Inter, Space_Grotesk } from "next/font/google"
 import "./globals.css"
 
-const geistSans = Geist({
-	variable: "--font-geist-sans",
+const inter = Inter({
+	variable: "--font-inter",
+	subsets: ["latin"],
+})
+
+const spaceGrotesk = Space_Grotesk({
+	variable: "--font-space-grotesk",
 	subsets: ["latin"],
 })
 
@@ -16,30 +20,66 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-	title: "BioVerify",
-	description: "Next.js Agentic DApp",
+	metadataBase: new URL(
+		process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+	),
+	title: {
+		default: "BioVerify — Trustless Peer Review at AI Speed",
+		template: "%s | BioVerify",
+	},
+	description:
+		"BioVerify is a DeSci agentic DApp for decentralized, trustless peer review. " +
+		"Leveraging Chainlink VRF for verifiable reviewer selection and LangGraph AI agents " +
+		"for forensic validation, it anchors scientific outcomes on-chain.",
+	keywords: [
+		"DeSci",
+		"agentic",
+		"decentralized",
+		"DApp",
+		"Chainlink VRF",
+		"trustless",
+		"peer review",
+		"scientific validation",
+		"on-chain",
+		"LangGraph",
+		"BioVerify",
+	],
+	authors: [{ name: "Siegfried Bozza" }],
+	openGraph: {
+		type: "website",
+		siteName: "BioVerify",
+		title: "BioVerify — Trustless Peer Review at AI Speed",
+		description:
+			"A DeSci agentic DApp for decentralized, trustless scientific peer review powered by Chainlink VRF and AI agents.",
+		locale: "en_US",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "BioVerify — Trustless Peer Review at AI Speed",
+		description:
+			"Decentralized scientific peer review. Chainlink VRF selects reviewers, AI agents verify integrity, stakes settle on-chain.",
+	},
 }
 
 export default async function RootLayout({
 	children,
-	breadcrumbs
 }: Readonly<{
 	children: React.ReactNode
-	breadcrumbs: React.ReactNode
 }>) {
-	const headersObj = await headers()
-	const cookies = headersObj.get("cookie")
-
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+				className={`${inter.variable} ${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased`}
 			>
-				<Providers cookies={cookies}>
-					{breadcrumbs}
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="dark"
+					enableSystem
+					disableTransitionOnChange
+				>
 					{children}
-					<Toaster />
-				</Providers>
+				</ThemeProvider>
+				<Analytics />
 			</body>
 		</html>
 	)

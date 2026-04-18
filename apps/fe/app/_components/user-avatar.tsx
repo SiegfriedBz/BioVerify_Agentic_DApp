@@ -1,13 +1,13 @@
 "use client"
 
+import type { FC } from "react"
+import { useConnection, useEnsAvatar, useEnsName } from "wagmi"
 import {
 	Avatar,
 	AvatarBadge,
 	AvatarFallback,
 	AvatarImage,
 } from "@/components/ui/avatar"
-import type { FC } from "react"
-import { useConnection, useEnsAvatar, useEnsName } from "wagmi"
 
 export const UserAvatar: FC = () => {
 	const { address } = useConnection()

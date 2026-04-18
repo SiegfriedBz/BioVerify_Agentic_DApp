@@ -1,12 +1,12 @@
 "use client"
 
-import { useConnections, UseConnectionsReturnType } from "wagmi"
+import { type UseConnectionsReturnType, useConnections } from "wagmi"
 
 export const useAuthFromWallet = () => {
-  const connections: UseConnectionsReturnType = useConnections()
-  const connection = connections?.at(0)
-  const walletAddress = connection?.accounts?.at(0)
-  const walletChainId = connection?.chainId
+	const connections: UseConnectionsReturnType = useConnections()
+	const connection = connections?.at(0)
+	const walletAddress = connection?.accounts?.at(0)
+	const walletChainId = connection?.chainId
 
-  return { walletAddress, walletChainId }
+	return { walletAddress, walletChainId }
 }

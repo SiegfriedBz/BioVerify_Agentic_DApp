@@ -10,17 +10,17 @@ import { Check, ChevronsUpDown, Settings2 } from "lucide-react"
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
+	Command,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandList,
 } from "@/components/ui/command"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { formatLabel } from "../lib/format"
@@ -30,89 +30,89 @@ import { formatLabel } from "../lib/format"
  * Priority: column.meta.label > formatted column.id
  */
 function getColumnTitle<TData>(column: Column<TData, unknown>): string {
-  return column.columnDef.meta?.label ?? formatLabel(column.id)
+	return column.columnDef.meta?.label ?? formatLabel(column.id)
 }
 
 export interface TableViewMenuProps<TData> {
-  table: Table<TData>
-  className?: string
-  onColumnVisibilityChange?: (columnId: string, isVisible: boolean) => void
+	table: Table<TData>
+	className?: string
+	onColumnVisibilityChange?: (columnId: string, isVisible: boolean) => void
 }
 
 export function TableViewMenu<TData>({
-  table,
-  onColumnVisibilityChange,
+	table,
+	onColumnVisibilityChange,
 }: TableViewMenuProps<TData>) {
-  /**
-   * PERFORMANCE: Memoize filtered columns to avoid recalculating on every render
-   *
-   * WHY: `getAllColumns().filter()` iterates through all columns and checks properties.
-   * Without memoization, this runs on every render, even when columns haven't changed.
-   *
-   * IMPACT: Prevents unnecessary column filtering operations.
-   * With 20 columns: saves ~0.2-0.5ms per render.
-   *
-   * NOTE: Column visibility changes are tracked via table state in context,
-   * so this memoization correctly updates when visibility changes.
-   *
-   * WHAT: Only recalculates when table instance changes (rare).
-   */
-  const columns = React.useMemo(
-    () =>
-      table
-        .getAllColumns()
-        .filter(
-          column =>
-            typeof column.accessorFn !== "undefined" && column.getCanHide(),
-        ),
-    [table],
-  )
+	/**
+	 * PERFORMANCE: Memoize filtered columns to avoid recalculating on every render
+	 *
+	 * WHY: `getAllColumns().filter()` iterates through all columns and checks properties.
+	 * Without memoization, this runs on every render, even when columns haven't changed.
+	 *
+	 * IMPACT: Prevents unnecessary column filtering operations.
+	 * With 20 columns: saves ~0.2-0.5ms per render.
+	 *
+	 * NOTE: Column visibility changes are tracked via table state in context,
+	 * so this memoization correctly updates when visibility changes.
+	 *
+	 * WHAT: Only recalculates when table instance changes (rare).
+	 */
+	const columns = React.useMemo(
+		() =>
+			table
+				.getAllColumns()
+				.filter(
+					(column) =>
+						typeof column.accessorFn !== "undefined" && column.getCanHide(),
+				),
+		[table],
+	)
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          aria-label="Toggle columns"
-          role="combobox"
-          variant="outline"
-          size="sm"
-          className="ml-auto hidden h-8 lg:flex"
-        >
-          <Settings2 />
-          View
-          <ChevronsUpDown className="ml-auto opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-fit p-0">
-        <Command>
-          <CommandInput placeholder="Search columns..." />
-          <CommandList>
-            <CommandEmpty>No columns found.</CommandEmpty>
-            <CommandGroup>
-              {columns.map(column => (
-                <CommandItem
-                  key={column.id}
-                  onSelect={() => {
-                    const newVisibility = !column.getIsVisible()
-                    column.toggleVisibility(newVisibility)
-                    onColumnVisibilityChange?.(column.id, newVisibility)
-                  }}
-                >
-                  <span className="truncate">{getColumnTitle(column)}</span>
-                  <Check
-                    className={cn(
-                      "ml-auto size-4 shrink-0",
-                      column.getIsVisible() ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  )
+	return (
+		<Popover>
+			<PopoverTrigger asChild>
+				<Button
+					aria-label="Toggle columns"
+					role="combobox"
+					variant="outline"
+					size="sm"
+					className="ml-auto hidden h-8 lg:flex"
+				>
+					<Settings2 />
+					View
+					<ChevronsUpDown className="ml-auto opacity-50" />
+				</Button>
+			</PopoverTrigger>
+			<PopoverContent align="end" className="w-fit p-0">
+				<Command>
+					<CommandInput placeholder="Search columns..." />
+					<CommandList>
+						<CommandEmpty>No columns found.</CommandEmpty>
+						<CommandGroup>
+							{columns.map((column) => (
+								<CommandItem
+									key={column.id}
+									onSelect={() => {
+										const newVisibility = !column.getIsVisible()
+										column.toggleVisibility(newVisibility)
+										onColumnVisibilityChange?.(column.id, newVisibility)
+									}}
+								>
+									<span className="truncate">{getColumnTitle(column)}</span>
+									<Check
+										className={cn(
+											"ml-auto size-4 shrink-0",
+											column.getIsVisible() ? "opacity-100" : "opacity-0",
+										)}
+									/>
+								</CommandItem>
+							))}
+						</CommandGroup>
+					</CommandList>
+				</Command>
+			</PopoverContent>
+		</Popover>
+	)
 }
 
 /**

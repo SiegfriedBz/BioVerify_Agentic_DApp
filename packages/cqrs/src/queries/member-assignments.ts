@@ -1,43 +1,66 @@
 import { db } from "@packages/db"
-import { mapPublication, type Publication, publicationDbSchema } from "@packages/schema"
-import { and, eq, sql } from "drizzle-orm"
+import {
+	mapPublication,
+	type Publication,
+	publicationDbSchema,
+} from "@packages/schema"
+import { and, count, desc, eq, or, sql } from "drizzle-orm"
 
-export type MemberAssignments = Publication[]
-
-type Params = {
-  userAddress: string
+export type MemberAssignmentsResponse = {
+	items: Publication[]
+	totalCount: number
 }
 
-export async function getMemberAssignments(params: Params): Promise<MemberAssignments> {
-  const { userAddress } = params
-  const address = userAddress.toLowerCase()
+export type MemberAssignmentsQueryParams = {
+	userAddress: string
+	/** When set with `limit`, applies server-side pagination. Omit for full list (client-side table). */
+	limit?: number
+	offset?: number
+}
 
-  try {
-    // 1. Database-level filtering 
-    // Filters for: Status = IN_REVIEW (2) AND (User is in reviewers array OR is seniorReviewer)
-    const rawItems = await db
-      .select()
-      .from(publicationDbSchema)
-      .where(
-        and(
-          eq(publicationDbSchema.status, 2),
-          sql`${address} = ANY(${publicationDbSchema.reviewers}) OR ${publicationDbSchema.seniorReviewer} = ${address}`
-        )
-      )
+export async function getMemberAssignments(
+	params: MemberAssignmentsQueryParams,
+): Promise<MemberAssignmentsResponse> {
+	const { userAddress, limit, offset = 0 } = params
+	const address = userAddress.toLowerCase()
 
-    // 2. Map results
-    const assignments = rawItems.reduce((acc: Publication[], raw) => {
-      try {
-        acc.push(mapPublication(raw))
-      } catch (e) {
-        console.error(`[CQRS] Mapping failed for publication ${raw.id}:`, e)
-      }
-      return acc
-    }, [])
+	const reviewerClause = or(
+		sql`${address} = ANY(${publicationDbSchema.reviewers})`,
+		eq(publicationDbSchema.seniorReviewer, address),
+	)
 
-    return assignments
-  } catch (error) {
-    console.error("[CQRS] getMemberAssignments Failed:", error)
-    return []
-  }
+	const whereClause = and(eq(publicationDbSchema.status, 2), reviewerClause)
+
+	try {
+		const listQuery = db
+			.select()
+			.from(publicationDbSchema)
+			.where(whereClause)
+			.orderBy(desc(publicationDbSchema.createdAt))
+
+		const [itemsRaw, [totalRes]] = await Promise.all([
+			limit === undefined ? listQuery : listQuery.limit(limit).offset(offset),
+			db
+				.select({ value: count() })
+				.from(publicationDbSchema)
+				.where(whereClause),
+		])
+
+		const items = itemsRaw.reduce((acc: Publication[], raw) => {
+			try {
+				acc.push(mapPublication(raw))
+			} catch (e) {
+				console.error(`[CQRS] Mapping failed for publication ${raw.id}:`, e)
+			}
+			return acc
+		}, [])
+
+		return {
+			items,
+			totalCount: totalRes.value,
+		}
+	} catch (error) {
+		console.error("[CQRS] getMemberAssignments Failed:", error)
+		return { items: [], totalCount: 0 }
+	}
 }

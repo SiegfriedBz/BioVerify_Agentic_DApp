@@ -112,6 +112,51 @@ contract FulfillVRFTest is TestHelpers {
         assertEq(bioVerify.rewardPool(), initialRewardPool - expectedRewardPoolDeduction);
     }
 
+    function test_FulfillRandomWords_ReviewerWith2xStakeRemainsAvailable() public {
+        _submitDefaultPub();
+
+        address doubleStaker = makeAddr(string(abi.encodePacked("reviewer_", uint256(0))));
+        vm.deal(doubleStaker, reviewerStake * 2);
+        vm.startPrank(doubleStaker);
+        bioVerify.payReviewerStake{value: reviewerStake}();
+        bioVerify.payReviewerStake{value: reviewerStake}();
+        vm.stopPrank();
+
+        for (uint256 i = 1; i < validMinReviewersPoolSize; ++i) {
+            address rev = makeAddr(string(abi.encodePacked("reviewer_", i)));
+            vm.deal(rev, reviewerStake);
+            vm.prank(rev);
+            bioVerify.payReviewerStake{value: reviewerStake}();
+        }
+
+        vm.prank(aiAgentAddress);
+        uint256 requestId = bioVerify.pickReviewers(0);
+
+        uint256[] memory words = new uint256[](vrfNumWords);
+        for (uint256 i = 0; i < vrfNumWords; ++i) {
+            words[i] = i;
+        }
+
+        vm.recordLogs();
+        vrfCoordinatorMock.fulfillRandomWordsWithOverride(requestId, address(bioVerify), words);
+
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 eventSig = keccak256("IsAvailableReviewer(address,bool,uint256)");
+
+        for (uint256 i = 0; i < entries.length; i++) {
+            if (entries[i].topics[0] != eventSig) continue;
+
+            address reviewer = address(uint160(uint256(entries[i].topics[1])));
+            (bool isAvailable,) = abi.decode(entries[i].data, (bool, uint256));
+
+            if (reviewer == doubleStaker) {
+                assertTrue(isAvailable, "2x-stake reviewer must remain available after being picked once");
+            } else {
+                assertFalse(isAvailable, "1x-stake reviewer must be unavailable after being picked");
+            }
+        }
+    }
+
     // ===== unhappy path
     function test_FulfillRandomWords_RevertIf_PoolShrinksDuringVRF() public {
         // 1. Setup: Submit and fill the pool with exactly enough reviewers

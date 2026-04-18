@@ -2,12 +2,12 @@
 
 import { useDataTable } from "../core"
 import {
-  TableRowDndProvider,
-  type TableRowDndProviderProps,
-  TableDraggableRow,
-  type TableDraggableRowProps,
-  TableRowDragHandle,
-  type TableRowDragHandleProps,
+	TableDraggableRow,
+	type TableDraggableRowProps,
+	TableRowDndProvider,
+	type TableRowDndProviderProps,
+	TableRowDragHandle,
+	type TableRowDragHandleProps,
 } from "../filters/table-row-dnd"
 
 // ============================================================================
@@ -15,8 +15,8 @@ import {
 // ============================================================================
 
 export type DataTableRowDndProviderProps<TData> = Omit<
-  TableRowDndProviderProps<TData>,
-  "table"
+	TableRowDndProviderProps<TData>,
+	"table"
 >
 
 /**
@@ -33,10 +33,10 @@ export type DataTableRowDndProviderProps<TData> = Omit<
  * </DataTableRoot>
  */
 export function DataTableRowDndProvider<TData>(
-  props: DataTableRowDndProviderProps<TData>,
+	props: DataTableRowDndProviderProps<TData>,
 ) {
-  const { table } = useDataTable<TData>()
-  return <TableRowDndProvider<TData> table={table} {...props} />
+	const { table } = useDataTable<TData>()
+	return <TableRowDndProvider<TData> table={table} {...props} />
 }
 
 DataTableRowDndProvider.displayName = "DataTableRowDndProvider"
@@ -60,9 +60,9 @@ export type DataTableDraggableRowProps<TData> = TableDraggableRowProps<TData>
  * </DataTableDraggableRow>
  */
 export function DataTableDraggableRow<TData>(
-  props: DataTableDraggableRowProps<TData>,
+	props: DataTableDraggableRowProps<TData>,
 ) {
-  return <TableDraggableRow<TData> {...props} />
+	return <TableDraggableRow<TData> {...props} />
 }
 
 DataTableDraggableRow.displayName = "DataTableDraggableRow"
@@ -85,7 +85,7 @@ export type DataTableRowDragHandleProps = TableRowDragHandleProps
  * }
  */
 export function DataTableRowDragHandle(props: DataTableRowDragHandleProps) {
-  return <TableRowDragHandle {...props} />
+	return <TableRowDragHandle {...props} />
 }
 
 DataTableRowDragHandle.displayName = "DataTableRowDragHandle"

@@ -2,15 +2,15 @@
 
 import { useDataTable } from "../core"
 import {
-  TableViewMenu,
-  type TableViewMenuProps,
+	TableViewMenu,
+	type TableViewMenuProps,
 } from "../filters/table-view-menu"
 
 type DataTableViewMenuProps<TData> = Omit<TableViewMenuProps<TData>, "table">
 
 export function DataTableViewMenu<TData>(props: DataTableViewMenuProps<TData>) {
-  const { table } = useDataTable<TData>()
-  return <TableViewMenu table={table} {...props} />
+	const { table } = useDataTable<TData>()
+	return <TableViewMenu table={table} {...props} />
 }
 
 /**

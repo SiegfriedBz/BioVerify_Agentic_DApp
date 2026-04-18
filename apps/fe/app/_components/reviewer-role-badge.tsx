@@ -1,23 +1,32 @@
-import { Badge } from "@/components/ui/badge"
+import type { FC } from "react"
 import { cn } from "@/lib/utils"
-import { ComponentProps, FC } from "react"
 
-type Props = ComponentProps<typeof Badge> & {
-  isSeniorReviewer: boolean
+type Props = {
+	isSeniorReviewer: boolean
 }
 
 export const ReviewerRoleBadge: FC<Props> = (props) => {
-  const { isSeniorReviewer, className, ...rest } = props
+	const { isSeniorReviewer } = props
 
-  return (
-    <Badge
-      {...rest}
-      variant={"ghost"}
-      className={cn("flex items-center gap-x-2", className)}>
-      <span className={cn("rounded-full size-4",
-        isSeniorReviewer ? "bg-amber-500" : "bg-blue-500"
-      )} />
-      <span>{isSeniorReviewer ? "Senior" : "Peer"}</span>
-    </Badge>
-  )
+	return (
+		<span
+			className={cn(
+				"inline-flex max-w-full items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em]",
+				isSeniorReviewer
+					? "border-primary/20 bg-primary/10 text-primary shadow-[0_0_20px_rgba(76,214,255,0.12)]"
+					: "border-border/50 bg-muted/25 text-muted-foreground",
+			)}
+		>
+			<span
+				className={cn(
+					"h-1.5 w-1.5 shrink-0 rounded-full",
+					isSeniorReviewer
+						? "bg-primary shadow-[0_0_10px_rgba(0,209,255,0.55)]"
+						: "bg-secondary",
+				)}
+				aria-hidden
+			/>
+			<span>{isSeniorReviewer ? "Senior Reviewer" : "Peer Reviewer"}</span>
+		</span>
+	)
 }

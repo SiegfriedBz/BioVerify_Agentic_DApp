@@ -1,40 +1,86 @@
-# BIOVERIFY
+# Submission Agent
 
-> **Trigger Source:** This graph is triggered by the `api/webhooks/alchemy/submission` webhook, responding to the on-chain `BioVerify_SubmittedPublication` event.
+LangGraph agent that autonomously pre-validates scientific submissions for originality before they enter the peer-review pool. Acts as a "Proof of Originality" filter.
 
-## AI SUBMISSION GRAPH
+## Trigger Chain
 
-This LangGraph orchestrates the autonomous pre-validation of scientific submissions. It serves as a decentralized **"Proof of Originality"** filter, acting as an automated gatekeeper to ensure only novel research enters the peer-review pool.
+A user calls `submitPublication(cid, fee)` on the `BioVerifyV3` smart contract, which emits a `SubmitPublication` event. That event flows through the infrastructure pipeline into this agent:
 
-### Flow Logic
+```mermaid
+sequenceDiagram
+    participant User
+    participant BioVerifyV3
+    participant AlchemyNotify
+    participant NextAPI as Next.js Webhook API
+    participant CQRS as processContractEvent
+    participant DB as Postgres (Neon)
+    participant Inngest
+    participant Agent as Submission Agent
 
-* **IPFS Ingestion**
-Resolution of the multi-layer manifest. The agent fetches the publication metadata and the abstract from IPFS to prepare the forensic context.
+    User->>BioVerifyV3: submitPublication(cid, fee) + stake
+    BioVerifyV3-->>AlchemyNotify: emits SubmitPublication event
+    AlchemyNotify->>NextAPI: POST /api/webhooks/alchemy/all-events
+    NextAPI->>CQRS: decode log + processContractEvent()
+    CQRS->>DB: upsert publication (status: SUBMITTED)
+    CQRS->>Inngest: inngest.send(CHAIN_SUBMISSION_RECEIVED)
+    Inngest->>Agent: step.run -> startSubmissionAgent()
+```
 
-* **Forensic Search**
-Utilizes the **Tavily Search Tool** to perform multi-source web crawling. This step identifies existing literature, pre-prints, or similar datasets that could indicate plagiarism or lack of novelty.
+1. **Alchemy Notify** watches the `BioVerifyV3` contract and POSTs raw logs to the Next.js webhook at `apps/fe/app/api/webhooks/alchemy/all-events/route.ts`.
+2. The webhook decodes each log with `viem` and calls `processContractEvent()` from `@packages/cqrs`, which upserts the publication into Postgres and emits an Inngest event.
+3. The Inngest function `audit-publication-submission` picks up `CHAIN_SUBMISSION_RECEIVED` and runs `startSubmissionAgent()` inside a durable `step.run`.
 
-* **AI Pre-Validation Verdict**
-The final LLM-driven node analyzes the forensic search results. It determines if the submission is a unique contribution or a violation of protocol integrity.
+## Graph
 
----
+Linear pipeline -- no conditional edges inside the graph itself.
 
-### Outcomes
+```mermaid
+graph LR
+    START --> fetchIpfsNode --> discoveryNode --> llmNode --> END
+```
 
-#### **Scenario: PASS**
+### Nodes
 
-* **Validation:** The paper is deemed original.
-* **Next Step:** The protocol triggers **Chainlink VRF** to select the peer reviewers and senior editor.
-* **Status:** The scientist's stake remains safely locked in the protocol.
+| Node | What it does |
+|------|-------------|
+| `fetchIpfsNode` | Resolves the IPFS manifest from `rootCid`, fetches the abstract text. |
+| `discoveryNode` | Neural search via **Exa AI** for prior publications that could indicate plagiarism or lack of novelty. Returns up to 5 scored sources. |
+| `llmNode` | Gemini (`gemini-2.5-flash-lite`) with structured output. Produces `{ decision: "pass" \| "fail", reason }`. |
 
-#### **Scenario: FAIL**
+### State
 
-* **Validation:** Clear evidence of plagiarism detected.
-* **Immediate Slash:** The scientist's stake is immediately confiscated by the smart contract.
-* **Protocol Ban:** The publisher's reputation score is penalized to prevent future sybil-spam.
+| Field | Type | Default |
+|-------|------|---------|
+| `publicationId` | `string` | -- |
+| `rootCid` | `string` | -- |
+| `publication` | `{ abstract }` | -- |
+| `sources` | `any[]` | `[]` |
+| `verdict` | `{ decision, reason }` | `{ decision: "pending" }` |
 
----
+## Post-Graph Settlement
 
-### Logic Principle
+After the graph completes, `agent-start.ts` reads the verdict and branches:
 
-**Efficiency First**: By filtering out low-quality or fraudulent submissions autonomously, the protocol saves human reviewers' time and ensures that staking rewards are only generated for genuine scientific advancement.
+```mermaid
+graph TD
+    LlmVerdict{Verdict?}
+    LlmVerdict -->|pass| PickReviewers["pickReviewersCommand()"]
+    LlmVerdict -->|fail| EarlySlash["earlySlashPublicationCommand()"]
+    PickReviewers --> VRF["On-chain: Chainlink VRF request"]
+    EarlySlash --> Slashed["On-chain: publisher stake slashed"]
+```
+
+- **Pass**: calls `pickReviewersCommand()`, which triggers a Chainlink VRF request on-chain to randomly select peer reviewers. This is the entry point for the [Review Agent](../review/README.md).
+- **Fail**: calls `earlySlashPublicationCommand()`, which pins the reason to IPFS and immediately slashes the publisher's stake on-chain.
+
+## State Persistence
+
+The graph is compiled with a **Postgres checkpointer** (`PostgresSaver` from `@langchain/langgraph-checkpoint-postgres`) connected to a **Neon** database via `NEON_AGENTS_DATABASE_URL`. Each invocation is keyed by `thread_id = getThreadId({ type: SUBMISSION, publicationId, rootCid })`.
+
+## Durable Execution
+
+**Inngest** wraps the agent invocation in a durable `step.run` with 3 retries. On completion, the Inngest function emits `SUBMISSION_AGENT_AUDIT_COMPLETED` for downstream hooks. Inngest functions are registered and served from `apps/fe/app/api/inngest/route.ts`.
+
+## Notifications
+
+Telegram alerts are sent on agent start and on verdict (pass or fail), including links to the IPFS manifest.

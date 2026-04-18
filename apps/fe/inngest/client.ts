@@ -1,24 +1,26 @@
 import { env } from "@packages/env"
-import { BioVerifyInnGestEvents } from "@packages/schema"
+import type { BioVerifyInnGestEvents } from "@packages/schema"
 import { Inngest } from "inngest"
 
 const globalForInngest = globalThis as unknown as {
-  inngest: Inngest<{
-    id: string
-    schemas: BioVerifyInnGestEvents,
-  }> | undefined
+	inngest:
+		| Inngest<{
+				id: string
+				schemas: BioVerifyInnGestEvents
+		  }>
+		| undefined
 }
 
 export const inngest =
-  globalForInngest.inngest ??
-  new Inngest({
-    id: "bioverify-app",
-    schemas: {} as BioVerifyInnGestEvents,
-    signingKey: env.INNGEST_SIGNING_KEY,
-    eventKey: env.INNGEST_EVENT_KEY,
-    env: process.env.VERCEL_ENV
-  })
+	globalForInngest.inngest ??
+	new Inngest({
+		id: "bioverify-app",
+		schemas: {} as BioVerifyInnGestEvents,
+		signingKey: env.INNGEST_SIGNING_KEY,
+		eventKey: env.INNGEST_EVENT_KEY,
+		env: process.env.VERCEL_ENV,
+	})
 
 if (process.env.NODE_ENV !== "production") {
-  globalForInngest.inngest = inngest
+	globalForInngest.inngest = inngest
 }

@@ -1,21 +1,19 @@
 {
-  "name": "@packages/env",
+	"name": "@packages/env",
 	"version": "0.3.0",
-  "private": true,
-  "author": "Siegfried Bozza",
-  "license": "MIT",
-  "main": "index.js",
-  "scripts": {
-    "check": "tsx ./index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.23.0",
-  "dependencies": {
-    "@t3-oss/env-core": "^0.13.10",
-    "tsx": "^4.21.0",
-    "zod": "^4.3.6"
-  }
+	"private": true,
+	"author": "Siegfried Bozza",
+	"license": "MIT",
+	"main": "index.js",
+	"scripts": {
+		"check": "tsx ./index.ts",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"packageManager": "pnpm@10.23.0",
+	"dependencies": {
+		"@t3-oss/env-core": "^0.13.10",
+		"tsx": "^4.21.0",
+		"zod": "^4.3.6"
+	}
 }

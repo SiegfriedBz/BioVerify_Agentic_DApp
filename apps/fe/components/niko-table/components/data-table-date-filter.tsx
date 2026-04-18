@@ -8,17 +8,17 @@ import { useDerivedColumnTitle } from "../hooks/use-derived-column-title"
 import { FILTER_VARIANTS } from "../lib/constants"
 
 type DataTableDateFilterProps<TData> = Omit<
-  TableDateFilterProps<TData>,
-  "column" | "title"
+	TableDateFilterProps<TData>,
+	"column" | "title"
 > & {
-  /**
-   * The accessor key of the column to filter (matches column definition)
-   */
-  accessorKey: keyof TData & string
-  /**
-   * Optional title override (if not provided, will use column.meta.label)
-   */
-  title?: string
+	/**
+	 * The accessor key of the column to filter (matches column definition)
+	 */
+	accessorKey: keyof TData & string
+	/**
+	 * Optional title override (if not provided, will use column.meta.label)
+	 */
+	title?: string
 }
 
 /**
@@ -50,47 +50,50 @@ type DataTableDateFilterProps<TData> = Omit<
  */
 
 export function DataTableDateFilter<TData>({
-  accessorKey,
-  title,
-  multiple,
-  trigger,
-  ...props
+	accessorKey,
+	title,
+	multiple,
+	trigger,
+	...props
 }: DataTableDateFilterProps<TData>) {
-  const { table } = useDataTable<TData>()
-  const column = table.getColumn(String(accessorKey))
+	const { table } = useDataTable<TData>()
+	const column = table.getColumn(String(accessorKey))
 
-  const derivedTitle = useDerivedColumnTitle(column, String(accessorKey), title)
+	const derivedTitle = useDerivedColumnTitle(column, String(accessorKey), title)
 
-  // Auto-set variant in column meta if not already set
-  // This allows the auto-filterFn to be applied based on variant
-  React.useMemo(() => {
-    if (!column) return
-    const meta = (column.columnDef.meta ||= {})
-    // Only set variant if not already set (respects manual configuration)
-    if (!meta.variant) {
-      meta.variant = multiple
-        ? FILTER_VARIANTS.DATE_RANGE
-        : FILTER_VARIANTS.DATE
-    }
-  }, [column, multiple])
+	// Auto-set variant in column meta if not already set
+	// This allows the auto-filterFn to be applied based on variant
+	React.useMemo(() => {
+		if (!column) return
+		if (!column.columnDef.meta) {
+			column.columnDef.meta = {}
+		}
+		const meta = column.columnDef.meta
+		// Only set variant if not already set (respects manual configuration)
+		if (!meta.variant) {
+			meta.variant = multiple
+				? FILTER_VARIANTS.DATE_RANGE
+				: FILTER_VARIANTS.DATE
+		}
+	}, [column, multiple])
 
-  // Early return if column not found
-  if (!column) {
-    console.warn(
-      `Column with accessorKey "${accessorKey}" not found in table columns`,
-    )
-    return null
-  }
+	// Early return if column not found
+	if (!column) {
+		console.warn(
+			`Column with accessorKey "${accessorKey}" not found in table columns`,
+		)
+		return null
+	}
 
-  return (
-    <TableDateFilter
-      column={column}
-      title={derivedTitle}
-      multiple={multiple}
-      trigger={trigger}
-      {...props}
-    />
-  )
+	return (
+		<TableDateFilter
+			column={column}
+			title={derivedTitle}
+			multiple={multiple}
+			trigger={trigger}
+			{...props}
+		/>
+	)
 }
 
 /**
