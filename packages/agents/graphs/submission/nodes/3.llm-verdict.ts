@@ -33,10 +33,10 @@ const systemMsg = new SystemMessage(`
 
     AUDIT PARAMETERS:
     1. VERBATIM MATCH (FAIL): If you find word-for-word overlap of more than two sentences with a source from the provided data.
-    2. METADATA CORRELATION: Use the "Year" and "CitationCount" from Semantic Scholar. If a match is found in an older, highly-cited paper, the confidence for a "FAIL" verdict is 100%.
+    2. METADATA CORRELATION: Use the "year" and "score" from the search results. If a match is found in an older, high-scoring paper, the confidence for a "FAIL" verdict is 100%.
     3. THE "DEMO" EXCEPTION: Since this protocol may be demoed with non-scientific text (e.g., Code, Personal Bio, or Placeholder text):
-			- If the input is clearly NOT a scientific abstract, evaluate it for uniqueness against the sources. 
-			- If no direct plagiarism of that non-scientific text is found in the sources, you must "PASS" it.
+            - If the input is clearly NOT a scientific abstract, evaluate it for uniqueness against the sources. 
+            - If no direct plagiarism of that non-scientific text is found in the sources, you must "PASS" it.
     4. NO HALLUCINATION: If the 'sources' list is empty or irrelevant, you MUST "PASS" the submission unless it is a world-famous historical text (e.g., The Origin of Species).
 
     OUTPUT STYLE:
@@ -55,7 +55,7 @@ export const llmNode = async (
 		[
 			`### SUBMISSION ABSTRACT ###`,
 			`"${publication.abstract}"`,
-			`\n### SEMANTIC SCHOLAR SEARCH RESULTS ###`,
+			`\n### EXA AI SEARCH RESULTS ###`,
 			`${JSON.stringify(sources, null, 2)}`,
 			`\nPerform a forensic audit. Is this submission original or a copy?`,
 		].join("\n"),
