@@ -1,10 +1,10 @@
 "use client"
 
-import { cva, type VariantProps } from "class-variance-authority"
-import { useMemo } from "react"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { cva, type VariantProps } from "class-variance-authority"
+import { useMemo } from "react"
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
 	return (
@@ -54,7 +54,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const fieldVariants = cva(
-	"group/field flex w-full gap-3 data-[invalid=true]:text-destructive",
+	"group/field flex w-full gap-3 data-[invalid=true]:text-error",
 	{
 		variants: {
 			orientation: {
@@ -225,7 +225,7 @@ function FieldError({
 		<div
 			role="alert"
 			data-slot="field-error"
-			className={cn("text-destructive text-sm font-normal", className)}
+			className={cn("text-error text-sm font-normal", className)}
 			{...props}
 		>
 			{content}

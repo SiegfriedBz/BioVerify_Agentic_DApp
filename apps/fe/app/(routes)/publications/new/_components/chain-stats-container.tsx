@@ -1,11 +1,12 @@
 "use client"
 
-import type { ChainStats } from "@packages/cqrs"
-import { LandmarkIcon, UsersIcon } from "lucide-react"
 import { useChainStats } from "@/_hooks/cqrs/queries/use-chain-stats"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { FetchError } from "@/app/_components/fetch-error"
 import { MetricCard } from "@/app/_components/metric-card"
+import type { ChainStats } from "@packages/cqrs"
+import { useAppKitAccount } from "@reown/appkit/react"
+import { LandmarkIcon, UsersIcon } from "lucide-react"
 import { ChainStatsSkeleton } from "./chain-stats-skeleton"
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 
 export const ChainStatsContainer = (props: Props) => {
 	const { server } = props
+	const { isConnected } = useAppKitAccount()
 	const { walletChainId } = useAuthFromWallet()
 	const activeChainId = walletChainId || server.chainId
 
@@ -32,6 +34,8 @@ export const ChainStatsContainer = (props: Props) => {
 		chainId: activeChainId,
 		initialData: validatedInitialData,
 	})
+
+	if (!isConnected) return null
 
 	if (isError) return <FetchError refetch={refetch} />
 

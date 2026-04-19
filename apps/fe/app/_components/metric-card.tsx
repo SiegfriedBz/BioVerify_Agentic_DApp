@@ -1,5 +1,3 @@
-import type { LucideIcon } from "lucide-react"
-import type { FC } from "react"
 import {
 	TypographyH4,
 	TypographyP,
@@ -7,6 +5,8 @@ import {
 } from "@/app/_components/typography"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import type { LucideIcon } from "lucide-react"
+import type { FC } from "react"
 
 type IconTone = "primary" | "secondary" | "error" | "warning"
 
@@ -41,7 +41,7 @@ export const MetricCard: FC<Props> = (props) => {
 	const cardStatusClasses = {
 		default: "border-border hover:ring-primary/20",
 		warning: "border-amber-500/50 bg-amber-500/5 ring-1 ring-amber-500/20",
-		error: "border-destructive/50 bg-destructive/5 ring-1 ring-destructive/20",
+		error: "border-error/50 bg-error/5 ring-1 ring-error/20",
 	}
 
 	const resolvedIconTone: IconTone =
@@ -64,7 +64,7 @@ export const MetricCard: FC<Props> = (props) => {
 							status === "warning"
 								? "text-amber-600"
 								: status === "error"
-									? "text-destructive"
+									? "text-error"
 									: "text-muted-foreground",
 						)}
 					>
