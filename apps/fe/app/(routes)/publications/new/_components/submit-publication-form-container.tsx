@@ -1,14 +1,16 @@
 "use client"
 
-import type { Protocol } from "@packages/schema"
-import { ChainIdToNetwork } from "@packages/utils"
-import type { FC } from "react"
 import { useProtocolByChain } from "@/_hooks/cqrs/queries/use-protocol-by-chain"
 import { useAuthFromWallet } from "@/_hooks/use-auth-from-wallet"
 import { FetchError } from "@/app/_components/fetch-error"
 import { TypographyP, TypographySmall } from "@/app/_components/typography"
 import { Button } from "@/components/ui/button"
+import type { Protocol } from "@packages/schema"
+import { ChainIdToNetwork, NetworkToChainId } from "@packages/utils"
+import type { FC } from "react"
 import { SubmitPublicationForm } from "./submit-publication-form"
+
+const DEFAULT_CHAIN_ID = NetworkToChainId.base_sepolia
 
 type Props = {
 	server: {
@@ -21,23 +23,15 @@ export const SubmitPublicationFormContainer: FC<Props> = (props) => {
 	const { server } = props
 	const { walletChainId } = useAuthFromWallet()
 
-	// Fallback chain logic
-	const activeChainId = walletChainId || server.chainId
+	const activeChainId = walletChainId || server.chainId || DEFAULT_CHAIN_ID
 
-	// Ensure validatedInitialData is only used if the chain is a match
 	const validatedInitialData =
-		activeChainId && activeChainId === server.initialData?.chainId
-			? server.initialData
-			: null
+		activeChainId === server.initialData?.chainId ? server.initialData : null
 
 	const { data, isFetching, isError, isPending, refetch } = useProtocolByChain({
 		initialData: validatedInitialData,
 		chainId: activeChainId,
 	})
-
-	if (!activeChainId) {
-		return <div className="p-4 text-center">Please connect your wallet.</div>
-	}
 
 	if (isError) return <FetchError refetch={refetch} />
 

@@ -1,5 +1,14 @@
 "use client"
 
+import { reownConfig } from "@/_config/wagmi/wagmi-config"
+import { useSubmitPublication } from "@/_hooks/cqrs/commands/use-submit-publication"
+import { useEffectiveSubmissionFee } from "@/_hooks/use-effective-submission-fee"
+import { useNetwork } from "@/_hooks/use-network"
+import { TypographySmall } from "@/app/_components/typography"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { FieldError } from "@/components/ui/field"
+import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
 	AuthorRoleSchema,
@@ -7,8 +16,9 @@ import {
 	type NetworkT,
 } from "@packages/schema"
 import { NetworkToChainId } from "@packages/utils"
+import { useAppKit, useAppKitAccount } from "@reown/appkit/react"
 import { switchChain } from "@wagmi/core"
-import { Loader2Icon, ShieldCheckIcon } from "lucide-react"
+import { Loader2Icon, ShieldCheckIcon, WalletIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { type FC, startTransition, useCallback } from "react"
 import {
@@ -20,15 +30,6 @@ import {
 } from "react-hook-form"
 import { toast } from "sonner"
 import { parseEther } from "viem"
-import { reownConfig } from "@/_config/wagmi/wagmi-config"
-import { useSubmitPublication } from "@/_hooks/cqrs/commands/use-submit-publication"
-import { useEffectiveSubmissionFee } from "@/_hooks/use-effective-submission-fee"
-import { useNetwork } from "@/_hooks/use-network"
-import { TypographySmall } from "@/app/_components/typography"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { FieldError } from "@/components/ui/field"
-import { cn } from "@/lib/utils"
 import { pinManifest } from "../_api/pin-manifest"
 import {
 	SubmitPublicationFormSchema,
@@ -84,9 +85,12 @@ type Props = {
 export const SubmitPublicationForm: FC<Props> = (props) => {
 	const { network: targetNetwork, publisherStake } = props
 
+	const { isConnected } = useAppKitAccount()
+	const { open } = useAppKit()
+
 	// connectedNetwork comes from the Wallet
 	const connectedNetwork = useNetwork()
-	const isWrongNetwork = connectedNetwork !== targetNetwork
+	const isWrongNetwork = !isConnected || connectedNetwork !== targetNetwork
 
 	const { effectiveSubmissionFeeWei } = useEffectiveSubmissionFee()
 	const { mutateAsync, isPending: isTransactionPending } =
@@ -254,6 +258,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 				{/* Right Column: Sticky Submission Sidebar */}
 				<aside className="@4xl:col-span-2 space-y-6 sticky top-8 h-fit">
 					<ChainContextCard
+						isConnected={isConnected}
 						targetNetwork={targetNetwork}
 						connectedNetwork={connectedNetwork}
 						onSwitchChain={() =>
@@ -283,34 +288,47 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 								</div>
 							</div>
 
-							<Button
-								type="submit"
-								disabled={isDisabled || isWrongNetwork}
-								className={cn(
-									"h-12 w-full cursor-pointer bg-primary font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90",
-									(isDisabled || isWrongNetwork) &&
-										"cursor-not-allowed opacity-60",
-								)}
-							>
-								{isIpfsUploading ? (
-									<>
-										<Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-										Uploading to IPFS...
-									</>
-								) : isTransactionPending ? (
-									<>
-										<Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-										Confirming...
-									</>
-								) : (
-									"Submit to Ledger"
-								)}
-							</Button>
+							{isConnected ? (
+								<>
+									<Button
+										type="submit"
+										disabled={isDisabled || isWrongNetwork}
+										className={cn(
+											"h-12 w-full cursor-pointer bg-primary font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90",
+											(isDisabled || isWrongNetwork) &&
+												"cursor-not-allowed opacity-60",
+										)}
+									>
+										{isIpfsUploading ? (
+											<>
+												<Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+												Uploading to IPFS...
+											</>
+										) : isTransactionPending ? (
+											<>
+												<Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+												Confirming...
+											</>
+										) : (
+											"Submit to Ledger"
+										)}
+									</Button>
 
-							<TypographySmall className="block px-4 text-center text-muted-foreground">
-								By submitting, you agree to the protocol's slashing conditions
-								for fraudulent data.
-							</TypographySmall>
+									<TypographySmall className="block px-4 text-center text-muted-foreground">
+										By submitting, you agree to the protocol&apos;s slashing
+										conditions for fraudulent data.
+									</TypographySmall>
+								</>
+							) : (
+								<Button
+									type="button"
+									onClick={() => open()}
+									className="h-12 w-full cursor-pointer border-0 bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] font-bold uppercase tracking-widest text-[#003543] shadow-[0_4px_20px_rgba(0,209,255,0.18)] transition-[filter,box-shadow] hover:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] hover:text-[#003543] hover:brightness-110 hover:shadow-[0_6px_24px_rgba(0,209,255,0.22)] active:bg-[linear-gradient(135deg,#a4e6ff_0%,#00d1ff_100%)] active:text-[#003543] [&>svg]:text-[#003543]"
+								>
+									<WalletIcon className="mr-2 h-4 w-4" />
+									Connect Wallet
+								</Button>
+							)}
 						</CardContent>
 					</Card>
 				</aside>

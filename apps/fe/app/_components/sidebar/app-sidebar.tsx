@@ -14,6 +14,7 @@ import {
 	SidebarRail,
 	useSidebar,
 } from "@/components/ui/sidebar"
+import { useAppKitAccount } from "@reown/appkit/react"
 import type { LucideIcon } from "lucide-react"
 import {
 	ExternalLinkIcon,
@@ -60,6 +61,7 @@ const navButtonClassName =
 export const AppSidebar: FC = () => {
 	const pathname = usePathname()
 	const { isMobile, setOpenMobile } = useSidebar()
+	const { isConnected } = useAppKitAccount()
 
 	const handleNavClick = useCallback(() => {
 		if (isMobile) setOpenMobile(false)
@@ -93,14 +95,16 @@ export const AppSidebar: FC = () => {
 								<ConnectButton />
 							</SidebarMenuItem>
 
-							<SidebarMenuItem>
-								<SidebarMenuButton asChild tooltip="Switch Network">
-									<SwitchChainButton
-										variant={"ghost"}
-										className="flex w-full cursor-pointer justify-start group-data-[collapsible=icon]:justify-center"
-									/>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
+							{isConnected && (
+								<SidebarMenuItem>
+									<SidebarMenuButton asChild tooltip="Switch Network">
+										<SwitchChainButton
+											variant={"ghost"}
+											className="flex w-full cursor-pointer justify-start group-data-[collapsible=icon]:justify-center"
+										/>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							)}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>

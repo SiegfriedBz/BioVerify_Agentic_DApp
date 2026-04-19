@@ -1,15 +1,24 @@
-import { getStatsByChain } from "@packages/cqrs"
-import { redirect } from "next/navigation"
 import { getAuthFromCookies } from "@/_services/wagmi/get-auth-from-cookies"
+import { getStatsByChain } from "@packages/cqrs"
+import { NetworkToChainId } from "@packages/utils"
 import { ChainStatsContainer } from "./chain-stats-container"
+import { ChainStatsSkeleton } from "./chain-stats-skeleton"
+
+const DEFAULT_CHAIN_ID = NetworkToChainId.base_sepolia
 
 export const ChainStatsWrapper = async () => {
 	const { chainId } = await getAuthFromCookies()
 
-	if (!chainId) {
-		redirect("/")
-	}
-	const stats = await getStatsByChain({ chainId })
+	const effectiveChainId = chainId ?? DEFAULT_CHAIN_ID
+	const stats = await getStatsByChain({ chainId: effectiveChainId })
 
-	return <ChainStatsContainer server={{ initialData: stats, chainId }} />
+	if (!stats) {
+		return <ChainStatsSkeleton />
+	}
+
+	return (
+		<ChainStatsContainer
+			server={{ initialData: stats, chainId: effectiveChainId }}
+		/>
+	)
 }
