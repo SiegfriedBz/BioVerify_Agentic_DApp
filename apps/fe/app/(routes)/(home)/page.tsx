@@ -1,5 +1,4 @@
 import { HeroImage } from "@/app/_components/hero-image"
-import { HeroVideo } from "@/app/_components/hero-video"
 import {
 	TypographyH1,
 	TypographyH2,
@@ -8,7 +7,6 @@ import {
 	TypographyP,
 	TypographySmall,
 } from "@/app/_components/typography"
-import { VideoSkeleton } from "@/app/_components/video-skeleton"
 import { Button } from "@/components/ui/button"
 import {
 	ArrowRight,
@@ -18,7 +16,7 @@ import {
 	UsersRoundIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { Fragment, Suspense } from "react"
+import { Fragment } from "react"
 import { Footer } from "./_components/footer"
 
 const STATUS_DOT = {
@@ -115,15 +113,8 @@ export default function Page() {
 					</div>
 				</div>
 
-				<div className="w-full min-w-0 max-md:flex max-md:flex-1 max-md:items-center md:mt-0 md:flex-1 md:min-w-0">
-					<div className="block w-full pt-4 md:hidden">
-						<HeroImage />
-					</div>
-					<div className="hidden w-full md:block">
-						<Suspense fallback={<VideoSkeleton />}>
-							<HeroVideo />
-						</Suspense>
-					</div>
+				<div className="w-full min-w-0 pt-8 md:flex-[1.3] md:pt-0">
+					<HeroImage />
 				</div>
 			</main>
 
