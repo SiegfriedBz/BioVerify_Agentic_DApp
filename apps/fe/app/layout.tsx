@@ -52,12 +52,29 @@ export const metadata: Metadata = {
 		description:
 			"A DeSci agentic DApp for decentralized, trustless scientific peer review powered by Chainlink VRF and AI agents.",
 		locale: "en_US",
+		images: [
+			{
+				url: "/opengraph-image.jpg",
+				width: 1200,
+				height: 634,
+				alt: "BioVerify — Decentralized Science Protocol",
+				type: "image/jpeg",
+			},
+		],
 	},
 	twitter: {
 		card: "summary_large_image",
 		title: "BioVerify — Trustless Peer Review at AI Speed",
 		description:
 			"Decentralized scientific peer review. Chainlink VRF selects reviewers, AI agents verify integrity, stakes settle on-chain.",
+		images: [
+			{
+				url: "/opengraph-image.jpg",
+				width: 1200,
+				height: 634,
+				alt: "BioVerify — Decentralized Science Protocol",
+			},
+		],
 	},
 }
 
