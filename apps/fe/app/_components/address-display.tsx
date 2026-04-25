@@ -1,9 +1,9 @@
 "use client"
 
-import { CheckIcon, CopyIcon } from "lucide-react"
-import { type FC, useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { CheckIcon, CopyIcon } from "lucide-react"
+import { type FC, useCallback, useState } from "react"
 import { TypographySmall } from "./typography"
 
 const DELAY = 2_000
@@ -15,6 +15,8 @@ type Props = {
 
 export const AddressDisplay: FC<Props> = ({ address, className }) => {
 	const [copied, setCopied] = useState(false)
+
+	if (!address) return null
 
 	const displayAddress = `${address.slice(0, 6)}...${address.slice(-4)}`
 

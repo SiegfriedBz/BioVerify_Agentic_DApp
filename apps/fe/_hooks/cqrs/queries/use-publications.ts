@@ -14,11 +14,13 @@ type Props = {
 }
 
 export const usePublications = (props: Props) => {
-	const { initialData = { items: [], totalCount: 0 }, searchQueryParams } =
-		props
+	const {
+		initialData = { items: [], totalCount: 0 },
+		searchQueryParams = { limit: 10, offset: 0 },
+	} = props
 
 	const { data, isFetching, isError, refetch } = useQuery({
-		queryKey: publicationsKeys.all,
+		queryKey: publicationsKeys.byQueryParams(searchQueryParams),
 		queryFn: () => getPublications(searchQueryParams),
 		initialData,
 	})

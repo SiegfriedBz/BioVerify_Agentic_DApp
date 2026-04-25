@@ -1,4 +1,4 @@
-# BioVerify Frontend
+# 🧬 BioVerify Frontend
 
 Next.js 16 App Router DApp for decentralized scientific peer review. Scientists submit publications on-chain, AI agents validate originality, Chainlink VRF selects peer reviewers, and human verdicts settle stakes -- all orchestrated through this interface.
 
@@ -34,6 +34,7 @@ graph TD
     Chain -- "emits events" --> Alchemy
     Alchemy -- "POST webhook" --> FE
     FE -- "processContractEvent" --> CQRS
+    Chain -- "WSS (NewPublicationStatus)" --> FE
     CQRS -- "upserts / queries" --> NeonDB
     CQRS -- "viem contract calls" --> Chain
     FE -- "serves Inngest functions" --> Inngest
@@ -61,7 +62,7 @@ Two provider trees serve different route groups:
 - **`RootProviders`** (home): ThemeProvider -> CustomWagmiProvider (Reown AppKit + TanStack QueryClientProvider + NuqsAdapter) -> TooltipProvider
 - **`SideProvider`** (publications): Same stack plus `AppSideBarProvider` wrapping a collapsible sidebar layout
 
-`CustomWagmiProvider` initializes Reown AppKit with `baseSepolia` and `sepolia` networks, configures Alchemy RPC transports with WebSocket-first fallback, and hydrates wallet state from cookies for SSR.
+`CustomWagmiProvider` initializes Reown AppKit with `baseSepolia` and `sepolia` networks, configures Alchemy HTTP transports for wallet-connected operations, and hydrates wallet state from cookies for SSR.
 
 ### Data Flow
 
@@ -85,6 +86,8 @@ sequenceDiagram
 ```
 
 **Smart polling**: Query hooks like `usePublicationDetail` use a dynamic `refetchInterval` that polls every 5 seconds while a publication is in a pending state, and automatically stops polling once it reaches a terminal status (`PUBLISHED`, `SLASHED`, or `EARLY_SLASHED`). The `PublicationDetailsProvider` context wraps this pattern, exposing live publication data and a syncing indicator to all child components.
+
+**WebSocket cache invalidation**: The `/publications` table uses `useWatchNewPublicationStatusEvent` to subscribe to `NewPublicationStatus` on-chain events on both chains via standalone viem WebSocket clients (`eth_subscribe` over Alchemy WSS), independent of wagmi's wallet connection state. This means all visitors see real-time updates — even without a connected wallet. When events arrive, a debounced invalidation (3-second delay for CQRS eventual consistency) triggers a TanStack Query refetch, keeping the table in sync without polling or manual refresh.
 
 ### CQRS Bridge
 
@@ -127,7 +130,7 @@ The server action verifies the EIP-712 signature, then resumes the LangGraph rev
 | Route | Description |
 |-------|-------------|
 | `/` | Landing page with protocol mechanism walkthrough and CTAs |
-| `/publications` | Server-side paginated and filtered publications table. nuqs syncs filters (chain, status, page) to URL search params; server component passes them to the CQRS query. TanStack Table in manual mode. |
+| `/publications` | Server-side paginated and filtered publications table. nuqs syncs filters (chain, status, page) to URL search params; server component passes them to the CQRS query. TanStack Table in manual mode. Real-time updates via WebSocket subscription to `NewPublicationStatus` on-chain events. |
 | `/publications/new` | Submit publication form (react-hook-form + zod, IPFS manifest pinning via Pinata, on-chain `submitPublication`) |
 | `/publications/[chainId]/[pubId]` | Publication detail with live smart-polling, verdict timeline, economics sidebar, participants list |
 | `/publications/[chainId]/[pubId]/review` | Reviewer form with EIP-712 signing and agent handoff |
@@ -143,6 +146,7 @@ The server action verifies the EIP-712 signature, then resumes the LangGraph rev
 ## Key Patterns
 
 - **Smart polling** -- `refetchInterval` dynamically stops when a publication reaches a terminal status, eliminating unnecessary network requests
+- **WebSocket real-time invalidation** -- `useWatchNewPublicationStatusEvent` subscribes to `NewPublicationStatus` on-chain events via standalone viem WebSocket clients (Alchemy WSS) on both chains, independent of wallet state; rapid-fire events are debounced into a single TanStack Query cache invalidation (3-second delay for CQRS eventual consistency)
 - **Optimistic updates + delayed invalidation** -- immediate UI feedback on transactions, with a 3-second delayed cache invalidation to account for Alchemy webhook -> CQRS projection latency
 - **Server-first data loading** -- RSC fetches from Neon via `@packages/cqrs`, hydrates client hooks via `initialData` for zero-loading-state initial renders
 - **`"use server"` CQRS bridge** -- all Drizzle DB queries stay server-only, exposed to client hooks through Next.js Server Actions
