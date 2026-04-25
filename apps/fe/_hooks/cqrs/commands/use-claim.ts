@@ -1,11 +1,11 @@
 "use client"
 
+import { reownConfig } from "@/_config/wagmi/wagmi-config"
 import type { Member } from "@packages/schema"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { waitForTransactionReceipt, writeContract } from "@wagmi/core"
 import { toast } from "sonner"
 import { formatEther, parseEther } from "viem"
-import { reownConfig } from "@/_config/wagmi/wagmi-config"
 import { useContractConfig } from "../../use-contract-config"
 import { membersKeys } from "../query-keys/members-keys"
 import { statsKeys } from "../query-keys/stats-keys"

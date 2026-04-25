@@ -1,7 +1,17 @@
 
 ![CI-Foundry](https://github.com/SiegfriedBz/BioVerify_Agentic_DApp/actions/workflows/foundry-tests.yml/badge.svg)
 
-# BioVerify
+# 🧬 BioVerify
+
+## 🧪 Quick Start
+
+1. **Try the Demo:** [🌐 Live Demo](https://bio-verify-ai-dapp.vercel.app/)
+2. **Get Testnet Sepolia ETH:** [Sepolia Faucet](https://sepolia-faucet.pk910.de/)
+3. **Swap for Base Sepolia ETH:** [Superbridge](https://superbridge.app/base-sepolia) (only if you want to use Base)
+4. **Connect your wallet** to the DApp (Base Sepolia or Ethereum Sepolia)
+5. **Submit a publication** and/or **register as a reviewer** and let the agents do the rest!
+
+---
 
 **Durable AI Agent Protocol for Scientific Integrity**
 
@@ -46,6 +56,7 @@ graph TD
     BC -- "emits events" --> Alchemy
     Alchemy -- "POST webhook" --> FE
     FE -- "processContractEvent" --> CQRS
+    BC -- "WSS (NewPublicationStatus)" --> FE
     CQRS -- "upserts / queries" --> DB
     CQRS -- "viem contract calls" --> BC
     FE -- "serves Inngest functions" --> Inngest
@@ -60,7 +71,7 @@ graph TD
 
 ### Event-Driven Data Flow
 
-The contract uses a getter-less design: all state mutations emit events. These are projected off-chain into a Postgres read model, which powers all frontend queries. No on-chain reads required.
+The contract uses a getter-less design: all state mutations emit events. These are projected off-chain into a Postgres read model, which powers all frontend queries. No on-chain reads required. In parallel, the frontend subscribes to `NewPublicationStatus` events via standalone viem WebSocket clients (Alchemy WSS), independent of wallet connection state, debouncing cache invalidations so the publications table stays in sync without polling.
 
 ```mermaid
 graph LR
@@ -141,7 +152,7 @@ pnpm workspaces with two apps and seven packages.
 ```
 apps/
   contracts/          BioVerifyV3 Solidity contract (Foundry) — staking, VRF, settlement
-  fe/                 Next.js 16 frontend — DApp UI, webhook API, Inngest serving
+  fe/                 Next.js 16 frontend — DApp UI, webhook API, Inngest serving, WSS event subscriptions
 
 packages/
   agents/             LangGraph AI agents (submission + review)
