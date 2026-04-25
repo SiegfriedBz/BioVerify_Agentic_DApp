@@ -77,7 +77,7 @@ contract PoolManagementTest is TestHelpers {
         // Setup submit publication
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
-        bioVerifyWithRejectorTreasury.submitPublication{value: validPaidPublisherAmount}(FAKE_CID, publisherMinFee);
+        bioVerifyWithRejectorTreasury.submitPublication{value: validPaidPublisherAmount}(FAKE_CID);
 
         // Early slash publication to get publisherStake into slashPool
         vm.prank(aiAgentAddress);

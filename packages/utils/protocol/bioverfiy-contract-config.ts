@@ -426,11 +426,6 @@ export const bioVerifyAbi = [
 				type: "string",
 				internalType: "string",
 			},
-			{
-				name: "_paidSubmissionFee",
-				type: "uint256",
-				internalType: "uint256",
-			},
 		],
 		outputs: [],
 		stateMutability: "payable",
@@ -987,7 +982,7 @@ export const bioVerifyAbi = [
 	},
 	{
 		type: "error",
-		name: "BioVerify_InsufficientPublisherFee",
+		name: "BioVerify_InsufficientPayment",
 		inputs: [],
 	},
 	{
@@ -1068,11 +1063,6 @@ export const bioVerifyAbi = [
 	},
 	{
 		type: "error",
-		name: "BioVerify_MustPayPublisherStake",
-		inputs: [],
-	},
-	{
-		type: "error",
 		name: "BioVerify_MustPayReviewerStake",
 		inputs: [],
 	},
@@ -1136,12 +1126,12 @@ export const bioVerifyAbi = [
 ]
 
 const bioVerifyConfigBaseSepolia: ContractConfig = {
-	address: "0x76654c2cdadcf869e78928f0785797b6be20f11b",
+	address: "0xf569d7b5016de6ef0f16fcae82d85d61249df31d",
 	abi: bioVerifyAbi as Abi,
 }
 
 const bioVerifyConfigEthSepolia: ContractConfig = {
-	address: "0x7d52170db31be4ab3d0166fbba937a031dc6e1ff",
+	address: "0xfce6990d551a60f8640a498b6bc34a15822ba3e3",
 	abi: bioVerifyAbi as Abi,
 }
 

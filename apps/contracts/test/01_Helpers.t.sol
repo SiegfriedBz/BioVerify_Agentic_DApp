@@ -189,7 +189,7 @@ contract TestHelpers is BaseTest {
     function _submitDefaultPub() internal {
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
-        bioVerify.submitPublication{value: validPaidPublisherAmount}(FAKE_CID, publisherMinFee);
+        bioVerify.submitPublication{value: validPaidPublisherAmount}(FAKE_CID);
     }
 
     // Helpers to fill the reviewer pool before testing pickReviewers

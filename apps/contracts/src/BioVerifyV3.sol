@@ -71,8 +71,7 @@ error BioVerify_NotAMember();
 error BioVerify_InvalidPublicationId(uint256 pubId);
 error BioVerify_ClaimTooMuch();
 error BioVerify_ClaimFailTransferTo(address member, uint256 amount);
-error BioVerify_InsufficientPublisherFee();
-error BioVerify_MustPayPublisherStake();
+error BioVerify_InsufficientPayment();
 error BioVerify_MustPayReviewerStake();
 error BioVerify_AlreadyInReview(uint256 pubId);
 error BioVerify_CanNotSettle(uint256 pubId, PublicationStatus from, PublicationStatus to);
@@ -245,15 +244,18 @@ contract BioVerifyV3 is VRFConsumerBaseV2Plus, ReentrancyGuard {
     }
 
     /**
-     * @notice Submits a new research publication and locks the publisher's stake.
+     * @notice Submits a new research publication and locks the publisher's fixed protocol stake.
+     * @dev The stake is always `I_PUBLISHER_STAKE`. The submission fee is derived from `msg.value`
+     * as `msg.value - I_PUBLISHER_STAKE`, allowing callers to overpay the fee (e.g. to cover VRF
+     * cost spikes) while enforcing a minimum fee via `I_PUBLISHER_MIN_FEE`.
      * @param _cid The IPFS content identifier of the publication.
-     * @param _paidSubmissionFee The fee paid to cover VRF and AI processing costs.
      */
-    function submitPublication(string calldata _cid, uint256 _paidSubmissionFee) external payable {
+    function submitPublication(string calldata _cid) external payable {
         // Check
-        uint256 stake = msg.value - _paidSubmissionFee;
-        if (_paidSubmissionFee < I_PUBLISHER_MIN_FEE) revert BioVerify_InsufficientPublisherFee();
-        if (msg.value != I_PUBLISHER_STAKE + _paidSubmissionFee) revert BioVerify_MustPayPublisherStake();
+        if (msg.value < I_PUBLISHER_STAKE + I_PUBLISHER_MIN_FEE) revert BioVerify_InsufficientPayment();
+
+        uint256 stake = I_PUBLISHER_STAKE;
+        uint256 paidFee = msg.value - stake;
 
         // Effect
         uint256 pubId = nextPubId;
@@ -262,7 +264,7 @@ contract BioVerifyV3 is VRFConsumerBaseV2Plus, ReentrancyGuard {
         pub.id = pubId;
         pub.publisher = msg.sender;
         pub.cid = _cid;
-        pub.paidSubmissionFee = _paidSubmissionFee;
+        pub.paidSubmissionFee = paidFee;
         pub.status = PublicationStatus.SUBMITTED;
         emit NewPublicationStatus(pubId, PublicationStatus.SUBMITTED);
 
@@ -278,7 +280,7 @@ contract BioVerifyV3 is VRFConsumerBaseV2Plus, ReentrancyGuard {
         // Lock publisher stake on pubId.
         _lockStake(msg.sender, pubId, stake);
 
-        emit SubmitPublication(msg.sender, pubId, _cid, _paidSubmissionFee);
+        emit SubmitPublication(msg.sender, pubId, _cid, paidFee);
 
         nextPubId++;
     }
