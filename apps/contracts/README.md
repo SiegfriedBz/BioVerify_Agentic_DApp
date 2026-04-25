@@ -63,7 +63,7 @@ Constructor parameters: `reputationBoost`, `aiAgent`, `treasury`, `pubMinFee`, `
 
 | Function | Description |
 |----------|-------------|
-| `submitPublication(cid, paidSubmissionFee)` | Submit a publication with IPFS CID. Requires `msg.value == I_PUBLISHER_STAKE + paidSubmissionFee`. Emits `SubmitPublication`. |
+| `submitPublication(cid)` | Submit a publication with IPFS CID. Requires `msg.value >= I_PUBLISHER_STAKE + I_PUBLISHER_MIN_FEE`. The stake is fixed; the submission fee is derived as `msg.value - I_PUBLISHER_STAKE` and stored as `paidSubmissionFee` (funds VRF). Emits `SubmitPublication`. |
 | `payReviewerStake()` | Stake exactly `I_REVIEWER_STAKE` to join the reviewer pool. Registers the member if new. |
 | `claim(amount)` | Withdraw `amount` from `availableStake`. Non-reentrant. |
 | `receive()` | Accept ETH donations into `rewardPool`. |
