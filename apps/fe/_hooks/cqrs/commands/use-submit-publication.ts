@@ -1,16 +1,15 @@
 "use client"
 
+import { reownConfig } from "@/_config/wagmi/wagmi-config"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { waitForTransactionReceipt, writeContract } from "@wagmi/core"
 import { toast } from "sonner"
-import { reownConfig } from "@/_config/wagmi/wagmi-config"
 import { useContractConfig } from "../../use-contract-config"
 import { publicationsKeys } from "../query-keys/publications-keys"
 
 type PublicationArgs = {
 	cid: string
 	totalWeiValue: bigint
-	submissionFeeWeiValue: bigint
 }
 
 export const useSubmitPublication = () => {
@@ -19,13 +18,13 @@ export const useSubmitPublication = () => {
 
 	return useMutation({
 		mutationFn: async (args: PublicationArgs) => {
-			const { cid, totalWeiValue, submissionFeeWeiValue } = args
+			const { cid, totalWeiValue } = args
 
 			// Trigger Wallet
 			const hash = await writeContract(reownConfig, {
 				...contractConfig,
 				functionName: "submitPublication",
-				args: [cid, submissionFeeWeiValue],
+				args: [cid],
 				value: totalWeiValue,
 			})
 

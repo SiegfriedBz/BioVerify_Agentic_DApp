@@ -10,13 +10,13 @@ import { baseSepolia, sepolia } from "viem/chains"
  */
 
 export const createBaseSepoliaWsClient = () =>
-  createPublicClient({
-    chain: baseSepolia,
-    transport: webSocket(env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_WSS),
-  })
+	createPublicClient({
+		chain: baseSepolia,
+		transport: webSocket(env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_WSS),
+	})
 
 export const createEthSepoliaWsClient = () =>
-  createPublicClient({
-    chain: sepolia,
-    transport: webSocket(env.NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_WSS),
-  })
+	createPublicClient({
+		chain: sepolia,
+		transport: webSocket(env.NEXT_PUBLIC_ALCHEMY_ETH_SEPOLIA_WSS),
+	})
