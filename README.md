@@ -71,7 +71,7 @@ graph TD
 
 ### Event-Driven Data Flow
 
-The contract uses a getter-less design: all state mutations emit events. These are projected off-chain into a Postgres read model, which powers all frontend queries. No on-chain reads required. In parallel, the frontend subscribes to `NewPublicationStatus` events directly via Alchemy WebSocket transports, debouncing cache invalidations so the publications table stays in sync without polling.
+The contract uses a getter-less design: all state mutations emit events. These are projected off-chain into a Postgres read model, which powers all frontend queries. No on-chain reads required. In parallel, the frontend subscribes to `NewPublicationStatus` events via standalone viem WebSocket clients (Alchemy WSS), independent of wallet connection state, debouncing cache invalidations so the publications table stays in sync without polling.
 
 ```mermaid
 graph LR
