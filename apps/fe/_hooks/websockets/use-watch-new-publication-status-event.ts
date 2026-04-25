@@ -41,8 +41,7 @@ const INVALIDATION_DELAY_MS = 3_000
 
 const baseSepoliaConfig =
 	BioVerifyContractConfig[NetworkSchema.enum.base_sepolia]
-const ethSepoliaConfig =
-	BioVerifyContractConfig[NetworkSchema.enum.eth_sepolia]
+const ethSepoliaConfig = BioVerifyContractConfig[NetworkSchema.enum.eth_sepolia]
 
 export const useWatchNewPublicationStatusEvent = () => {
 	const queryClient = useQueryClient()
@@ -80,9 +79,7 @@ export const useWatchNewPublicationStatusEvent = () => {
 				})
 
 				if (process.env.NODE_ENV === "development") {
-					console.log(
-						`[WS] Cache invalidated for pubIds: ${pubIds.join(", ")}`,
-					)
+					console.log(`[WS] Cache invalidated for pubIds: ${pubIds.join(", ")}`)
 				}
 			}, INVALIDATION_DELAY_MS)
 		},

@@ -201,8 +201,8 @@ contract FulfillVRFTest is TestHelpers {
         // 2. Submit 2 publications
         vm.deal(publisher, 2 ether);
         vm.startPrank(publisher);
-        poorContract.submitPublication{value: validPaidPublisherAmount}(FAKE_CID, publisherMinFee);
-        poorContract.submitPublication{value: validPaidPublisherAmount}(FAKE_CID, publisherMinFee);
+        poorContract.submitPublication{value: validPaidPublisherAmount}(FAKE_CID);
+        poorContract.submitPublication{value: validPaidPublisherAmount}(FAKE_CID);
         vm.stopPrank();
 
         // 3. Fill reviewers pool

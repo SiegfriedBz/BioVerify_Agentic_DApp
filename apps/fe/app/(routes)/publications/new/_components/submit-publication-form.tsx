@@ -45,7 +45,6 @@ import { FeeCalculator } from "./fee-calculator"
 import { FileInput } from "./file-input"
 import { LicenseInput } from "./license-input"
 import { ManuscriptInput } from "./manuscript-input"
-import { StakeAmountInput } from "./stake-amount-input"
 import { TitleInput } from "./title-input"
 
 const defaultAuthorWallet = (): NonNullable<
@@ -67,7 +66,6 @@ const DEFAULT_VALUES: DefaultValues<SubmitPublicationFormValues> = {
 		},
 	],
 	files: [],
-	stakeAmount: "",
 }
 
 const emptyContributorAuthor =
@@ -103,8 +101,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 		defaultValues: DEFAULT_VALUES,
 		mode: "onChange", // for real-time FeeCalculator updates
 	})
-
-	const stakeAmount = form.watch("stakeAmount")
+	const publisherStakeWei = parseEther(publisherStake)
 
 	const isIpfsUploading = form.formState.isSubmitting
 	const isDisabled = isTransactionPending || isIpfsUploading
@@ -142,13 +139,11 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 				}
 
 				// 2. Blockchain Transaction
-				const totalWeiValueSent =
-					parseEther(payload.stakeAmount) + effectiveSubmissionFeeWei
+				const totalWeiValueSent = publisherStakeWei + effectiveSubmissionFeeWei
 
 				await mutateAsync({
 					cid: rootCid,
 					totalWeiValue: totalWeiValueSent,
-					submissionFeeWeiValue: effectiveSubmissionFeeWei,
 				})
 
 				// 3. Success -> Redirect
@@ -162,7 +157,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 				console.error("Form submission error:", e)
 			}
 		},
-		[mutateAsync, effectiveSubmissionFeeWei, router],
+		[mutateAsync, effectiveSubmissionFeeWei, publisherStakeWei, router],
 	)
 
 	return (
@@ -249,7 +244,10 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 								<TypographySmall className="font-bold uppercase tracking-widest text-primary">
 									5. Protocol Economics
 								</TypographySmall>
-								<StakeAmountInput minStakeWei={parseEther(publisherStake)} />
+								<TypographySmall className="text-[10px] leading-snug text-muted-foreground">
+									The publisher stake is fixed by the protocol. Your wallet will
+									prompt the exact amount (stake + fee).
+								</TypographySmall>
 							</section>
 						</CardContent>
 					</Card>
@@ -268,8 +266,7 @@ export const SubmitPublicationForm: FC<Props> = (props) => {
 						}
 					/>
 					<FeeCalculator
-						userStakeInput={stakeAmount}
-						minStakeWei={parseEther(publisherStake)}
+						stakeWei={publisherStakeWei}
 						effectiveFeeWei={effectiveSubmissionFeeWei || 0n}
 					/>
 
