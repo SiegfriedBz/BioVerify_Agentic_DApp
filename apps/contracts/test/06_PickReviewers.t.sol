@@ -72,7 +72,7 @@ contract PickReviewersTest is TestHelpers {
         // Submit publication
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
-        poorContract.submitPublication{value: validPaidPublisherAmount}(FAKE_CID, publisherMinFee);
+        poorContract.submitPublication{value: validPaidPublisherAmount}(FAKE_CID);
 
         // Fill reviewers pool
         for (uint256 i = 0; i < validMinReviewersPoolSize; ++i) {

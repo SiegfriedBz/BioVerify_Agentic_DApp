@@ -5,8 +5,7 @@ import {TestHelpers} from "./01_Helpers.t.sol";
 import {
 
     //  errors
-    BioVerify_MustPayPublisherStake,
-    BioVerify_InsufficientPublisherFee,
+    BioVerify_InsufficientPayment,
 
     // enum
     PublicationStatus
@@ -27,55 +26,29 @@ contract SubmitPublicationTest is TestHelpers {
 
         // 3. Execute
         vm.prank(publisher);
-        bioVerify.submitPublication{value: validValue}(FAKE_CID, publisherMinFee);
+        bioVerify.submitPublication{value: validValue}(FAKE_CID);
     }
 
     // ===== unhappy path
-    function test_RevertIf_StakeTooLow() public {
-        uint256 stakeTooLow = publisherStake - 1;
-        uint256 wrongTotal = publisherMinFee + stakeTooLow;
+    function test_RevertIf_InsufficientPayment() public {
+        // Anything below stake + min fee should revert.
+        uint256 insufficientTotal = publisherStake + publisherMinFee - 1;
 
         vm.deal(publisher, 1 ether);
         vm.prank(publisher);
 
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayPublisherStake.selector));
-        bioVerify.submitPublication{value: wrongTotal}(FAKE_CID, publisherMinFee);
-    }
-
-    function test_RevertIf_StakeTooHigh() public {
-        uint256 stakeTooHigh = publisherStake + 1;
-        uint256 wrongTotal = publisherMinFee + stakeTooHigh;
-
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_MustPayPublisherStake.selector));
-        bioVerify.submitPublication{value: wrongTotal}(FAKE_CID, publisherMinFee);
-    }
-
-    function test_RevertIf_InsufficientFee() public {
-        uint256 invalidFee = publisherMinFee - 1;
-        uint256 validTotal = publisherStake + publisherMinFee;
-
-        vm.deal(publisher, 1 ether);
-        vm.prank(publisher);
-
-        vm.expectRevert(abi.encodeWithSelector(BioVerify_InsufficientPublisherFee.selector));
-        bioVerify.submitPublication{value: validTotal}(FAKE_CID, invalidFee);
+        vm.expectRevert(abi.encodeWithSelector(BioVerify_InsufficientPayment.selector));
+        bioVerify.submitPublication{value: insufficientTotal}(FAKE_CID);
     }
 }
 
 contract FuzzSubmit is TestHelpers {
-    function testFuzz_SubmitPublication(uint256 fee, uint256 stake) public {
-        // Bound the inputs to realistic values to avoid overflow in test math
-        fee = bound(fee, publisherMinFee, 100 ether);
-        stake = bound(stake, publisherStake, publisherStake);
-
-        uint256 total = fee + stake;
+    function testFuzz_SubmitPublication(uint256 total) public {
+        total = bound(total, publisherStake + publisherMinFee, 100 ether);
         vm.deal(publisher, total);
 
         vm.prank(publisher);
-        bioVerify.submitPublication{value: total}(FAKE_CID, fee);
+        bioVerify.submitPublication{value: total}(FAKE_CID);
 
         // Invariant: Contract balance must have increased by exactly 'total'
         assertEq(address(bioVerify).balance, DEPLOY_VALUE + total);
