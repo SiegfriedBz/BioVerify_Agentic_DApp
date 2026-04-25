@@ -244,8 +244,8 @@ pnpm lint:format               # Biome format
 
 | Network | Contract Address |
 |:--------|:-----------------|
-| **[Base Sepolia](https://sepolia.basescan.org/address/0x76654c2cdadcf869e78928f0785797b6be20f11b)** | `0x76654c2cdadcf869e78928f0785797b6be20f11b` |
-| **[Ethereum Sepolia](https://sepolia.etherscan.io/address/0x7d52170db31be4ab3d0166fbba937a031dc6e1ff)** | `0x7d52170db31be4ab3d0166fbba937a031dc6e1ff` |
+| **[Base Sepolia](https://sepolia.basescan.org/address/0xf569d7b5016de6ef0f16fcae82d85d61249df31d)** | `0xf569D7b5016DE6eF0F16FCAe82d85d61249Df31d` |
+| **[Ethereum Sepolia](https://sepolia.etherscan.io/address/0xfce6990d551a60f8640a498b6bc34a15822ba3e3)** | `0xfce6990D551a60F8640a498B6bC34A15822BA3e3` |
 
 ## Design Decisions & Roadmap
 
