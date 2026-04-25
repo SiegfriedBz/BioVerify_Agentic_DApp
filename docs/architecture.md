@@ -36,7 +36,8 @@ sequenceDiagram
     IPFS-->>S: rootCid (manifest)
 
     Note over S,BC: Phase 2 -- On-Chain Submission
-    S->>BC: submitPublication(cid, paidSubmissionFee) + stake
+    S->>BC: submitPublication(cid) with msg.value (stake + fee)
+    Note right of BC: stake=fixed I_PUBLISHER_STAKE; paidFee=msg.value-stake
     BC->>BC: emit SubmitPublication
 
     Note over BC,DB: Phase 3 -- Event Projection
