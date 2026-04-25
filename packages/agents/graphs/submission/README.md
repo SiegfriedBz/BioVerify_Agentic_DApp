@@ -4,7 +4,7 @@ LangGraph agent that autonomously pre-validates scientific submissions for origi
 
 ## Trigger Chain
 
-A user calls `submitPublication(cid, fee)` on the `BioVerifyV3` smart contract, which emits a `SubmitPublication` event. That event flows through the infrastructure pipeline into this agent:
+A user calls `submitPublication(cid)` on the `BioVerifyV3` smart contract (sending `msg.value = stake + fee`), which emits a `SubmitPublication` event. The stake is protocol-fixed; the fee is derived on-chain as `msg.value - stake`. That event flows through the infrastructure pipeline into this agent:
 
 ```mermaid
 sequenceDiagram
@@ -17,7 +17,7 @@ sequenceDiagram
     participant Inngest
     participant Agent as Submission Agent
 
-    User->>BioVerifyV3: submitPublication(cid, fee) + stake
+    User->>BioVerifyV3: submitPublication(cid) with msg.value (stake + fee)
     BioVerifyV3-->>AlchemyNotify: emits SubmitPublication event
     AlchemyNotify->>NextAPI: POST /api/webhooks/alchemy/all-events
     NextAPI->>CQRS: decode log + processContractEvent()
