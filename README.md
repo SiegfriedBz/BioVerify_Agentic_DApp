@@ -5,7 +5,7 @@
 
 ## 🧪 Quick Start
 
-1. **Try the Demo:** [🌐 Live Demo](https://bio-verify-agentic-dapp.vercel.app)
+1. **Try the Demo:** [🌐 Live Demo](https://bio-verify-ai-dapp.vercel.app)
 2. **Get Testnet Sepolia ETH:** [Sepolia Faucet](https://sepolia-faucet.pk910.de/)
 3. **Swap for Base Sepolia ETH:** [Superbridge](https://superbridge.app/base-sepolia) (only if you want to use Base)
 4. **Connect your wallet** to the DApp (Base Sepolia or Ethereum Sepolia)
