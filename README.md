@@ -17,6 +17,86 @@
 
 A decentralized science (DeSci) protocol that replaces opaque, slow, and biased traditional peer review with stateful AI agents and on-chain game theory. Scientists stake collateral to submit research, autonomous agents screen for plagiarism, Chainlink VRF selects unbiased reviewers, and cryptographic consensus settles stakes — creating an immutable, economically enforced pipeline for scientific truth.
 
+## Features in Action
+
+The clips below follow the publication lifecycle from submission through human-in-the-loop review, then a separate plagiarism scenario, reviewer staking, and finally how on-chain events trigger durable agent runs in Inngest.
+
+### Submitting a publication (success path)
+
+*Split view: BioVerify Telegram bot (left) and DApp (right).*
+
+The author completes the publication form (metadata and IPFS manifest) and prepares to submit.
+
+![Submit publication — form ready](assets/BioVerify_SubmitPublicationSuccess_WithTGView__01.gif)
+
+The author confirms the on-chain transaction. The bot receives status notifications as the publication moves from **SUBMITTED** to **IN REVIEW**; the author lands back on the publications list.
+
+![Submit publication — submitted and in review](assets/BioVerify_SubmitPublicationSuccess_WithTGView__02.gif)
+
+Opening the publication detail page shows **IN REVIEW** and the Chainlink VRF–selected reviewers.
+
+![Submit publication — detail with reviewers](assets/BioVerify_SubmitPublicationSuccess_WithTGView__03.gif)
+
+### Peer review — human-in-the-loop conflict resolution
+
+*Same publication as above, now in the review phase.*
+
+The first peer reviewer submits a **pass** verdict and validates the submission.
+
+![Peer review — first reviewer pass](assets/BioVerify_SubmitReview_Reviewer_01_Pass__01.gif)
+
+The second peer reviewer submits a **fail** verdict. The two peer reviews now **conflict**.
+
+![Peer review — second reviewer fail](assets/BioVerify_SubmitReview_Reviewer_02_Fail__02.gif)
+
+*Split view: Telegram bot (left) and senior reviewer (right).* The bot shows both peer reviews and the agent’s decision to **escalate** to the senior reviewer. The senior reviewer opens the Reviewer Portal and prepares a tie-breaking **pass**.
+
+![Peer review — senior reviewer and Telegram escalation](assets/BioVerify_SubmitReview_SeniorReviewer_Pass__03.gif)
+
+After the senior review is submitted, Telegram reflects **PUBLISHED**; the detail page shows the final verdict from IPFS and **PUBLISHED** status.
+
+![Peer review — published and verdict on chain](assets/BioVerify_SubmitReview_SeniorReviewer_Pass__04.gif)
+
+### AI plagiarism detection and early slashing
+
+*Separate scenario: a submission that duplicates work already present in the scientific literature.*
+
+*Dual device view: User A (mobile, no wallet) on `/publications` (left); User B (tablet, wallet on Base Sepolia) (right).*
+
+User B submits the publication on-chain.
+
+![Early slash — submit on Base Sepolia](assets/BioVerify_EarlySlashed_2Users_WS__01.gif)
+
+User A sees the row appear in real time over **WebSocket** (no wallet required). User B opens the detail page, follows the live **Validation Trail**, and ends on **EARLY SLASHED** with the AI verdict loaded from IPFS.
+
+![Early slash — realtime list and validation trail](assets/BioVerify_EarlySlashed_2Users_WS__02.gif)
+
+### Reviewer portal — stake, top-up, claim
+
+A visitor who is not yet in the reviewer pool opens the Reviewer Portal, joins for the **currently connected network** (Base Sepolia or Ethereum Sepolia), pays the **reviewer stake**, and after the transaction the UI refreshes to show **available stake** (claimable or eligible for future VRF selection if above the minimum).
+
+![Reviewer portal — pay reviewer stake](assets/BioVerify_PayReviewerStake.gif)
+
+A reviewer already assigned to one cycle (locked stake equals reviewer stake) **tops up** so they can be picked again; the new available balance is shown.
+
+![Reviewer portal — top up stake](assets/BioVerify_TopUpStake.gif)
+
+With **available stake > 0**, the reviewer **claims** up to that amount (pull withdrawal).
+
+![Reviewer portal — claim available stake](assets/BioVerify_Claim.gif)
+
+### Under the hood — agent orchestration (Inngest)
+
+Production Inngest runs driven by Alchemy Notify webhooks → Next.js API [`apps/fe/app/api/webhooks/alchemy/all-events/route.ts`](apps/fe/app/api/webhooks/alchemy/all-events/route.ts) → CQRS [`processContractEvent`](packages/cqrs/src/commands/sync/events.ts).
+
+Completed **`submission-agent`** run after a `CHAIN_SUBMISSION_RECEIVED` event (from `SubmitPublication` in [`events.ts` lines 158–185](packages/cqrs/src/commands/sync/events.ts)):
+
+![Inngest — submission agent after chain submission](assets/Inngest_ChainSubmissionReceived.png)
+
+Completed **`review-agent`** run after a `CHAIN_PICKED_REVIEWERS_RECEIVED` event (from `Agent_PickReviewers` in [`events.ts` lines 205–229](packages/cqrs/src/commands/sync/events.ts)):
+
+![Inngest — review agent after reviewers picked](assets/Inngest_ChainPickedReviewersReceived.png)
+
 ## The Problem
 
 The reproducibility crisis is real: a [2016 Nature survey](https://www.nature.com/articles/533452a) found that over 70% of researchers failed to reproduce another scientist's results. The root cause is a peer-review system with no accountability, no public audit trail, and no economic consequences for negligence.
