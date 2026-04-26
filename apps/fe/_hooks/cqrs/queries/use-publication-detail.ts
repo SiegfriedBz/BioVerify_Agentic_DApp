@@ -19,7 +19,8 @@ export const usePublicationDetail = (params: Params) => {
 		initialData,
 		enabled: !!id,
 
-		// Smart Polling: Only poll every 5s if the publication is NOT finalized
+		// Smart Polling: Only poll every 10s if the publication is NOT finalized
+		// (WebSocket handles NewPublicationStatus; polling covers Agent_PickReviewers)
 		refetchInterval: (query) => {
 			const status = query.state.data?.status
 			const isFinalized =
@@ -27,7 +28,7 @@ export const usePublicationDetail = (params: Params) => {
 				status === PublicationStatusSchema.enum.SLASHED ||
 				status === PublicationStatusSchema.enum.EARLY_SLASHED
 
-			return isFinalized ? false : 5_000 // Poll every 5s if NOT finalized
+			return isFinalized ? false : 10_000
 		},
 	})
 

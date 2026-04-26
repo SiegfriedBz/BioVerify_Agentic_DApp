@@ -23,6 +23,7 @@ export const usePublications = (props: Props) => {
 		queryKey: publicationsKeys.byQueryParams(searchQueryParams),
 		queryFn: () => getPublications(searchQueryParams),
 		initialData,
+		staleTime: 0,
 	})
 
 	return { data, isFetching, isError, refetch }

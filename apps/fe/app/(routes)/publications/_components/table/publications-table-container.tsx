@@ -1,7 +1,6 @@
 "use client"
 
 import { usePublications } from "@/_hooks/cqrs/queries/use-publications"
-import { useWatchNewPublicationStatusEvent } from "@/_hooks/websockets/use-watch-new-publication-status-event"
 import { FetchError } from "@/app/_components/fetch-error"
 import type { PublicationsQueryParams } from "@packages/cqrs"
 import type { PublicationsResponse } from "@packages/schema"
@@ -16,10 +15,7 @@ type Props = {
 export const PublicationsTableContainer = (props: Props) => {
 	const { initialData, searchQueryParams } = props
 
-	// Alchemy Websockets (invalidate tanstack query publications keys on NewPublicationStatus on-chain event)
-	useWatchNewPublicationStatusEvent()
-
-	// Fetch publications data
+	// Fetch publications data (WebSocket invalidation lives in PublicationsRealtimeProvider in layout)
 	const {
 		data: publicationsResponse,
 		isFetching,
