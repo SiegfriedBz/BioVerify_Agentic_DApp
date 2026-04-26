@@ -4,7 +4,7 @@
  * @title Real-Time Publication Status Watcher
  * @notice Subscribes to on-chain `NewPublicationStatus` events via WebSocket
  * (eth_subscribe) on all supported chains, then invalidates the TanStack Query
- * publications cache so the UI refreshes automatically.
+ * publications and stats caches so the list and metric cards refresh together.
  *
  * @dev Uses standalone viem WebSocket clients (not wagmi) so that subscriptions
  * remain active regardless of the user's wallet connection state. This is
@@ -30,6 +30,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef } from "react"
 import type { Log, WatchContractEventReturnType } from "viem"
 import { publicationsKeys } from "../cqrs/query-keys/publications-keys"
+import { statsKeys } from "../cqrs/query-keys/stats-keys"
 
 type NewPublicationStatusArgs = {
 	pubId?: bigint
@@ -77,9 +78,14 @@ export const useWatchNewPublicationStatusEvent = () => {
 				queryClient.invalidateQueries({
 					queryKey: publicationsKeys.all,
 				})
+				queryClient.invalidateQueries({
+					queryKey: statsKeys.all,
+				})
 
 				if (process.env.NODE_ENV === "development") {
-					console.log(`[WS] Cache invalidated for pubIds: ${pubIds.join(", ")}`)
+					console.log(
+						`[WS] Cache invalidated (publications + stats) for pubIds: ${pubIds.join(", ")}`,
+					)
 				}
 			}, INVALIDATION_DELAY_MS)
 		},

@@ -5,7 +5,7 @@
 
 ## 🧪 Quick Start
 
-1. **Try the Demo:** [🌐 Live Demo](https://bio-verify-ai-dapp.vercel.app/)
+1. **Try the Demo:** [🌐 Live Demo](https://bio-verify-agentic-dapp.vercel.app)
 2. **Get Testnet Sepolia ETH:** [Sepolia Faucet](https://sepolia-faucet.pk910.de/)
 3. **Swap for Base Sepolia ETH:** [Superbridge](https://superbridge.app/base-sepolia) (only if you want to use Base)
 4. **Connect your wallet** to the DApp (Base Sepolia or Ethereum Sepolia)
@@ -71,7 +71,7 @@ graph TD
 
 ### Event-Driven Data Flow
 
-The contract uses a getter-less design: all state mutations emit events. These are projected off-chain into a Postgres read model, which powers all frontend queries. No on-chain reads required. In parallel, the frontend subscribes to `NewPublicationStatus` events via standalone viem WebSocket clients (Alchemy WSS), independent of wallet connection state, debouncing cache invalidations so the publications table stays in sync without polling.
+The contract uses a getter-less design: all state mutations emit events. These are projected off-chain into a Postgres read model, which powers all frontend queries. No on-chain reads required. In parallel, the frontend subscribes to `NewPublicationStatus` events via standalone viem WebSocket clients (Alchemy WSS), independent of wallet connection state, debouncing cache invalidations so the publications list, global stats strip, and related TanStack Query caches stay in sync without polling the table.
 
 ```mermaid
 graph LR
@@ -244,8 +244,8 @@ pnpm lint:format               # Biome format
 
 | Network | Contract Address |
 |:--------|:-----------------|
-| **[Base Sepolia](https://sepolia.basescan.org/address/0xf569d7b5016de6ef0f16fcae82d85d61249df31d)** | `0xf569D7b5016DE6eF0F16FCAe82d85d61249Df31d` |
-| **[Ethereum Sepolia](https://sepolia.etherscan.io/address/0xfce6990d551a60f8640a498b6bc34a15822ba3e3)** | `0xfce6990D551a60F8640a498B6bC34A15822BA3e3` |
+| **[Base Sepolia](https://sepolia.basescan.org/address/0x76654c2cdadcf869e78928f0785797b6be20f11b)** | `0x76654c2cdadcf869e78928f0785797b6be20f11b` |
+| **[Ethereum Sepolia](https://sepolia.etherscan.io/address/0x7d52170db31be4ab3d0166fbba937a031dc6e1ff)** | `0x7d52170db31be4ab3d0166fbba937a031dc6e1ff` |
 
 ## Design Decisions & Roadmap
 
