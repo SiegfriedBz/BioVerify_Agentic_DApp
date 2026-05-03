@@ -1,21 +1,374 @@
-
+[![Live Demo](https://img.shields.io/badge/Live-Demo-blue)](https://bio-verify-ai-dapp.vercel.app)
 ![CI-Foundry](https://github.com/SiegfriedBz/BioVerify_Agentic_DApp/actions/workflows/foundry-tests.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/coverage-100%25-success)
 
-# 🧬 BioVerify
+# 🧬 BioVerify Protocol — Technical Specification & Reference Implementation
 
-## 🧪 Quick Start
+## TL;DR
 
-1. **Try the Demo:** [🌐 Live Demo](https://bio-verify-ai-dapp.vercel.app)
-2. **Get Testnet Sepolia ETH:** [Sepolia Faucet](https://sepolia-faucet.pk910.de/)
-3. **Swap for Base Sepolia ETH:** [Superbridge](https://superbridge.app/base-sepolia) (only if you want to use Base)
-4. **Connect your wallet** to the DApp (Base Sepolia or Ethereum Sepolia)
-5. **Submit a publication** and/or **register as a reviewer** and let the agents do the rest!
+BioVerify is a fully event-driven Web3 protocol that replaces traditional backend orchestration with:
 
----
+- **On-chain events as the source of truth**
+- **Off-chain CQRS projection for real-time UX**
+- **Durable workflows (Inngest + LangGraph)** for async coordination
 
-**Durable AI Agent Protocol for Scientific Integrity**
+It demonstrates how to build **deterministic Web3 systems** without polling, cron jobs, or centralized orchestration.
 
-A decentralized science (DeSci) protocol that replaces opaque, slow, and biased traditional peer review with stateful AI agents and on-chain game theory. Scientists stake collateral to submit research, autonomous agents screen for plagiarism, Chainlink VRF selects unbiased reviewers, and cryptographic consensus settles stakes — creating an immutable, economically enforced pipeline for scientific truth.
+**Core pattern:** Event Sourcing + CQRS + Durable Execution.
+
+
+## 🚀 What This Project Demonstrates
+
+What the system achieves end-to-end:
+
+- **Smart contracts:** secure, gas-efficient state transitions using CEI, pull payments, and VRF-based randomness (Chainlink)
+- **Security posture:** reentrancy containment (`nonReentrant`), EIP-712 for human intent, HMAC-authenticated webhook ingress
+- **Quality bar:** Foundry suite at 100% branch coverage, including fuzzing, VRF mocks, and explicit revert-path tests
+- **Backend:** CQRS with a Neon Postgres projection instead of heavy RPC read paths
+- **Infrastructure:** durable, retry-safe execution via Inngest (no cron-as-orchestrator)
+- **Frontend:** real-time Next.js UI driven by WebSockets and projection-backed queries (no polling)
+
+Net effect: verifiable state transitions and predictable behaviour under async workloads.
+
+## 🧠 Abstract
+
+**[Live demo](https://bio-verify-agentic-dapp.vercel.app)** — BioVerify is a **end to end** Web3 system for **multi-actor workflows** (staking, screening, VRF-based reviewer draw, signed reviews, settlement) on **Base Sepolia** and **Ethereum Sepolia**.
+
+Writes stay on-chain; reads for the app come from a **Neon Postgres** projection fed by verified Alchemy webhooks. **Inngest** runs long-running steps; **LangGraph** coordinates orchestration only — the protocol does not treat LLM output as authoritative state.
+
+Details follow in the sections below.
+
+## 🧭 User Flow (End-to-End)
+
+1. **Submit** a publication with stake (manifest pinned to IPFS; CID committed on-chain).
+2. **Screen:** submission pipeline runs plagiarism / originality checks (structured verdicts).
+3. **If valid →** Chainlink VRF selects reviewers from the staked pool.
+4. **Review:** reviewers submit signed verdicts (**EIP-712**); conflicts can escalate.
+5. **Resolve:** a controlled (**whitelisted**) agent advances consensus (or escalation path) off-chain, then **settles on-chain**.
+6. **Settle:** contract publishes or slashes; stakes and incentives follow terminal rules.
+
+Each hop is verifiable: chain events, typed signatures, and the projection trail.
+
+## 💡 Engineering Highlights
+
+How the stack is split:
+
+### Smart Contract ↔ Frontend Synchronization
+
+- Mutations emit events; the UI reads from the Postgres projection (not direct struct getters on the contract)
+- WebSocket subscriptions keep lists and detail views fresh without polling loops
+
+### Asynchronous Backend Orchestration
+
+- Chain events → authenticated webhooks → CQRS projector / Inngest triggers
+- Inngest provides retries and step isolation for commands that must survive days-long human steps
+
+### Agent-Orchestrated Workflows (Deterministic Execution)
+
+Deterministic workflows orchestrated via **LangGraph**, where:
+
+- LLM outputs are **schema-constrained** before they become commands
+- **State transitions are validated** before execution (CQRS commands, contract gates)
+- The **blockchain remains the source of truth**; agents orchestrate, they do not replace consensus
+
+### On-Chain Economic Logic
+
+- Staking / slashing mechanisms
+- Verifiable randomness (Chainlink VRF)
+- Multi-actor coordination with incentives
+
+### Complex UX for Web3
+
+- Wallet interaction (EIP-712 signing, transactions)
+- Live row/detail updates via subscriptions (see Performance for read-path costs)
+- Multi-role flows (submitter, reviewer, validator)
+
+### Performance & Cost Optimization
+
+- **Gas-aware design:** minimal on-chain storage; reads for product queries hit the projection, not heavy `eth_call` fanout
+- **WebSockets** replace polling loops for live UI
+- **Projection-backed reads** avoid expensive on-chain queries for list/detail state
+- **Lean contract surface:** getter-less design reduces bytecode size and gas costs
+- **Pull payments:** avoids gas-limit failures in multi-recipient payouts
+
+### Security & Testing Discipline
+
+- **Checks–Effects–Interactions (CEI)** pattern and OpenZeppelin `nonReentrant` on ETH-out paths (`claim`, `transferSlashPoolToTreasury`)
+- **EIP-712** asymmetric signing (ECDSA / secp256k1) for human reviews + **HMAC-SHA256** symmetric authentication for Alchemy webhooks (integrity + authenticity)
+- **Foundry** suite with **100% branch coverage** (`forge test`, `forge coverage`)
+
+### Security Model Summary
+
+- **Reentrancy mitigation:** CEI pattern + `nonReentrant` guards
+- **DoS resistance — pull-based withdrawals:** A naive settlement that **pushes** ETH to every reviewer in one transaction grows linearly with headcount and can exceed the block **gas limit**, enabling a **gas-limit DoS** on settlement (honest runs fail; griefers cheaply force oversized payout loops). BioVerify credits rewards on-chain but routes payouts through **`claim`** so each recipient **pays their own gas** to withdraw. That shifts the claiming burden off the protocol’s settlement path: settlement stays bounded, and throughput does not degrade as more reviewers participate.
+- **Access control:** agent-restricted state transitions
+- **Data integrity:** HMAC-SHA256 verification for webhooks
+- **User authenticity:** EIP-712 typed signatures (ECDSA)
+
+The system minimizes trusted surface area and ensures external inputs are authenticated before state mutation.
+
+## 🧩 Full Stack Ownership
+
+This system was designed and built end-to-end:
+
+- **Smart contracts:** Solidity (Foundry, Chainlink VRF, OpenZeppelin)
+- **Backend:** Node.js / TypeScript (event ingestion, CQRS projection, Inngest workflows)
+- **Frontend:** Next.js 16 (React 19, real-time UI, wallet integration via wagmi/viem)
+- **Infrastructure:** Alchemy Notify, Neon Postgres, Vercel Functions
+
+The architecture deliberately separates:
+
+- **Write path:** blockchain transactions
+- **Read path:** off-chain projection (CQRS)
+- **Execution:** durable agents (Inngest + LangGraph)
+
+## Smart Contract Architecture & Security
+
+The protocol contract is [`apps/contracts/src/BioVerifyV3.sol`](apps/contracts/src/BioVerifyV3.sol): staking, Chainlink VRF v2.5 reviewer selection, agent-gated settlement, and pull-based withdrawals.
+
+### Checks–Effects–Interactions (CEI) & Reentrancy
+
+- **CEI** is applied on ETH-out paths: internal accounting, status, and events are updated **before** external calls (e.g. `claim`, `transferSlashPoolToTreasury`), limiting reentrancy risk by construction.
+- **`nonReentrant`** (OpenZeppelin) guards **`claim`** and **`transferSlashPoolToTreasury`**; other flows rely on ordering and minimal external sends.
+
+### Pull Payments & Gas / DoS Considerations
+
+- **`claim(uint256)`** implements a **pull-withdrawal** model for **`availableStake`**. Settlement does not push ETH to arbitrary recipients in bulk, avoiding classic **gas-limit DoS** vectors on multi-party payouts.
+
+### Access Control & Minimal On-Chain Surface
+
+- **Agent-only execution model:** critical state transitions are not user-triggered but executed by a **controlled (whitelisted) agent**, reducing the attack surface and enforcing deterministic workflow progression.
+- **Agent-only** functions (`pickReviewers`, `earlySlashPublication`, `publishPublication`, `slashPublication`, `recordReview`, …) are restricted to an immutable **`I_AI_AGENT_ADDRESS`**, shrinking the trusted transition surface.
+- **Getter-less design:** no view getters on rich structs; mutations emit **indexed events**, reducing bytecode size and encouraging off-chain projections — **gas-efficient** writes and a smaller audit surface.
+
+### State Machine & Settlement Invariants
+
+- Modifiers such as **`onlyValidPubId`** and publication status checks enforce valid **`PublicationStatus`** transitions.
+- **`_settlePublication`** requires **`honest.length + negligent.length == I_VRF_NUM_WORDS`** before distributing rewards and slashing negligent reviewers.
+
+### EIP-712 & Asymmetric Cryptography (Off-Chain Reviews)
+
+Human peer reviews are signed with **EIP-712 typed structured data** — **asymmetric-key cryptography** (ECDSA over secp256k1). The stack verifies payloads server-side with viem **`verifyTypedData`** (see [`packages/utils-server/crypto/eip712/verify-review-eip712.ts`](packages/utils-server/crypto/eip712/verify-review-eip712.ts)), binding reviewer identity to the review without an on-chain signature transaction.
+
+## Testing & Quality Assurance
+
+Foundry tests live under [`apps/contracts/test/`](apps/contracts/test/) (12 scenario files: deployment, pay stake, submit, early slash, pick reviewers / VRF fulfillment, record review, publish / slash, claim, pools).
+
+- **Named paths:** `test_*_Success` and `test_RevertIf_*` with **`vm.expectRevert(abi.encodeWithSelector(...))`** for precise failure modes.
+- **Event discipline:** helpers assert emissions with **`vm.expectEmit`** across state transitions.
+- **VRF:** mock coordinator, **`fulfillRandomWordsWithOverride`**, and **`vm.recordLogs` / `vm.getRecordedLogs`** to validate reviewer selection under edge cases (e.g. colliding random words in [`07_FullfillVRF.t.sol`](apps/contracts/test/07_FullfillVRF.t.sol)).
+- **Transfer failures:** **`ETHRejector`** contract tests revert paths for **`claim`** and treasury transfers.
+- **Fuzzing:** e.g. **`testFuzz_SubmitPublication`** with **`bound`** and post-condition checks on balances.
+- **Coverage:** **`pnpm contract:cov`** → **`forge coverage`**; README / CI target **100% branch coverage**.
+
+## 🏗️ Architecture Snapshot
+
+**Key idea:** the blockchain emits events → everything else reacts.
+
+- Contracts emit events only (no getters)
+- Events are indexed into Postgres (CQRS)
+- The frontend subscribes via WebSockets
+- Backend workflows are triggered via webhooks
+- Agents process data asynchronously and feed results back on-chain
+
+## Architecture
+
+### System Overview
+
+How the monorepo packages connect to each other and to external services.
+
+```mermaid
+graph TD
+    FE["apps/fe — Next.js Frontend"]
+    BC["EVM Chains (Base Sepolia, Eth Sepolia)"]
+    Alchemy["Alchemy Notify"]
+    CQRS["@packages/cqrs"]
+    DB["@packages/db — Neon Postgres"]
+    Inngest["Inngest"]
+    Agents["@packages/agents — LangGraph"]
+    IPFS["IPFS (Pinata)"]
+    VRF["Chainlink VRF"]
+    EXA["Exa AI"]
+
+    FE -- "wagmi writeContract" --> BC
+    BC -- "emits events" --> Alchemy
+    Alchemy -- "POST webhook" --> FE
+    FE -- "processContractEvent" --> CQRS
+    BC -- "WSS (NewPublicationStatus)" --> FE
+    CQRS -- "upserts / queries" --> DB
+    CQRS -- "viem contract calls" --> BC
+    FE -- "serves Inngest functions" --> Inngest
+    Inngest -- "step.run" --> Agents
+    Agents -- "CQRS commands" --> CQRS
+    Agents -- "fetch manifest" --> IPFS
+    Agents -- "neural search" --> EXA
+    FE -- "pin manifest" --> IPFS
+    BC -- "requestRandomWords" --> VRF
+    VRF -- "fulfillRandomWords" --> BC
+```
+
+### Event-Driven Data Flow
+
+The contract uses a getter-less design: all state mutations emit events. These are projected off-chain into a Postgres read model, which powers all frontend queries — no `eth_call` read traffic for app state. In parallel, the frontend subscribes to `NewPublicationStatus` via standalone viem WebSocket clients (Alchemy WSS), independent of wallet connection state, with debounced TanStack Query invalidation so the publications list and stats stay fresh **without polling**.
+
+**Webhook authenticity:** Alchemy Notify POSTs are verified with **HMAC** using a **shared secret** and **SHA-256** — **symmetric-key cryptography**. Only payloads bearing a valid MAC are accepted, giving **data integrity** and **authenticity** before `processContractEvent` runs.
+
+**Human review authenticity:** Reviewers sign structured payloads with **EIP-712** — **asymmetric-key cryptography** (ECDSA / secp256k1) — so the agent pipeline can prove which wallet approved a given verdict off-chain.
+
+```mermaid
+graph LR
+    BC["BioVerifyV3 (events)"] --> AN["Alchemy Notify"]
+    AN --> WH["Webhook API (HMAC verified)"]
+    WH --> CQRS["processContractEvent"]
+    CQRS --> DB["Neon Postgres (OCC)"]
+    DB --> FE["Frontend Queries (Drizzle)"]
+    CQRS -.-> INN["Inngest (agent triggers)"]
+```
+
+### Why a Custom Projector?
+
+Off-the-shelf stacks (e.g., The Graph, Ponder) were evaluated but replaced because:
+
+- **Scope mismatch:** BioVerify needs contract-specific projection, not full-chain indexing
+- **Cost constraints:** free-tier limits restrict large-scale indexing
+- **Control:** a custom projector enables deterministic handling of out-of-order events
+
+The implemented solution uses:
+
+- **Alchemy Notify** → webhook ingestion
+- **HMAC verification** → authenticity
+- **OCC** (block number + log index) → consistency under real-world delivery
+
+### Agent Orchestration & Durability
+
+Logic state and execution durability are separated to handle the asynchronous nature of human review:
+
+- **LangGraph** manages the agent lifecycle using checkpointers. This allows the workflow to pause for days during peer review and resume exactly where it left off.
+- **Inngest** provides the durable execution layer — automatic retries for on-chain commands, wait-for-event logic, and fan-out orchestration.
+
+```mermaid
+graph TD
+    subgraph triggers [Event Triggers]
+        E1["SubmitPublication event"]
+        E2["Agent_PickReviewers event"]
+    end
+
+    subgraph submission [Submission Agent]
+        S1["fetchIpfsNode — resolve manifest"]
+        S2["discoveryNode — Exa AI neural search"]
+        S3["llmNode — plagiarism verdict"]
+        S1 --> S2 --> S3
+    end
+
+    subgraph review [Review Agent]
+        R1["humanReviewsNode — HITL loop"]
+        R2["llmVerdictNode — consensus check"]
+        R3["seniorReviewNode — escalation HITL"]
+        R4["llmFinalVerdictNode — enforce decision"]
+        R5["settlementNode — on-chain settle"]
+        R1 --> R2
+        R2 -->|"pass / fail"| R4
+        R2 -->|escalate| R3 --> R4
+        R4 --> R5
+    end
+
+    E1 --> |Inngest| submission
+    S3 -->|pass| pickReviewers["pickReviewersCommand"]
+    S3 -->|fail| earlySlash["earlySlashPublicationCommand"]
+    E2 --> |Inngest| review
+    R5 --> settle["publishPublication / slashPublication"]
+
+    pickReviewers --> BC["BioVerifyV3"]
+    earlySlash --> BC
+    settle --> BC
+```
+
+### Failure Handling & Idempotency
+
+- **Idempotent event processing:** OCC (block number + log index) prevents stale writes when webhooks arrive out of order or twice.
+- **Retry-safe workflows:** Inngest isolates steps so failed steps can be replayed without duplicating side effects when steps are designed idempotently.
+- **Deterministic projections:** replaying events yields the same read model.
+
+Correctness holds under webhook retries, out-of-order delivery, and partial failures.
+
+### Publication Lifecycle
+
+The `PublicationStatus` state machine on-chain.
+
+```mermaid
+stateDiagram-v2
+    [*] --> SUBMITTED : submitPublication()
+    SUBMITTED --> EARLY_SLASHED : AI detects plagiarism
+    SUBMITTED --> IN_REVIEW : AI passes, VRF selects reviewers
+    IN_REVIEW --> PUBLISHED : peer review consensus (pass)
+    IN_REVIEW --> SLASHED : peer review consensus (fail)
+    EARLY_SLASHED --> [*]
+    PUBLISHED --> [*]
+    SLASHED --> [*]
+```
+
+### Terminal Outcomes
+
+| Outcome | Trigger Phase | Publisher Impact | Reviewer Impact |
+|:--------|:--------------|:-----------------|:----------------|
+| **Early Slashed** | Pre-Review (Immediate) | Slashed: stake moved to slash pool; reputation penalty. | None: no reviewers selected; no rewards distributed. |
+| **Published** | Post-Review (Success) | Rewarded: stake returned; reputation boost. | Split: honest get stake + reward + rep; negligent lose stake + rep. |
+| **Slashed** | Post-Review (Failure) | Slashed: stake moved to slash pool; reputation penalty. | Split: honest get stake + reward + rep; negligent lose stake + rep. |
+
+For detailed end-to-end sequence diagrams with every interaction, see [`docs/architecture.md`](docs/architecture.md).
+
+## 🧩 Why This Matters
+
+Typical dApp pain: **polling** (`eth_call`), **cron-shaped glue**, and **UI drift** from chain truth.
+
+BioVerify instead couples **chain truth → webhook → projection → UI**, with **durable jobs** for anything that takes longer than a block:
+
+- **Reads:** served from a maintained projection for the product UX needs (and avoid RPC spam)
+- **Automation:** chain-triggered steps with retries—not ad hoc cron
+- **Replay:** idempotent projector + isolated workflow steps for sane recovery
+
+Horizontal scale: add contracts or chains by extending **ingestion + projection**, not rewriting core protocol rules.
+
+Same patterns transfer to DeFi dashboards, DAO tooling, marketplaces—anywhere multiple actors coordinate over time.
+
+## 🧬 Domain Use Case
+
+This implementation applies the architecture to a **peer-review workflow** (stake to submit, AI screening, VRF-selected reviewers, human verdicts, settlement). The system is **domain-agnostic** and can be adapted to any multi-step, multi-actor process that needs coordination, validation, and incentives.
+
+## Monorepo Structure
+
+pnpm workspaces with two apps and seven packages.
+
+```
+apps/
+  contracts/          BioVerifyV3 Solidity contract (Foundry) — staking, VRF, settlement
+  fe/                 Next.js 16 frontend — DApp UI, webhook API, Inngest serving, WSS event subscriptions
+
+packages/
+  agents/             LangGraph AI agents (submission + review)
+  cqrs/               Event projector, DB queries, on-chain action commands
+  db/                 Drizzle ORM client (Neon Postgres)
+  env/                Type-safe environment variable access (Zod)
+  notifications/      Telegram notification helpers
+  schema/             Zod schemas, DB table definitions, domain types, Inngest event types
+  utils/              Contract config, ABI, network mappings, EIP-712 type definitions
+  utils-server/       Server-only utilities
+```
+
+## Tech Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| Smart Contracts | Solidity, Foundry, OpenZeppelin, Chainlink VRF V2.5 |
+| Frontend | Next.js 16 (App Router, RSC), React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
+| Web3 | wagmi v3, viem, Reown AppKit (WalletConnect), EIP-712 typed data signing |
+| AI Agents | LangGraph.js, Gemini (structured output), Exa AI (neural search) |
+| Data | Drizzle ORM, Neon Postgres (serverless), TanStack Query v5, nuqs (URL state) |
+| Storage | IPFS via Pinata (publication manifests, verdict pinning) |
+| Infrastructure | Inngest (durable execution), Alchemy Notify (webhooks), Vercel Functions |
+| Security | CEI pattern, OZ ReentrancyGuard, EIP-712 (ECDSA), HMAC-SHA256 webhook auth |
+| Testing | Foundry (`forge test`, `forge coverage`), VRF mock, fuzz tests |
+| Quality | Biome (lint + format) |
 
 ## Features in Action
 
@@ -97,166 +450,13 @@ Completed **`review-agent`** run after a `CHAIN_PICKED_REVIEWERS_RECEIVED` event
 
 ![Inngest — review agent after reviewers picked](assets/Inngest_ChainPickedReviewersReceived.png)
 
-## The Problem
+## 🧪 Quick Start
 
-The reproducibility crisis is real: a [2016 Nature survey](https://www.nature.com/articles/533452a) found that over 70% of researchers failed to reproduce another scientist's results. The root cause is a peer-review system with no accountability, no public audit trail, and no economic consequences for negligence.
-
-Traditional peer review is a closed-door process. Reviewers face no consequences for approving fraudulent work or rejecting valid research. There is no on-chain record, no transparency, and no mechanism to reward diligence. The result: retractions, wasted funding, and eroded public trust in science.
-
-BioVerify targets the **peer-review accountability layer** specifically — the part of the pipeline where economic staking, AI-assisted forensics, and transparent on-chain settlement can have the most immediate impact on research integrity.
-
-## How BioVerify Works
-
-1. **Stake and Submit** — A scientist uploads their research manifest to IPFS (via Pinata) and submits it on-chain with a collateral stake and submission fee.
-2. **AI Forensic Screening** — The Submission Agent fetches the abstract from IPFS, runs a neural search against academic literature via Exa AI, and produces a structured LLM verdict (pass or fail). Plagiarism triggers immediate on-chain slashing.
-3. **VRF Reviewer Selection** — If the submission passes, Chainlink VRF selects $N$ peer reviewers from the staked pool using cryptographically verifiable randomness. The reviewer with the highest reputation is assigned as Senior Reviewer.
-4. **Human-in-the-Loop Peer Review** — Selected reviewers submit EIP-712-signed verdicts through the frontend. Each review resumes the Review Agent's HITL interrupt. If peer verdicts conflict, the Senior Reviewer is called to break the tie.
-5. **On-Chain Settlement** — The agent partitions reviewers into honest (aligned with the final decision) and negligent (opposed), then settles on-chain: honest reviewers are rewarded, negligent reviewers are slashed, and the publisher's stake is returned or forfeited.
-
-## Architecture
-
-### System Overview
-
-How the monorepo packages connect to each other and to external services.
-
-```mermaid
-graph TD
-    FE["apps/fe — Next.js Frontend"]
-    BC["EVM Chains (Base Sepolia, Eth Sepolia)"]
-    Alchemy["Alchemy Notify"]
-    CQRS["@packages/cqrs"]
-    DB["@packages/db — Neon Postgres"]
-    Inngest["Inngest"]
-    Agents["@packages/agents — LangGraph"]
-    IPFS["IPFS (Pinata)"]
-    VRF["Chainlink VRF"]
-    EXA["Exa AI"]
-
-    FE -- "wagmi writeContract" --> BC
-    BC -- "emits events" --> Alchemy
-    Alchemy -- "POST webhook" --> FE
-    FE -- "processContractEvent" --> CQRS
-    BC -- "WSS (NewPublicationStatus)" --> FE
-    CQRS -- "upserts / queries" --> DB
-    CQRS -- "viem contract calls" --> BC
-    FE -- "serves Inngest functions" --> Inngest
-    Inngest -- "step.run" --> Agents
-    Agents -- "CQRS commands" --> CQRS
-    Agents -- "fetch manifest" --> IPFS
-    Agents -- "neural search" --> EXA
-    FE -- "pin manifest" --> IPFS
-    BC -- "requestRandomWords" --> VRF
-    VRF -- "fulfillRandomWords" --> BC
-```
-
-### Event-Driven Data Flow
-
-The contract uses a getter-less design: all state mutations emit events. These are projected off-chain into a Postgres read model, which powers all frontend queries. No on-chain reads required. In parallel, the frontend subscribes to `NewPublicationStatus` events via standalone viem WebSocket clients (Alchemy WSS), independent of wallet connection state, debouncing cache invalidations so the publications list, global stats strip, and related TanStack Query caches stay in sync without polling the table.
-
-```mermaid
-graph LR
-    BC["BioVerifyV3 (events)"] --> AN["Alchemy Notify"]
-    AN --> WH["Webhook API (HMAC verified)"]
-    WH --> CQRS["processContractEvent"]
-    CQRS --> DB["Neon Postgres (OCC)"]
-    DB --> FE["Frontend Queries (Drizzle)"]
-    CQRS -.-> INN["Inngest (agent triggers)"]
-```
-
-### Agent Orchestration & Durability
-
-Logic state and execution durability are separated to handle the asynchronous nature of human review:
-
-- **LangGraph** manages the agent lifecycle using checkpointers. This allows the workflow to pause for days during peer review and resume exactly where it left off.
-- **Inngest** provides the durable execution layer — automatic retries for on-chain commands, wait-for-event logic, and fan-out orchestration.
-
-```mermaid
-graph TD
-    subgraph triggers [Event Triggers]
-        E1["SubmitPublication event"]
-        E2["Agent_PickReviewers event"]
-    end
-
-    subgraph submission [Submission Agent]
-        S1["fetchIpfsNode — resolve manifest"]
-        S2["discoveryNode — Exa AI neural search"]
-        S3["llmNode — plagiarism verdict"]
-        S1 --> S2 --> S3
-    end
-
-    subgraph review [Review Agent]
-        R1["humanReviewsNode — HITL loop"]
-        R2["llmVerdictNode — consensus check"]
-        R3["seniorReviewNode — escalation HITL"]
-        R4["llmFinalVerdictNode — enforce decision"]
-        R5["settlementNode — on-chain settle"]
-        R1 --> R2
-        R2 -->|"pass / fail"| R4
-        R2 -->|escalate| R3 --> R4
-        R4 --> R5
-    end
-
-    E1 --> |Inngest| submission
-    S3 -->|pass| pickReviewers["pickReviewersCommand"]
-    S3 -->|fail| earlySlash["earlySlashPublicationCommand"]
-    E2 --> |Inngest| review
-    R5 --> settle["publishPublication / slashPublication"]
-
-    pickReviewers --> BC["BioVerifyV3"]
-    earlySlash --> BC
-    settle --> BC
-```
-
-### Publication Lifecycle
-
-The `PublicationStatus` state machine on-chain.
-
-```mermaid
-stateDiagram-v2
-    [*] --> SUBMITTED : submitPublication()
-    SUBMITTED --> EARLY_SLASHED : AI detects plagiarism
-    SUBMITTED --> IN_REVIEW : AI passes, VRF selects reviewers
-    IN_REVIEW --> PUBLISHED : peer review consensus (pass)
-    IN_REVIEW --> SLASHED : peer review consensus (fail)
-    EARLY_SLASHED --> [*]
-    PUBLISHED --> [*]
-    SLASHED --> [*]
-```
-
-For detailed end-to-end sequence diagrams with every interaction, see [`docs/architecture.md`](docs/architecture.md).
-
-## Monorepo Structure
-
-pnpm workspaces with two apps and seven packages.
-
-```
-apps/
-  contracts/          BioVerifyV3 Solidity contract (Foundry) — staking, VRF, settlement
-  fe/                 Next.js 16 frontend — DApp UI, webhook API, Inngest serving, WSS event subscriptions
-
-packages/
-  agents/             LangGraph AI agents (submission + review)
-  cqrs/               Event projector, DB queries, on-chain action commands
-  db/                 Drizzle ORM client (Neon Postgres)
-  env/                Type-safe environment variable access (Zod)
-  notifications/      Telegram notification helpers
-  schema/             Zod schemas, DB table definitions, domain types, Inngest event types
-  utils/              Contract config, ABI, network mappings, EIP-712 type definitions
-  utils-server/       Server-only utilities
-```
-
-## Tech Stack
-
-| Layer | Technologies |
-|-------|-------------|
-| Smart Contracts | Solidity, Foundry, OpenZeppelin, Chainlink VRF V2.5 |
-| Frontend | Next.js 16 (App Router, RSC), React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
-| Web3 | wagmi v3, viem, Reown AppKit (WalletConnect), EIP-712 typed data signing |
-| AI Agents | LangGraph.js, Gemini (structured output), Exa AI (neural search) |
-| Data | Drizzle ORM, Neon Postgres (serverless), TanStack Query v5, nuqs (URL state) |
-| Storage | IPFS via Pinata (publication manifests, verdict pinning) |
-| Infrastructure | Inngest (durable execution), Alchemy Notify (webhooks), Vercel Functions |
-| Quality | Biome (lint + format), Foundry tests (100% branch coverage) |
+1. **Try the demo:** [Live Demo](https://bio-verify-agentic-dapp.vercel.app)
+2. **Get Testnet Sepolia ETH:** [Sepolia Faucet](https://sepolia-faucet.pk910.de/)
+3. **Swap for Base Sepolia ETH:** [Superbridge](https://superbridge.app/base-sepolia) (only if you want to use Base)
+4. **Connect your wallet** to the DApp (Base Sepolia or Ethereum Sepolia)
+5. **Submit a publication** and/or **register as a reviewer** and let the agents handle the rest
 
 ## Getting Started
 
@@ -333,29 +533,30 @@ pnpm lint:format               # Biome format
 
 - **Automated Slashing** — The AI agent slashes stakes immediately when plagiarism is detected, prioritizing protocol efficiency over manual appeals.
 - **Senior Reviewer Tie-Break** — When peer reviewers disagree, the highest-reputation reviewer is escalated via a second HITL interrupt to cast the deciding verdict, rather than requiring a full quorum re-vote.
-- **Getter-Less Contract** — BioVerifyV3 emits events for every state mutation and exposes no view functions. All reads are served from the off-chain Postgres projection, keeping gas costs minimal and the contract surface small.
+- **Getter-Less Contract** — BioVerifyV3 emits events for every state mutation and exposes no view functions. All reads are served from the off-chain Postgres projection, keeping gas costs minimal and the contract attack surface small.
 
 ### Roadmap
 
 **Weighted Majority Voting** — Replace the Senior Reviewer tie-breaker with a decentralized consensus mechanism where reviewer votes are weighted by on-chain reputation score.
 
-**Reputation via ZK-Proofs (Reclaim Protocol)** — Reviewer reputation is currently bootstrapped from on-chain history alone. Integration with [Reclaim Protocol](https://www.reclaimprotocol.org/) would allow scientists to import real-world credentials (h-index, citation count, institutional affiliation) via zero-knowledge proofs, solving the cold-start problem.
+**Reputation via ZK-Proofs (Reclaim Protocol) & Sybil resistance** — Reviewer reputation is currently bootstrapped from on-chain history alone. Integration with [Reclaim Protocol](https://www.reclaimprotocol.org/) would let reviewers attach **verifiable, privacy-preserving** proofs of real-world standing (e.g. h-index, affiliation) without doxxing raw credentials—supporting the goal that **one durable human identity maps to one reviewer seat** without exposing unnecessary PII. That directly attacks **identity Sybil** (many fake reviewers) and raises the cost of **reviewer collusion rings** in decentralized governance: roles become harder to farm at scale while integrity of the selection game improves.
 
 **Paid Content Access (x402)** — Integration of the [x402 protocol](https://www.x402.org/) to gate publication content behind micropayments. Non-publishers and non-reviewers would pay to access full research data (datasets, methodology, supplementary materials) through x402's HTTP 402-based payment flow, creating a sustainable revenue stream for honest publishers.
 
 **Encrypted Access Control (Lit Protocol)** — Publication data on IPFS would be encrypted using [Lit Protocol](https://litprotocol.com/). Decryption keys are only released when on-chain conditions are met — "has paid via x402", "is an assigned reviewer", or "is the publisher" — combining payment verification with decentralized key management and removing the need for a centralized access server.
 
-Together, these roadmap items would extend BioVerify from a pure integrity protocol into a full research marketplace: **stake-to-publish, pay-to-read, earn-to-review**.
+**Internal corpus + RAG (directional)** — Today screening leans on **Exa** for external literature; niche or brand-new protocol content may not appear there in time. Roadmap: embed **published** manifests into **Neon + pgvector** (triggered when status hits `PUBLISHED`), run **internal similarity** alongside Exa, and tighten originality checks for work already inside the protocol. Crawlable manifests and a BioVerify-only search UI would follow if the corpus grows.
 
 ## License
 
 MIT — Siegfried Bozza, 2026
 
-## Author
+## 👤 Author
 
-Built solo (in parallel with a full-time professional software engineering role) by **Siegfried Bozza**: Full-stack development, smart contract, and deployment.
+**Siegfried Bozza** — Full-stack on & Web3 builder (Solidity / Node.js / React)
 
-Full-Stack Developer React/Next.js & Web3
+Built BioVerify end-to-end: protocol design, smart contracts, backend architecture, and frontend.
 
-💼 [LinkedIn](https://www.linkedin.com/in/siegfriedbozza/)
-🐙 [GitHub](https://github.com/SiegfriedBz)
+**Focus areas:** event-driven Web3 systems · protocol security · distributed architecture
+
+[LinkedIn](https://www.linkedin.com/in/siegfriedbozza/) · [GitHub](https://github.com/SiegfriedBz)
