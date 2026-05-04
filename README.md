@@ -14,7 +14,7 @@ Publication manifests are pinned to IPFS at submission time and verdict data is 
 
 ## Quick Start
 
-1. Open the **[live demo](https://bio-verify-agentic-dapp.vercel.app)**
+1. Open the **[live demo](https://bio-verify-ai-dapp.vercel.app)**
 2. Connect a wallet (Base Sepolia or Ethereum Sepolia)
 3. Submit a publication or register as a reviewer — the agents handle the rest
 
