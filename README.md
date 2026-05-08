@@ -1,42 +1,47 @@
+
 ![CI-Foundry](https://github.com/SiegfriedBz/BioVerify_Agentic_DApp/actions/workflows/foundry-tests.yml/badge.svg)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-success)
 
-# 🧬 BioVerify Protocol
+# 🧬 BioVerify - An Agentic Web3 Peer-Review Case Study
 
-A Web3 peer-review system on Base Sepolia and Ethereum Sepolia. Authors stake ETH to submit publications, then two agents drive the process:
-
-1. **Screening agent** — checks the submission against scientific literature (Exa AI). If plagiarism is detected, it triggers an early slash on-chain. If the submission passes, it requests a random reviewer pool via Chainlink VRF.
-2. **Review agent** — runs the human peer review cycle (HITL). If peer reviewers conflict, a senior reviewer breaks the tie. The final verdict triggers either a slash or a publication on-chain.
-
-Publication manifests are pinned to IPFS at submission time and verdict data is pinned at settlement. This protects against link rot and prevents anyone from silently modifying a publication's content after the fact — the on-chain CID is the commitment.
-
----
-
-## Quick Start
-
-1. Open the **[live demo](https://bio-verify-ai-dapp.vercel.app)**
-2. Connect a wallet (Base Sepolia or Ethereum Sepolia)
-3. Submit a publication or register as a reviewer — the agents handle the rest
-
-Need testnet ETH? [Sepolia Faucet](https://sepolia-faucet.pk910.de/) · [Superbridge to Base](https://superbridge.app/base-sepolia)
+BioVerify reimagines scientific peer review as a trustless coordination game. Authors stake ETH, AI screens for plagiarism, and human reviewers settle verdicts on-chain — with every research artifact pinned to IPFS so nothing can change silently after publication.
 
 ---
 
 ## Why
 
-Traditional scientific publishing has two structural problems. First, the economic rewards flow to publishers (Elsevier and others) rather than to the researchers and reviewers who do the actual work. Second, peer review as currently practiced contributes to the reproducibility crisis: reviewer selection is opaque, verdicts are unchallengeable, and reviewer incentives are too weak to ensure rigorous scrutiny.
+The legacy scientific model has a few deep problems. Published papers point to mutable URLs — data can silently change or disappear after publication. Reviewer selection is opaque. Neither publishers nor reviewers are properly rewarded for their work. And the reproducibility crisis has eroded trust in research findings at a foundational level: studies that cannot be replicated are often never flagged or corrected.
 
-BioVerify treats peer review as a coordination problem — multiple actors (authors, reviewers, AI agents) need to reach a verifiable outcome, with economic incentives keeping everyone honest. Stakes, verdicts, and settlements live on-chain. Rewards go to reviewers, not intermediaries.
+DeSci offers a different set of primitives. Content-addressed storage like IPFS means a link to data is a commitment to that exact data — no silent edits, no rot links. On-chain coordination makes reviewer selection auditable and incentive structures explicit.
 
-Two layers make this work:
-- **Blockchain** — the trust layer. Stakes, verdicts, and settlements are on-chain. No one can fake an outcome.
-- **LangGraph agents** — the orchestration layer. They drive the workflow (screen → pick reviewers → collect verdicts → settle) without becoming the source of truth.
+BioVerify is an experiment in that direction. It treats peer review as a coordination problem: authors, reviewers, and agents need a verifiable outcome over days, with economic incentives aligned to the rules encoded on-chain — and research artifacts pinned to IPFS, so what was reviewed is what stays.
+
+BioVerify separates concerns across two layers with distinct responsibilities:
+
+- **Truth layer — blockchain.** Stakes, lifecycle states, reviewer selection, and settlements are all on-chain in [`BioVerifyV3`](apps/contracts/src/BioVerifyV3.sol). Outcomes are not asserted off-chain alone; the contract is the source of truth.
+- **Orchestration layer — agents.** LangGraph drives the screening and review graphs ([`@packages/agents`](packages/agents)); Inngest provides durable execution, retries, step isolation, and HITL pauses that can span days. Agents coordinate the workflow but never override the contract.
+
+---
+
+## Try the Live Demo
+
+To explore the live demo, you need a browser wallet ([MetaMask](https://metamask.io/) works) funded with Base Sepolia ETH — grab some free from the faucet below. No local setup required.
+
+1. Open the **[live demo](https://bio-verify-ai-dapp.vercel.app/)**.
+2. Connect a wallet (Base Sepolia or Ethereum Sepolia).
+3. Submit a publication or register as a reviewer — the agents handle the rest.
+
+Want live notifications? Join the [BioVerify Telegram Bot](https://web.telegram.org/a/#8438952136) to receive status updates as publications move through screening, review, and settlement — no need to keep the app open.
+
+Need testnet ETH? [Sepolia Faucet](https://sepolia-faucet.pk910.de/) · [Superbridge to Base Sepolia](https://superbridge.app/base-sepolia)
 
 ---
 
 ## Solution
 
-**Chain events drive everything.** The contract emits events instead of exposing view functions. Those events feed a Postgres projection (CQRS), which the frontend reads. Long-running steps run through Inngest for retry-safe execution. Agents orchestrate — they don't replace the contract as source of truth.
+**Chain events drive the app.** [`BioVerifyV3`](apps/contracts/src/BioVerifyV3.sol) emits events instead of relying on view-heavy reads for product state. Alchemy Notify delivers logs to the Next.js webhook ([`route.ts`](apps/fe/app/api/webhooks/alchemy/all-events/route.ts)), where the payload is verified via **HMAC-SHA256** before [`processContractEvent`](packages/cqrs/src/commands/sync/events.ts) projects events into **Neon Postgres** with optimistic concurrency on `(blockNumber, logIndex)` (see [`@packages/cqrs`](packages/cqrs/README.md)). The frontend reads the projection; it is complemented by a viem WebSocket subscription to `NewPublicationStatus` that invalidates the TanStack Query cache as soon as a status event is mined, so open publication lists reflect the new on-chain status without waiting for the webhook round-trip.
+
+Long-running work runs in **Inngest** (retries, step isolation). **LangGraph** runs the screening and review graphs; LLM output is schema-constrained before it becomes an allowed command. Reviewers sign verdicts with **EIP-712**; the server verifies with viem ([`verify-review-eip712.ts`](packages/utils-server/crypto/eip712/verify-review-eip712.ts)) before the agent records reviews on-chain.
 
 ### Publication lifecycle
 
@@ -57,12 +62,20 @@ stateDiagram-v2
 | Outcome | Publisher | Reviewers |
 |:--------|:----------|:----------|
 | **Early Slashed** | Stake slashed, reputation penalty | None selected |
-| **Published** | Stake returned, reputation boost | Honest: stake + reward + rep · Negligent: stake slashed + rep penalty |
-| **Slashed** | Stake slashed, reputation penalty | Honest: stake + reward + rep · Negligent: stake slashed + rep penalty |
+| **Published** | Stake returned, reputation boost | Honest: stake + reward + rep · Negligent: slashed stake + rep penalty |
+| **Slashed** | Stake slashed, reputation penalty | Honest: stake + reward + rep · Negligent: slashed stake + rep penalty |
 
 ---
 
 ## Architecture
+
+The protocol is split across three layers, each documented separately:
+
+- **Truth layer** — Solidity contract: [`apps/contracts/README.md`](apps/contracts/README.md)
+- **Read model** — event projection and on-chain commands: [`packages/cqrs/README.md`](packages/cqrs/README.md)
+- **Orchestration** — submission and review graphs: [`packages/agents/graphs/submission/README.md`](packages/agents/graphs/submission/README.md) · [`packages/agents/graphs/review/README.md`](packages/agents/graphs/review/README.md)
+
+For full sequence diagrams, see [`docs/architecture.md`](docs/architecture.md).
 
 ### System overview
 
@@ -98,7 +111,7 @@ graph TD
 
 ### Event-driven data flow
 
-Contract mutations emit events → Alchemy Notify POSTs a webhook (HMAC-SHA256 verified) → `processContractEvent` upserts the Postgres projection → frontend queries hit Postgres, not the chain. A separate viem WebSocket client subscribes to `NewPublicationStatus` events and invalidates TanStack Query cache, so the UI stays current without polling.
+Contract mutations emit events → Alchemy Notify POSTs a webhook (HMAC-SHA256 verified in [`apps/fe/app/api/webhooks/alchemy/all-events/route.ts`](apps/fe/app/api/webhooks/alchemy/all-events/route.ts)) → `processContractEvent` upserts the Postgres projection → frontend queries hit Postgres. A viem WebSocket client subscribes to `NewPublicationStatus` and invalidates the matching TanStack Query keys on every event, propagating status transitions into open lists in real time.
 
 ```mermaid
 graph LR
@@ -149,35 +162,68 @@ graph TD
     settle --> BC
 ```
 
-LangGraph manages agent state with checkpointers so a workflow can pause for days during human review and resume exactly where it left off. Inngest handles retries and step isolation so failed steps replay without duplicating side effects.
+LangGraph uses checkpointers so a workflow can pause for days during human review and resume where it left off. Inngest handles retries and step isolation so failed steps can replay without duplicating side effects when steps are idempotent. Graph-by-graph reference: [`submission/README.md`](packages/agents/graphs/submission/README.md), [`review/README.md`](packages/agents/graphs/review/README.md).
 
 ### Smart contract notes
 
-- **CEI + nonReentrant** on ETH-out paths (`claim`, `transferSlashPoolToTreasury`)
-- **Pull payments** — settlement credits rewards on-chain; each reviewer calls `claim` and pays their own gas. This keeps settlement gas bounded regardless of reviewer count.
-- **Agent-gated transitions** — critical state changes go through a whitelisted agent address, not arbitrary users
-- **Getter-less design** — no view functions on structs; all state is projected off-chain from events
-- **EIP-712** — reviewer verdicts are signed off-chain (ECDSA/secp256k1) and verified server-side with viem
+- **CEI + `nonReentrant`** on ETH-out paths (`claim`, `transferSlashPoolToTreasury`).
+- **Pull payments** — rewards are credited on-chain; reviewers withdraw via `claim` and pay their own gas, so settlement stays bounded as reviewer count grows.
+- **Agent-gated transitions** — sensitive moves use a configured agent address, not arbitrary callers.
+- **Getter-less design** — rich state is projected from events instead of heavy on-chain reads for app lists.
+- **EIP-712** — peer verdicts are signed off-chain (ECDSA / secp256k1) and verified server-side before on-chain recording.
 
-### Idempotency & consistency
+See [`apps/contracts/README.md`](apps/contracts/README.md) for the full contract reference (types, functions, events, staking mechanics).
 
-Webhook ingestion uses optimistic concurrency on `(blockNumber, logIndex)` to prevent stale or duplicate writes. Replaying events produces the same read model. The projection is eventually consistent relative to chain tip; deeper finality guarantees (confirmation gates, rewind/replay) are the obvious next step if stronger safety is needed.
+### Idempotency and consistency
+
+Webhook handling uses optimistic concurrency on `(blockNumber, logIndex)` to reduce bad overwrites when deliveries retry or arrive out of order (see [`@packages/cqrs`](packages/cqrs/README.md)). Replaying the same events yields the same read model. The projection is eventually consistent with chain tip; confirmation gates or rewind/replay are natural extensions if you need stronger guarantees.
+
+---
+
+## Testing
+
+Smart-contract tests live under [`apps/contracts/test/`](apps/contracts/test/) and run via Foundry — VRF mocks, named revert paths, and a fuzz test on `submitPublication`. The suite is split across 12 files (deployment, payReviewerStake, submitPublication, earlySlash, pickReviewers, fulfillVRF, recordReview, publishPublication, slashPublication, claim, poolManagement, fuzz).
+
+`BioVerifyV3` ships with full coverage on production code:
+
+- **50 tests across 12 suites — all passing.**
+- **`src/BioVerifyV3.sol`: 100% lines (241/241), 100% statements (260/260), 100% branches (33/33), 100% functions (26/26).**
+
+See [`apps/contracts/README.md`](apps/contracts/README.md) for the contract reference.
+
+```shell
+pnpm contract:test    # forge test
+pnpm contract:cov     # forge coverage
+```
 
 ---
 
 ## Tech Stack
 
-| Layer | Technologies |
-|-------|-------------|
-| Smart Contracts | Solidity, Foundry, OpenZeppelin, Chainlink VRF V2.5 |
-| Frontend | Next.js 16 (App Router, RSC), React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
-| Web3 | wagmi v3, viem, Reown AppKit (WalletConnect), EIP-712 |
-| AI Agents | LangGraph.js, Gemini (structured output), Exa AI (neural search) |
-| Data | Drizzle ORM, Neon Postgres, TanStack Query v5, nuqs |
-| Storage | IPFS via Pinata |
+### Core architecture
+
+| Area | Technologies |
+|------|----------------|
+| Smart contracts | Solidity, Foundry, OpenZeppelin, Chainlink VRF V2.5 |
+| Agents & AI | LangGraph.js, Gemini (structured output), Exa AI (neural search) |
 | Infrastructure | Inngest, Alchemy Notify, Vercel Functions |
-| Security | CEI, OZ ReentrancyGuard, EIP-712 (ECDSA), HMAC-SHA256 |
-| Testing | Foundry (`forge test`, `forge coverage`), VRF mock, fuzz tests |
+| Data & storage | Neon Postgres, IPFS via Pinata |
+
+### Frontend
+
+| Area | Technologies |
+|------|----------------|
+| UI | Next.js 16 (App Router, RSC), React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
+| Web3 | wagmi v3, viem, Reown AppKit (WalletConnect), EIP-712 |
+| Client data | TanStack Query v5, Drizzle ORM, nuqs |
+
+### Tooling and quality
+
+| Area | Technologies |
+|------|----------------|
+| Testing | Foundry (`forge test`, `forge coverage`), VRF mock |
+| Lint / schema | Biome (lint + format), Zod |
+| Security patterns | CEI, OZ ReentrancyGuard, EIP-712 (ECDSA), HMAC-SHA256 |
 
 ---
 
@@ -191,13 +237,19 @@ The author fills in the publication form (metadata and IPFS manifest) and prepar
 
 ![Submit publication — form ready](assets/BioVerify_SubmitPublicationSuccess_WithTGView__01.gif)
 
+
+
 The author confirms the on-chain transaction. The bot receives status notifications as the publication moves from **SUBMITTED** to **IN REVIEW**.
 
 ![Submit publication — submitted and in review](assets/BioVerify_SubmitPublicationSuccess_WithTGView__02.gif)
 
+*Watch the Telegram bot reflect each status transition as it happens on-chain.*
+
 The publication detail page shows **IN REVIEW** and the Chainlink VRF–selected reviewers.
 
 ![Submit publication — detail with reviewers](assets/BioVerify_SubmitPublicationSuccess_WithTGView__03.gif)
+
+*Watch the VRF-selected reviewer addresses appear in the publication detail panel.*
 
 ### Peer review — human-in-the-loop conflict resolution
 
@@ -205,17 +257,24 @@ The first peer reviewer submits a **pass** verdict.
 
 ![Peer review — first reviewer pass](assets/BioVerify_SubmitReview_Reviewer_01_Pass__01.gif)
 
-The second peer reviewer submits a **fail** verdict. The two reviews now conflict.
+*Watch the Wallet EIP-712 signature prompt — the reviewer signs their verdict off-chain before the agent records it on-chain.*
+
+The second peer reviewer submits a **fail** verdict. The two reviews now conflict, which will trigger the escalation path.
 
 ![Peer review — second reviewer fail](assets/BioVerify_SubmitReview_Reviewer_02_Fail__02.gif)
+
 
 *Split view: Telegram bot (left) and senior reviewer (right).* The bot shows both peer reviews and the agent's decision to escalate. The senior reviewer submits a tie-breaking **pass**.
 
 ![Peer review — senior reviewer and Telegram escalation](assets/BioVerify_SubmitReview_SeniorReviewer_Pass__03.gif)
 
+*Watch the senior reviewer break the tie — the agent resumes the paused LangGraph workflow.*
+
 After the senior review, Telegram reflects **PUBLISHED** and the detail page shows the final verdict from IPFS.
 
 ![Peer review — published and verdict on chain](assets/BioVerify_SubmitReview_SeniorReviewer_Pass__04.gif)
+
+*Watch the final status flip to PUBLISHED and the verdict CID resolve from IPFS.*
 
 ### AI plagiarism detection and early slashing
 
@@ -225,9 +284,12 @@ User B submits a publication that duplicates existing literature.
 
 ![Early slash — submit on Base Sepolia](assets/BioVerify_EarlySlashed_2Users_WS__01.gif)
 
+
 User A sees the row appear in real time over WebSocket (no wallet needed). The publication ends at **EARLY SLASHED** with the AI verdict loaded from IPFS.
 
 ![Early slash — realtime list and validation trail](assets/BioVerify_EarlySlashed_2Users_WS__02.gif)
+
+*Watch the publication row appear in User A's list over WebSocket — no wallet, no refresh.*
 
 ### Reviewer portal — stake, top-up, claim
 
@@ -235,33 +297,41 @@ A new reviewer joins the pool and pays the reviewer stake.
 
 ![Reviewer portal — pay reviewer stake](assets/BioVerify_PayReviewerStake.gif)
 
+*Watch the reviewer's available stake update after the transaction confirms.*
+
 An existing reviewer tops up so they can be picked in another cycle.
 
 ![Reviewer portal — top up stake](assets/BioVerify_TopUpStake.gif)
+
+*Watch the available balance increase, making the reviewer eligible for a new review cycle.*
 
 A reviewer claims their available balance (pull withdrawal).
 
 ![Reviewer portal — claim available stake](assets/BioVerify_Claim.gif)
 
+*Watch the pull withdrawal transfer ETH back to the reviewer's wallet.*
+
 ### Agent orchestration (Inngest)
 
-Completed **`submission-agent`** run after a `CHAIN_SUBMISSION_RECEIVED` event:
+Production path: Alchemy webhooks → [`apps/fe/app/api/webhooks/alchemy/all-events/route.ts`](apps/fe/app/api/webhooks/alchemy/all-events/route.ts) → CQRS [`processContractEvent`](packages/cqrs/src/commands/sync/events.ts).
+
+Completed **`submission-agent`** after `CHAIN_SUBMISSION_RECEIVED` (`SubmitPublication` in [`events.ts` lines 158–185](packages/cqrs/src/commands/sync/events.ts)):
 
 ![Inngest — submission agent after chain submission](assets/Inngest_ChainSubmissionReceived.png)
 
-Completed **`review-agent`** run after a `CHAIN_PICKED_REVIEWERS_RECEIVED` event:
+Completed **`review-agent`** after `CHAIN_PICKED_REVIEWERS_RECEIVED` (`Agent_PickReviewers` in [`events.ts` lines 205–229](packages/cqrs/src/commands/sync/events.ts)):
 
 ![Inngest — review agent after reviewers picked](assets/Inngest_ChainPickedReviewersReceived.png)
 
 ---
 
-## Getting Started
+## Run it Locally
 
 ### Prerequisites
 
 - Node.js 20+
 - pnpm 10+
-- [Foundry](https://book.getfoundry.sh/)
+- [Foundry](https://book.getfoundry.sh/) (for contract development)
 
 ### Setup
 
@@ -274,43 +344,52 @@ cp .env.example .env   # fill in your keys (see packages/env for validation)
 
 ### Scripts
 
+All scripts run from the monorepo root.
+
 **Frontend**
+
 ```shell
-pnpm fe:dev
-pnpm fe:build
-pnpm fe:start
+pnpm fe:dev                    # start Next.js dev server
+pnpm fe:build                  # production build
+pnpm fe:start                  # start production server
 ```
 
 **Contracts**
+
 ```shell
-pnpm contract:compile
-pnpm contract:test
-pnpm contract:cov
-pnpm contract:deploy:base
-pnpm contract:deploy:sepolia
-pnpm contract:sync-config
+pnpm contract:compile          # forge compile
+pnpm contract:test             # forge test
+pnpm contract:cov              # forge coverage
+pnpm contract:deploy:base      # deploy to Base Sepolia + sync config
+pnpm contract:deploy:sepolia   # deploy to Ethereum Sepolia + sync config
+pnpm contract:sync-config      # regenerate TS config from Foundry artifacts
 ```
 
 **Database**
+
 ```shell
-pnpm db:push
-pnpm db:seed
-pnpm db:setup-agents
+pnpm db:push                   # push Drizzle schema to Neon
+pnpm db:seed                   # seed protocol config rows
+pnpm db:setup-agents           # initialize LangGraph checkpointer tables
 ```
 
 **Infrastructure**
+
 ```shell
-pnpm inngest:dev
-pnpm inngest:sync
+pnpm inngest:dev               # local Inngest dev server
+pnpm inngest:sync              # sync Inngest functions to cloud
 ```
 
 **Quality**
+
 ```shell
-pnpm lint:check
-pnpm lint:format
+pnpm lint:check                # Biome lint
+pnpm lint:format               # Biome format
 ```
 
-### Deployment
+---
+
+## Deployment
 
 | Network | Contract Address |
 |:--------|:-----------------|
@@ -319,37 +398,55 @@ pnpm lint:format
 
 ---
 
-## Roadmap
+## Design Decisions and Roadmap
 
-**Weighted Majority Voting** — Replace the senior reviewer tie-breaker with decentralized consensus weighted by on-chain reputation.
+### Current design choices
 
-**Reputation via ZK-Proofs (Reclaim Protocol)** — Let reviewers attach privacy-preserving proofs of real-world credentials (h-index, affiliation) without exposing raw data. Raises the cost of identity Sybil attacks and reviewer collusion.
+- **Automated slashing** — When plagiarism is detected in screening, the contract slashes stakes immediately rather than opening a manual appeals path first.
+- **Senior reviewer tie-break** — If peer reviewers disagree, the highest-reputation reviewer is escalated via a second HITL step instead of a full quorum re-vote.
+- **Getter-less contract** — BioVerifyV3 emits events for state changes and does not expose rich view getters; the app reads from the Postgres projection.
 
-**Paid Content Access (x402)** — Gate full publication data behind micropayments using the [x402 protocol](https://www.x402.org/), creating a revenue stream for honest publishers.
+### Known limitations
 
-**Encrypted Access Control (Lit Protocol)** — Encrypt IPFS content with [Lit Protocol](https://litprotocol.com/); decryption keys release only when on-chain conditions are met (paid, assigned reviewer, or publisher).
+The current implementation covers the optimistic happy paths. The following edge cases are not handled today and are documented here honestly as the next hardening backlog before any future production use.
 
-**Internal corpus + RAG** — Embed published manifests into Neon + pgvector to run internal similarity checks alongside Exa, improving originality detection for work already inside the protocol.
+- **Empty or malformed IPFS payload.** If a publisher submits a syntactically valid CID that resolves to an empty manifest (or one whose `payload.abstractCid` points at empty content), the submission graph reaches `llmNode` with an empty abstract, the LLM verdict short-circuits without producing `pass`/`fail`, and `agent-start.ts` throws `Unexpected verdict "pending"`. After Inngest's 3 step retries the publication is left stuck in `SUBMITTED`. The fetch helper ([`fetchIpfs`](packages/utils/ipfs/fetch-ipfs.ts)) only validates HTTP status, and there is no Zod validation of the manifest shape inside [`fetchIpfsNode`](packages/agents/graphs/submission/nodes/1.fetch-ipfs.ts). Also, sending an empty abstract to Exa is currently avoided only by a truthy check in [`discoveryNode`](packages/agents/graphs/submission/nodes/2.discovery.ts); the behavior of submitting a non-empty but garbage abstract to Exa AI has not been characterized.
+
+- **Agent transaction failures.** All CQRS commands ([`pickReviewersCommand`](packages/cqrs/src/commands/actions/submission/pick-reviewers.ts), [`earlySlashPublicationCommand`](packages/cqrs/src/commands/actions/submission/early-slash-publication.ts), [`publishPublicationCommand`](packages/cqrs/src/commands/actions/review/publish-publication.ts), `slashPublicationCommand`, `recordReviewCommand`) call `publicClient.simulateContract` then `agentClient.writeContract` once and re-throw on failure. The only retry layer is Inngest's outer `step.run` (3 retries with default backoff). There is no in-command retry with bumped gas, no nonce-conflict recovery, and no detection of transient RPC errors versus actual revert reasons. A gas spike during settlement can today leave a publication in `IN_REVIEW` after the last human review is recorded.
+
+### Roadmap
+
+**Weighted majority voting** — Replace the senior tie-break with consensus weighted by on-chain reputation.
+
+**Reputation via ZK-proofs (Reclaim Protocol)** — Allow privacy-preserving proofs of real-world signals (for example h-index or affiliation) without exposing raw credentials; raises the cost of Sybil identities and collusion at scale. See [Reclaim Protocol](https://www.reclaimprotocol.org/).
+
+**Paid content access (x402)** — Gate full datasets and supplementary material behind micropayments via the [x402 protocol](https://www.x402.org/).
+
+**Encrypted access control (Lit Protocol)** — Encrypt IPFS payloads with [Lit Protocol](https://litprotocol.com/); keys release when on-chain conditions hold (paid, assigned reviewer, or publisher).
+
+**Internal corpus + RAG** — Index published manifests in Neon + pgvector for similarity checks alongside Exa, improving detection for work already inside BioVerify.
 
 ---
 
-## Monorepo Structure
+## Monorepo structure
 
 ```
 apps/
-  contracts/    BioVerifyV3 Solidity contract (Foundry)
-  fe/           Next.js 16 frontend — UI, webhook API, Inngest, WebSocket subscriptions
+  contracts/     BioVerifyV3 Solidity contract (Foundry) — see apps/contracts/README.md
+  fe/            Next.js 16 frontend — UI, webhook API, Inngest, WebSocket subscriptions — see apps/fe/README.md
 
 packages/
-  agents/       LangGraph agents (submission + review)
-  cqrs/         Event projector, DB queries, on-chain commands
-  db/           Drizzle ORM client (Neon Postgres)
-  env/          Type-safe env vars (Zod)
+  agents/        LangGraph agents (submission + review)
+  cqrs/          Event projector, DB queries, on-chain commands — see packages/cqrs/README.md
+  db/            Drizzle ORM client (Neon Postgres) — see packages/db/README.md
+  env/           Type-safe env vars (Zod)
   notifications/ Telegram helpers
-  schema/       Zod schemas, DB tables, domain types, Inngest event types
-  utils/        Contract config, ABI, network mappings, EIP-712 types
-  utils-server/ Server-only utilities
+  schema/        Zod schemas, DB tables, domain types, Inngest event types
+  utils/         Contract config, ABI, network mappings, EIP-712 types
+  utils-server/  Server-only utilities
 ```
+
+Deep dives: [`apps/contracts/README.md`](apps/contracts/README.md) · [`apps/fe/README.md`](apps/fe/README.md) · [`packages/cqrs/README.md`](packages/cqrs/README.md) · [`packages/db/README.md`](packages/db/README.md) · [`packages/agents/graphs/submission/README.md`](packages/agents/graphs/submission/README.md) · [`packages/agents/graphs/review/README.md`](packages/agents/graphs/review/README.md)
 
 ---
 
@@ -359,6 +456,6 @@ MIT — Siegfried Bozza, 2026
 
 ## Author
 
-**Siegfried Bozza** — Full-stack Web3 engineer (Solidity / Node.js / React)
+**Siegfried Bozza** — Full-stack Developer & Web3 Builder (Node.js / React / Next.js / Foundry / Solidity)
 
 [LinkedIn](https://www.linkedin.com/in/siegfriedbozza/) · [GitHub](https://github.com/SiegfriedBz)
