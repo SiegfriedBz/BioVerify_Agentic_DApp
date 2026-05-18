@@ -1,8 +1,7 @@
-
 ![CI-Foundry](https://github.com/SiegfriedBz/BioVerify_Agentic_DApp/actions/workflows/foundry-tests.yml/badge.svg)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-success)
 
-# 🧬 BioVerify - An Agentic Web3 Peer-Review Case Study
+# BioVerify - A Web3 Peer-Review Case Study
 
 BioVerify reimagines scientific peer review as a trustless coordination game. Authors stake ETH, AI screens for plagiarism, and human reviewers settle verdicts on-chain — with every research artifact pinned to IPFS so nothing can change silently after publication.
 
@@ -14,7 +13,7 @@ The legacy scientific model has a few deep problems. Published papers point to m
 
 DeSci offers a different set of primitives. Content-addressed storage like IPFS means a link to data is a commitment to that exact data — no silent edits, no rot links. On-chain coordination makes reviewer selection auditable and incentive structures explicit.
 
-BioVerify is an experiment in that direction. It treats peer review as a coordination problem: authors, reviewers, and agents need a verifiable outcome over days, with economic incentives aligned to the rules encoded on-chain — and research artifacts pinned to IPFS, so what was reviewed is what stays.
+BioVerify is an experiment in that direction. It treats peer review as a coordination game: authors, reviewers, and agents need a verifiable outcome over days, with economic incentives aligned to the rules encoded on-chain — and research artifacts pinned to IPFS, so what was reviewed is what stays.
 
 BioVerify separates concerns across two layers with distinct responsibilities:
 
@@ -215,7 +214,7 @@ pnpm contract:cov     # forge coverage
 |------|----------------|
 | UI | Next.js 16 (App Router, RSC), React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
 | Web3 | wagmi v3, viem, Reown AppKit (WalletConnect), EIP-712 |
-| Client data | TanStack Query v5, Drizzle ORM, nuqs |
+| Client data | TanStack Query v5, TanStack Table v8, Drizzle ORM, nuqs |
 
 ### Tooling and quality
 
@@ -410,6 +409,8 @@ pnpm lint:format               # Biome format
 
 The current implementation covers the optimistic happy paths. The following edge cases are not handled today and are documented here honestly as the next hardening backlog before any future production use.
 
+- **No author recourse against AI or peer-review false positives.** The submission agent can produce a `fail` verdict on a clean manuscript (false plagiarism positive against [`discoveryNode`](packages/agents/graphs/submission/nodes/2.discovery.ts) results), and peer reviewers can reach a binding verdict an author considers incorrect. Today, both outcomes are terminal: [`earlySlashPublicationCommand`](packages/cqrs/src/commands/actions/submission/early-slash-publication.ts) and `slashPublicationCommand` settle immediately, and the only remaining action for the author is `claim` (which does nothing for a slashed stake). There is no contractual path to contest the verdict, no escalation stake, and no second review cycle.
+
 - **Empty or malformed IPFS payload.** If a publisher submits a syntactically valid CID that resolves to an empty manifest (or one whose `payload.abstractCid` points at empty content), the submission graph reaches `llmNode` with an empty abstract, the LLM verdict short-circuits without producing `pass`/`fail`, and `agent-start.ts` throws `Unexpected verdict "pending"`. After Inngest's 3 step retries the publication is left stuck in `SUBMITTED`. The fetch helper ([`fetchIpfs`](packages/utils/ipfs/fetch-ipfs.ts)) only validates HTTP status, and there is no Zod validation of the manifest shape inside [`fetchIpfsNode`](packages/agents/graphs/submission/nodes/1.fetch-ipfs.ts). Also, sending an empty abstract to Exa is currently avoided only by a truthy check in [`discoveryNode`](packages/agents/graphs/submission/nodes/2.discovery.ts); the behavior of submitting a non-empty but garbage abstract to Exa AI has not been characterized.
 
 - **Agent transaction failures.** All CQRS commands ([`pickReviewersCommand`](packages/cqrs/src/commands/actions/submission/pick-reviewers.ts), [`earlySlashPublicationCommand`](packages/cqrs/src/commands/actions/submission/early-slash-publication.ts), [`publishPublicationCommand`](packages/cqrs/src/commands/actions/review/publish-publication.ts), `slashPublicationCommand`, `recordReviewCommand`) call `publicClient.simulateContract` then `agentClient.writeContract` once and re-throw on failure. The only retry layer is Inngest's outer `step.run` (3 retries with default backoff). There is no in-command retry with bumped gas, no nonce-conflict recovery, and no detection of transient RPC errors versus actual revert reasons. A gas spike during settlement can today leave a publication in `IN_REVIEW` after the last human review is recorded.
@@ -420,11 +421,11 @@ The current implementation covers the optimistic happy paths. The following edge
 
 **Reputation via ZK-proofs (Reclaim Protocol)** — Allow privacy-preserving proofs of real-world signals (for example h-index or affiliation) without exposing raw credentials; raises the cost of Sybil identities and collusion at scale. See [Reclaim Protocol](https://www.reclaimprotocol.org/).
 
-**Paid content access (x402)** — Gate full datasets and supplementary material behind micropayments via the [x402 protocol](https://www.x402.org/).
-
-**Encrypted access control (Lit Protocol)** — Encrypt IPFS payloads with [Lit Protocol](https://litprotocol.com/); keys release when on-chain conditions hold (paid, assigned reviewer, or publisher).
+**Encrypted access and monetisation (Lit Protocol + x402)** — Encrypt IPFS payloads with [Lit Protocol](https://litprotocol.com/); keys release when on-chain conditions hold (paid, assigned reviewer, or publisher). Gate datasets and supplementary material behind micropayments via the [x402 protocol](https://www.x402.org/).
 
 **Internal corpus + RAG** — Index published manifests in Neon + pgvector for similarity checks alongside Exa, improving detection for work already inside BioVerify.
+
+**Author escalation path** — Let the author contest a verdict (AI early-slash or peer-review settle) within a bounded escalation window by posting an escalation stake larger than the original. The contract opens a second review cycle restricted to humans only (no AI screening node), drawing a fresh VRF cohort that **excludes the original reviewers** to avoid bias replay. The second cycle's verdict is binding and reconciles the first one: if the original verdict is **confirmed**, the escalation stake is slashed in addition to the original slash; if **overturned**, prior rewards and slashes are reversed and new rewards/slashes are computed against the new binding verdict (publisher and original reviewers re-credited or re-slashed accordingly). To make this safe, terminal settlement enforcement (`PUBLISHED` / `SLASHED` / `EARLY_SLASHED`) must include an **escalation delay** during which on-chain effects are deferred or kept reversible (for example a per-publication `finalizedAt = block.timestamp + escalationWindow` and a separate `finalize()` agent-gated transition called after the window).
 
 ---
 
@@ -456,6 +457,8 @@ MIT — Siegfried Bozza, 2026
 
 ## Author
 
-**Siegfried Bozza** — Full-stack Developer & Web3 Builder (Node.js / React / Next.js / Foundry / Solidity)
+**Siegfried Bozza** — Full-stack Web3 engineer (Foundry / Solidity / Chainlink / Node.js / React / Next.js)
 
-[LinkedIn](https://www.linkedin.com/in/siegfriedbozza/) · [GitHub](https://github.com/SiegfriedBz)
+BioVerify was built solo, alongside a full-time full-stack role.
+
+[LinkedIn](https://www.linkedin.com/in/siegfriedbozza/) 
