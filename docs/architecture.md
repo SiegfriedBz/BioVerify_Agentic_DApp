@@ -142,7 +142,7 @@ sequenceDiagram
 
 ### 2. Consensus & Settlement
 
-Once all reviews are in, the LLM analyzes the collected verdicts. If consensus is clear (all agree), it passes through to settlement. If verdicts conflict, the flow escalates to a senior reviewer (another HITL interrupt), whose decision is enforced by the LLM before settling on-chain.
+Once all reviews are in, Gemini reads them and returns pass, fail or escalate. Its prompt asks for escalate on a split decision, but a pass or fail stands without a human, and the reviewer who disagreed with it is slashed. On escalate, the senior reviewer decides (another HITL interrupt) and the code enforces that decision; the LLM only rewrites the reason. Settlement runs in the Next.js server action that resumed the graph, outside Inngest.
 
 ```mermaid
 sequenceDiagram
@@ -162,7 +162,7 @@ sequenceDiagram
     activate LGR
     LGR->>LGR: llmVerdictNode -- produces pass, fail, or escalate
 
-    alt Verdict: PASS (clear consensus)
+    alt Verdict: PASS (no escalation)
         LGR->>LGR: llmFinalVerdictNode -- pass-through (no escalation)
         LGR->>LGR: settlementNode -- partition honest / negligent reviewers
         LGR->>IPFS: pin final verdict
@@ -174,7 +174,7 @@ sequenceDiagram
         API->>CQRS: decodedLog + chainId
         CQRS->>DB: upsert (status: PUBLISHED)
 
-    else Verdict: FAIL (clear consensus)
+    else Verdict: FAIL (no escalation)
         LGR->>LGR: llmFinalVerdictNode -- pass-through (no escalation)
         LGR->>LGR: settlementNode -- partition honest / negligent reviewers
         LGR->>IPFS: pin final verdict
@@ -186,7 +186,7 @@ sequenceDiagram
         API->>CQRS: decodedLog + chainId
         CQRS->>DB: upsert (status: SLASHED)
 
-    else Verdict: ESCALATE (conflicting peer verdicts)
+    else Verdict: ESCALATE
         Note over SR,LGR: Senior Reviewer HITL
         LGR->>LGR: seniorReviewNode -- interrupt(), wait for senior
 

@@ -1,21 +1,29 @@
 # BioVerifyV3
 
-Decentralized, meritocratic peer-review protocol for high-throughput research validation. Leverages a "Trustless Hybrid" model combining **Chainlink VRF V2.5** for unbiased reviewer selection, an **off-chain AI Agent** for orchestration, and a **staked human reviewer pool** for qualitative validation.
+Peer-review contract for BioVerify, deployed on testnets. It combines **Chainlink VRF V2.5** for the reviewer draw, an **off-chain AI agent** that drives every lifecycle transition, and a **staked human reviewer pool** for the reviews. The draw is verifiable on-chain; settlement trusts the agent key (see [Trust assumptions](#trust-assumptions)).
 
-## Getter-Less Design
+## Few Getters
 
-The contract intentionally exposes almost no view functions. Instead, every state mutation emits granular events. These events are picked up off-chain by **Alchemy Notify** webhooks and projected into a **Neon Postgres** database with Optimistic Concurrency Control. All frontend queries are served from that projection -- not from on-chain reads. This eliminates non-essential `view` functions, minimizes on-chain compute costs, and keeps gas consumption low. See [`@packages/cqrs`](../../packages/cqrs/README.md) for the full event sync and query layer.
+The contract has no getters for publications or members. Every state change emits events instead; **Alchemy Notify** webhooks pick them up and project them into a **Neon Postgres** database with optimistic concurrency, and the frontend reads that projection, not the chain. The pools (`rewardPool`, `slashPool`), the configuration (`I_*`) and the owner stay public. This keeps the contract smaller; each write emits several events, which costs a little more gas. See [`@packages/cqrs`](../../packages/cqrs/README.md) for the full event sync and query layer.
 
 ## Core Architectural Pillars
 
-- **Trustless Selection (Chainlink VRF V2.5):** Reviewers are selected from the pool via cryptographically secure randomness. The protocol funds the VRF subscription directly from the publisher's submission fee.
-- **Meritocratic Hierarchy & Anti-Collusion:** During selection, the protocol automatically assigns seniority to the reviewer with the highest reputation score. The selection logic strictly prevents publishers from self-reviewing, ensuring a 100% independent evaluation set.
+- **Verifiable Selection (Chainlink VRF V2.5):** Reviewers are drawn from the pool with VRF randomness; Chainlink's coordinator verifies the randomness proof before it calls the contract back. The publisher's submission fee funds the VRF subscription.
+- **Senior Reviewer by Reputation:** The drawn reviewer with the highest reputation becomes the senior reviewer. The draw skips the publisher, so an author cannot review their own paper.
 - **O(1) Dynamic Reviewer Pool:** The protocol manages an active reviewer pool using a "swap-and-pop" indexed array. Eligibility is determined dynamically based on a member's financial solvency (`availableStake >= I_REVIEWER_STAKE`).
-- **Agentic Lifecycle Management:** An authorized AI Agent acts as the protocol's orchestrator, handling early plagiarism detection, recording review submissions, and finalizing the verdict based on synthesized human feedback.
+- **Agent-Driven Lifecycle:** One agent address early-slashes, picks reviewers, records reviews and settles. The verdict it settles comes from off-chain: Gemini's reading of the peer reviews, or the senior reviewer's decision after escalation. The contract checks the reviewer lists, not the verdict.
 
 ## Architecture
 
 `BioVerifyV3` inherits from Chainlink's `VRFConsumerBaseV2Plus` and uses OpenZeppelin's `ReentrancyGuard`. Access control is lean by design: a single immutable `I_AI_AGENT_ADDRESS` gates all settlement functions via the `onlyAgent` modifier.
+
+## Trust Assumptions
+
+- The agent key settles every publication. The contract limits *whom* a settlement can touch (only the drawn reviewers, each with stake locked on that publication), not the verdict.
+- On both deployments one wallet is the agent, the treasury and the owner, and the owner can change the VRF coordinator.
+- Reviews are signed with EIP-712 and verified off-chain; the contract stores a flag per review, not the signature.
+
+See [Known bugs and trust assumptions](../../README.md#known-bugs-and-trust-assumptions) in the root README for the full list.
 
 ## Key Types
 
@@ -92,10 +100,10 @@ Constructor parameters: `reputationBoost`, `aiAgent`, `treasury`, `pubMinFee`, `
 2. **Initial Validation:** The AI Agent performs an automated plagiarism check. If the paper fails, it is **Early Slashed** immediately. The process terminates here to save protocol resources and VRF costs.
 3. **Selection:** If valid, the AI Agent triggers `pickReviewers()`. Chainlink VRF selects N unique reviewers from the available pool, assigning one Senior Reviewer based on reputation.
 4. **Review Phase:** Human reviewers analyze the publication. The AI Agent records their participation via `recordReview()`.
-5. **Final Settlement:** Based on the synthesized human feedback, the AI Agent triggers one of two terminal states:
+5. **Final Settlement:** With the final verdict (Gemini's reading of the peer reviews, or the senior reviewer's decision after escalation), the AI Agent triggers one of two terminal states:
     - **Publish:** The paper is validated. Publisher and honest reviewers are rewarded.
     - **Slash:** The paper is rejected. Publisher is slashed; honest reviewers are still rewarded for their diligence.
-6. **Sustainability:** Throughout this cycle, the protocol manages a **Reward Pool** and a **Slash Pool**. The AI Agent can reallocate funds from slashes to rewards to ensure long-term protocol solvency.
+6. **Sustainability:** Throughout this cycle, the protocol manages a **Reward Pool** and a **Slash Pool**. The AI Agent can move funds from the slash pool to the reward pool to keep rewards funded.
 
 ## Terminal Outcomes
 
@@ -137,9 +145,9 @@ Constructor parameters: `reputationBoost`, `aiAgent`, `treasury`, `pubMinFee`, `
 
 ## Technical Optimizations
 
-- **Self-Sustaining VRF:** The protocol implements a hybrid VRF v2.5 strategy. While managed via a Subscription ID for lower gas overhead, the contract automatically tops up the subscription balance using `paidSubmissionFee` via `fundSubscriptionWithNative`. This ensures the protocol is economically autonomous.
-- **Getter-Less Event Projection:** All non-essential state getters were removed in favor of a comprehensive event-emission strategy. Every state mutation emits indexed events that are captured off-chain by Alchemy Notify, projected into a Neon Postgres database with Optimistic Concurrency Control (`blockNumber` + `logIndex` ordering), and served as the read model for all frontend queries. See [`@packages/cqrs`](../../packages/cqrs/README.md).
-- **Economic Security:** Branch coverage tests ensure that locked stakes are accurately accounted for across all edge cases, including senior reviewer exits, slashing scenarios, and concurrent review capacity management.
+- **VRF Funded by Submissions:** The contract uses a VRF v2.5 subscription and tops it up in `pickReviewers` with the publication's `paidSubmissionFee` via `fundSubscriptionWithNative`, so the subscription needs no manual funding as long as fees cover VRF costs.
+- **Event Projection:** There are no getters for publications or members. Every state change emits indexed events that Alchemy Notify delivers off-chain; they are projected into Neon Postgres with optimistic concurrency (`blockNumber` + `logIndex` ordering) and serve as the read model for all frontend queries. See [`@packages/cqrs`](../../packages/cqrs/README.md).
+- **Tests:** 50 Foundry tests in 12 suites cover 100% of `BioVerifyV3.sol` lines (240/240) and branches (37/37), including VRF edge cases (collisions, a pool that shrinks, rewards that run out) and the slashing paths. Full coverage does not rule out accounting bugs; see the root README's known bugs.
 
 ## Infrastructure & Deployment
 
@@ -147,7 +155,7 @@ The deployment pipeline supports cross-chain portability, currently targeting **
 
 - **Dynamic Configuration:** The deploy script utilizes `block.chainid` to inject network-specific parameters (VRF Coordinators, Gas Lanes, Sub IDs) at runtime, keeping core source code immutable.
 - **Unified Verification:** Leverages Etherscan API V2 with a universal key, enabling automated source code verification on both Etherscan and Basescan via a single `foundry.toml` configuration.
-- **Strict Decoupling:** Environmental variables and network constants are fully isolated from business logic, allowing deployment to any EVM environment compatible with Chainlink VRF v2.5.
+- **Config Outside the Contract:** Environment variables and network constants live in the deploy script, not in the contract. The script knows Base Sepolia and Ethereum Sepolia; another chain with Chainlink VRF v2.5 needs a new entry there, plus changes in the app.
 
 ## Development
 
