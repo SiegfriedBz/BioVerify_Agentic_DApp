@@ -1,6 +1,6 @@
 # 🧬 BioVerify Frontend
 
-Next.js 16 App Router DApp for decentralized scientific peer review. Scientists submit publications on-chain, AI agents validate originality, Chainlink VRF selects peer reviewers, and human verdicts settle stakes -- all orchestrated through this interface.
+Next.js 16 App Router DApp for decentralized scientific peer review. Scientists submit publications on-chain, an AI agent screens for plagiarism, Chainlink VRF selects peer reviewers, and the agent settles stakes on a verdict from Gemini (or from the senior reviewer after escalation) -- all orchestrated through this interface.
 
 This is the user-facing application within the [BioVerify monorepo](../../README.md). It connects the on-chain protocol ([`apps/contracts`](../contracts/README.md)) to the off-chain AI agents ([Submission](../../packages/agents/graphs/submission/README.md), [Review](../../packages/agents/graphs/review/README.md)) through a CQRS event-projection layer ([`@packages/cqrs`](../../packages/cqrs/README.md)).
 

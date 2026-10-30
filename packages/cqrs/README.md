@@ -64,6 +64,8 @@ The projector handles every event emitted by `BioVerifyV3` and upserts into thre
 
 Alchemy webhooks can arrive out of order. Every upsert includes a `versionCheck` guard that compares `(blockNumber, logIndex)` against the stored values -- an update is only applied if the incoming event is strictly newer. This prevents stale webhooks from overwriting fresher state.
 
+Limits: there is one `(blockNumber, logIndex)` stamp per row and many events update only some columns, so a late event that changes a different column than the newer one is dropped. The webhook answers `200` before it processes the payload, so a projection that fails is lost, and there is no job yet to rebuild the read model from chain history.
+
 ### Agent Triggers
 
 Two events also emit Inngest events to kick off the AI agents:

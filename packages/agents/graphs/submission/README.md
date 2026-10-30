@@ -1,6 +1,6 @@
 # Submission Agent
 
-LangGraph agent that autonomously pre-validates scientific submissions for originality before they enter the peer-review pool. Acts as a "Proof of Originality" filter.
+LangGraph agent that screens each new submission for plagiarism before it reaches peer review. One Gemini call over Exa's search results decides; a `fail` early-slashes the publisher with no human in the loop.
 
 ## Trigger Chain
 
@@ -28,7 +28,7 @@ sequenceDiagram
 
 1. **Alchemy Notify** watches the `BioVerifyV3` contract and POSTs raw logs to the Next.js webhook at `apps/fe/app/api/webhooks/alchemy/all-events/route.ts`.
 2. The webhook decodes each log with `viem` and calls `processContractEvent()` from `@packages/cqrs`, which upserts the publication into Postgres and emits an Inngest event.
-3. The Inngest function `audit-publication-submission` picks up `CHAIN_SUBMISSION_RECEIVED` and runs `startSubmissionAgent()` inside a durable `step.run`.
+3. The Inngest function `audit-publication-submission` picks up `CHAIN_SUBMISSION_RECEIVED` and runs `startSubmissionAgent()` inside one `step.run`.
 
 ## Graph
 
@@ -77,9 +77,9 @@ graph TD
 
 The graph is compiled with a **Postgres checkpointer** (`PostgresSaver` from `@langchain/langgraph-checkpoint-postgres`) connected to a **Neon** database via `NEON_AGENTS_DATABASE_URL`. Each invocation is keyed by `thread_id = getThreadId({ type: SUBMISSION, publicationId, rootCid })`.
 
-## Durable Execution
+## Retries (Inngest)
 
-**Inngest** wraps the agent invocation in a durable `step.run` with 3 retries. On completion, the Inngest function emits `SUBMISSION_AGENT_AUDIT_COMPLETED` for downstream hooks. Inngest functions are registered and served from `apps/fe/app/api/inngest/route.ts`.
+**Inngest** runs the whole agent inside one `step.run` with 3 retries. A retry re-runs the whole agent, so its commands read on-chain state before writing where they can. On completion, the Inngest function emits `SUBMISSION_AGENT_AUDIT_COMPLETED` for downstream hooks. Inngest functions are registered and served from `apps/fe/app/api/inngest/route.ts`.
 
 ## Notifications
 
