@@ -19,7 +19,7 @@ BioVerify is an experiment in that direction: authors, reviewers and agents need
 BioVerify separates concerns across two layers with distinct responsibilities:
 
 - **Truth layer — blockchain.** Stakes, lifecycle states, reviewer selection and settlements are recorded in [`BioVerifyV3`](apps/contracts/src/BioVerifyV3.sol), which is the source of truth for balances and status. The contract checks *whom* a settlement can touch (only the drawn reviewers, with stake locked on that paper), but the verdict itself comes from the agent.
-- **Orchestration layer — agents.** LangGraph drives the screening and review graphs ([`@packages/agents`](packages/agents)). A review can pause for days: the graph stops at `interrupt()` and its state waits in Postgres (LangGraph checkpointer) until the next signed review resumes it. Inngest starts each agent run and retries it on failure.
+- **Orchestration layer — agents.** LangGraph drives the screening and review graphs ([`@packages/agents`](packages/agents)). A review can pause for days: the graph stops at `interrupt()` and its state waits in Postgres (LangGraph checkpointer) until the next signed review resumes it. Inngest starts each agent run and retries it if it fails (all of the screening, and the review agent up to its first pause); later review steps and settlement run in a Next.js server action, with no retry.
 
 ---
 
@@ -31,7 +31,7 @@ To explore the live demo, you need a browser wallet ([MetaMask](https://metamask
 2. Connect a wallet (Base Sepolia or Ethereum Sepolia).
 3. Submit a publication or register as a reviewer — the agents handle the rest.
 
-Want status updates? Open the [BioVerify Telegram Bot](https://t.me/BioVerifyBot) to receive status updates as publications move through screening, review, and settlement — no need to keep the app open.
+A Telegram bot posts each status change (screening, review, settlement) to one chat; it does not send updates to visitors who open it.
 
 Need testnet ETH? [Sepolia Faucet](https://sepolia-faucet.pk910.de/) · [Superbridge to Base Sepolia](https://superbridge.app/base-sepolia)
 
@@ -39,9 +39,9 @@ Need testnet ETH? [Sepolia Faucet](https://sepolia-faucet.pk910.de/) · [Superbr
 
 ## Solution
 
-**Chain events drive the app.** [`BioVerifyV3`](apps/contracts/src/BioVerifyV3.sol) emits events instead of relying on view-heavy reads for product state. Alchemy Notify delivers logs to the Next.js webhook ([`route.ts`](apps/fe/app/api/webhooks/alchemy/all-events/route.ts)), where the payload is verified via **HMAC-SHA256** before [`processContractEvent`](packages/cqrs/src/commands/sync/events.ts) projects events into **Neon Postgres** with optimistic concurrency on `(blockNumber, logIndex)` (see [`@packages/cqrs`](packages/cqrs/README.md)). The frontend reads the projection; it is complemented by a viem WebSocket subscription to `NewPublicationStatus` that invalidates the TanStack Query cache as soon as a status event is mined, so open publication lists reflect the new on-chain status without waiting for the webhook round-trip.
+**Chain events drive the app.** [`BioVerifyV3`](apps/contracts/src/BioVerifyV3.sol) emits events instead of relying on view-heavy reads for product state. Alchemy Notify delivers logs to the Next.js webhook ([`route.ts`](apps/fe/app/api/webhooks/alchemy/all-events/route.ts)), where the payload is verified via **HMAC-SHA256** before [`processContractEvent`](packages/cqrs/src/commands/sync/events.ts) projects events into **Neon Postgres** with optimistic concurrency on `(blockNumber, logIndex)` (see [`@packages/cqrs`](packages/cqrs/README.md)). The frontend reads the projection; it is complemented by a viem WebSocket subscription to `NewPublicationStatus` that, about 3 seconds after a status event, invalidates the TanStack Query cache so open publication lists refetch the projection.
 
-Each agent run starts in **Inngest**, which retries it on failure (one `step.run` around the whole agent). **LangGraph** runs the screening and review graphs; LLM output is schema-constrained before it becomes an allowed command. Reviewers sign their reviews with **EIP-712** in their wallet; the server verifies the signature with viem ([`verify-review-eip712.ts`](packages/utils-server/crypto/eip712/verify-review-eip712.ts)) and the agent then records on-chain that the reviewer has reviewed (a flag, not the signature). After the first review, the review graph resumes from a Next.js server action, outside Inngest.
+Each agent run starts in **Inngest**, which retries it if it fails: the screening runs in one `step.run`, and the review agent only up to its first `interrupt()`. **LangGraph** runs the screening and review graphs; LLM output is schema-constrained before it becomes an allowed command. Reviewers sign their reviews with **EIP-712** in their wallet; the server verifies the signature with viem ([`verify-review-eip712.ts`](packages/utils-server/crypto/eip712/verify-review-eip712.ts)) and the agent then records on-chain that the reviewer has reviewed (a flag, not the signature). After the first review, the review graph resumes from a Next.js server action, outside Inngest.
 
 ### Publication lifecycle
 
@@ -183,7 +183,7 @@ LangGraph uses checkpointers so a workflow can pause for days during human revie
 - **Few getters** — there are no getters for publications or members; that state is projected from events. Pools, configuration (`I_*`) and the owner stay public. This keeps the contract smaller; each write emits several events, which costs a little more gas.
 - **EIP-712** — reviewers sign their review in their wallet; the domain binds the chain id and the contract address, and the server checks the signer is one of the drawn reviewers before the agent records the review.
 - **Settlement input is checked** — the agent's honest and negligent lists must contain exactly the drawn reviewers, each with stake locked on that publication; the publisher and duplicates revert.
-- **Chainlink VRF v2.5** — Chainlink's coordinator verifies the randomness proof, then calls the contract back with the random words. The submission fee (`msg.value` minus the stake) funds the VRF subscription.
+- **Chainlink VRF v2.5** — Chainlink's coordinator verifies the randomness proof, then calls the contract back with the random words. The submission fee (`msg.value` minus the stake) funds the VRF subscription when screening passes; an early-slashed submission's fee stays in the contract.
 
 See [`apps/contracts/README.md`](apps/contracts/README.md) for the full contract reference (types, functions, events, staking mechanics).
 
@@ -195,7 +195,7 @@ Webhook handling keeps one `(blockNumber, logIndex)` stamp per row and skips any
 
 ## Testing
 
-Smart-contract tests live under [`apps/contracts/test/`](apps/contracts/test/) and run via Foundry — VRF mocks, named revert paths, VRF edge cases (collisions, a pool that shrinks, rewards that run out, a receiver that rejects ETH) and a fuzz test on `submitPublication`. The tests are in 11 files (deployment, payReviewerStake, submitPublication with its fuzz contract, earlySlash, pickReviewers, fulfillVRF, recordReview, publishPublication, slashPublication, claim, poolManagement), 12 suites in all, plus a shared base and helpers.
+Smart-contract tests live under [`apps/contracts/test/`](apps/contracts/test/) and run via Foundry — VRF mocks, named revert paths, VRF edge cases (collisions, a pool that shrinks, rewards that run out), claims and treasury transfers to a receiver that rejects ETH, and a fuzz test on `submitPublication`. The tests are in 11 files (deployment, payReviewerStake, submitPublication with its fuzz contract, earlySlash, pickReviewers, fulfillVRF, recordReview, publishPublication, slashPublication, claim, poolManagement), 12 suites in all, plus a shared base and helpers.
 
 - **50 tests in 12 suites, all passing.**
 - **`src/BioVerifyV3.sol`: 100% of lines (240/240), branches (37/37) and functions**, from `forge coverage` on commit `03378a6` (24 October 2026).
@@ -272,7 +272,7 @@ The first peer reviewer submits a **pass** verdict.
 
 *Watch the Wallet EIP-712 signature prompt — the reviewer signs their verdict off-chain before the agent records it on-chain.*
 
-The second peer reviewer submits a **fail** verdict. The two reviews now conflict, which will trigger the escalation path.
+The second peer reviewer submits a **fail** verdict. The two reviews now conflict; Gemini reads both and decides whether to escalate.
 
 ![Peer review — second reviewer fail](assets/BioVerify_SubmitReview_Reviewer_02_Fail__02.gif)
 
@@ -426,12 +426,17 @@ On both networks one wallet of mine is the agent, the treasury and the contract 
 ### Known bugs and trust assumptions
 
 - **One agent key settles everything.** A single immutable agent address drives every transition (pick reviewers, early slash, publish or slash). On both deployments it is also the treasury and the owner, and the owner can change the VRF coordinator. The contract limits *whom* the agent can slash (only reviewers with stake locked on that publication), not the verdict.
-- **LLM decisions without a human.** The plagiarism early slash is one Gemini call over Exa's top results. Without escalation, Gemini decides pass or fail from the peer reviews, and the reviewer who disagreed is slashed. Signed reviews are verified off-chain; the contract stores a flag per review, and the signatures stay in the private checkpoint database.
+- **LLM decisions without a human.** The plagiarism early slash is one Gemini call over Exa's top results. Without escalation, Gemini decides pass or fail from the peer reviews, and the reviewer who disagreed is slashed. Signed reviews are verified off-chain; the contract stores a flag per review, and the server drops each signature after verifying it.
 - **`pickReviewers` status check.** It checks `status != IN_REVIEW` instead of `== SUBMITTED`, so the agent could re-open a finished publication (and re-send `paidSubmissionFee`). Untested.
 - **Stuck VRF callback.** If the reviewer pool shrinks or rewards run out between the VRF request and the callback, `fulfillRandomWords` reverts, VRF does not retry, and the publication stays `IN_REVIEW` for good (a second `pickReviewers` reverts).
 - **Read model.** One `(block, logIndex)` stamp per row with partial updates, so a late event that changes another column is dropped; projections that fail after the webhook's `200` are lost, with no replay job. The webhook's HMAC is compared with `===`, not in constant time.
 - **Settlement has no retry.** It runs in the Next.js server action that resumes the last review, not in an Inngest step.
 - **IPFS reads trust the gateway.** The agent fetches content through the Pinata gateway and does not re-hash it against the CID.
+
+- **Early-slashed fee.** An early-slashed submission's fee stays in the contract, outside both pools, and nothing in the normal flow moves it.
+- **Repeated `SubmitPublication` delivery.** The webhook sends the Inngest event with no event id, and the submission agent has no "already started" check, so a repeated delivery starts a second screening run.
+- **`pending` verdict.** The review verdict schema allows `pending`; if Gemini returns it, settlement makes no call and the publication stays `IN_REVIEW`.
+- **Small bias in the draw.** On a collision the contract takes the next reviewer in the pool (linear probing), which slightly favours reviewers placed after others.
 
 ### Known limitations
 
@@ -442,6 +447,8 @@ The current implementation covers the happy paths. These edge cases are not hand
 - **Empty or malformed IPFS payload.** If a publisher submits a syntactically valid CID that resolves to an empty manifest (or one whose `payload.abstractCid` points at empty content), the submission graph reaches `llmNode` with an empty abstract, the LLM verdict short-circuits without producing `pass`/`fail`, and `agent-start.ts` throws `Unexpected verdict "pending"`. After Inngest's 3 step retries the publication is left stuck in `SUBMITTED`. The fetch helper ([`fetchIpfs`](packages/utils/ipfs/fetch-ipfs.ts)) only validates HTTP status, and there is no Zod validation of the manifest shape inside [`fetchIpfsNode`](packages/agents/graphs/submission/nodes/1.fetch-ipfs.ts). Also, sending an empty abstract to Exa is currently avoided only by a truthy check in [`discoveryNode`](packages/agents/graphs/submission/nodes/2.discovery.ts); the behavior of submitting a non-empty but garbage abstract to Exa AI has not been characterized.
 
 - **Agent transaction failures.** All CQRS commands ([`pickReviewersCommand`](packages/cqrs/src/commands/actions/submission/pick-reviewers.ts), [`earlySlashPublicationCommand`](packages/cqrs/src/commands/actions/submission/early-slash-publication.ts), [`publishPublicationCommand`](packages/cqrs/src/commands/actions/review/publish-publication.ts), `slashPublicationCommand`, `recordReviewCommand`) call `publicClient.simulateContract` then `agentClient.writeContract` once and re-throw on failure. On the screening path the only retry layer is Inngest's outer `step.run` (3 retries with default backoff); on the review path, which resumes from a server action, there is none. There is no in-command retry with bumped gas, no nonce-conflict recovery, and no detection of transient RPC errors versus actual revert reasons. A gas spike during settlement can leave a publication in `IN_REVIEW` after the last human review is recorded.
+- **No reviewer deadline.** The review graph waits for every reviewer and the contract has no timeout, so a reviewer who never answers leaves the publication `IN_REVIEW`, with every stake locked.
+- **Senior always counted honest.** Settlement counts the senior reviewer as honest even when no escalation asked them to review, so their stake unlocks and they get the reward.
 - **Chain support is hardcoded.** The two networks are a fixed enum used across the codebase; adding a chain means a new deployment plus changes in several places.
 
 ### Roadmap
