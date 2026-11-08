@@ -30,7 +30,7 @@ const protocolSteps = [
 	{
 		i: "01",
 		title: "Staked Submission",
-		desc: "Publishers upload a Research Manifest to IPFS and commit their CID + Stake on-chain. This triggers an Exa AI semantic scan to verify originality instantly.",
+		desc: "Publishers upload a Research Manifest to IPFS and commit their CID + Stake on-chain. This starts an Exa AI search that screens the abstract for plagiarism.",
 		icon: LinkIcon,
 		tech: ["IPFS", "Base/Sepolia", "Alchemy Notify", "LangGraph", "Exa AI"],
 		status: "Integrity Verified",
@@ -38,7 +38,7 @@ const protocolSteps = [
 	},
 	{
 		i: "02",
-		title: "Trustless Selection",
+		title: "Verifiable Selection",
 		desc: "Chainlink VRF selects peers from the staked reviewer pool. The highest-reputation member is appointed Senior Reviewer to oversee the consensus flow if required.",
 		icon: DicesIcon,
 		tech: ["Chainlink VRF", "LangGraph"],
@@ -84,11 +84,12 @@ export default function Page() {
 					</p>
 
 					<TypographyH1 className="max-w-4xl text-4xl md:text-5xl lg:text-6xl">
-						Trustless Peer Review at AI Speed.
+						Peer Review as a Coordination Game.
 					</TypographyH1>
 
 					<TypographyP className="mt-0 max-w-2xl text-base text-muted-foreground md:text-lg md:leading-relaxed">
-						Scientific Decentralization through Agentic Consensus.
+						Authors and reviewers stake ETH, Chainlink VRF draws the reviewers,
+						and an AI agent settles the outcome on chain.
 					</TypographyP>
 
 					<div className="mt-0 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center md:justify-start">
@@ -124,7 +125,7 @@ export default function Page() {
 				</p>
 				<TypographyP className="mx-auto mt-2 max-w-2xl text-pretty text-center text-sm leading-relaxed text-muted-foreground md:text-base md:leading-relaxed">
 					A meritocratic peer-review pipeline leveraging LangGraph agents for
-					forensic validation and Chainlink VRF for trustless reviewer
+					forensic validation and Chainlink VRF for verifiable reviewer
 					selection.
 				</TypographyP>
 				<TypographyH2 className="mt-2 border-none pb-0 text-center md:mt-3">

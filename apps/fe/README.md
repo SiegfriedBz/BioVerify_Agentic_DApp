@@ -15,7 +15,7 @@ This is the user-facing application within the [BioVerify monorepo](../../README
 | Tables | TanStack Table v8 + custom `niko-table` component library, nuqs (URL state sync) |
 | Forms | react-hook-form + zod validation |
 | UI | Tailwind CSS v4, shadcn/ui, Lucide icons, next-themes, sonner -- fully responsive |
-| Infra | Inngest (durable agent execution), Alchemy Notify (webhooks), Vercel Functions (`waitUntil`) |
+| Infra | Inngest (starts and retries agent runs), Alchemy Notify (webhooks), Vercel Functions (`waitUntil`) |
 
 ## Monorepo Context
 
@@ -141,7 +141,7 @@ The server action verifies the EIP-712 signature, then resumes the LangGraph rev
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/webhooks/alchemy/all-events` | POST | Alchemy Notify webhook. HMAC-verified per network, decodes contract logs with `viem`, calls `processContractEvent` from `@packages/cqrs` (DB projection + Inngest event triggers). Uses `waitUntil` for non-blocking processing. |
-| `/api/inngest` | GET/POST/PUT | Inngest function serving endpoint. Registers three durable functions: `auditPublicationSubmission`, `auditComplete`, `reviewPublication`. |
+| `/api/inngest` | GET/POST/PUT | Inngest function serving endpoint. Registers three functions: `auditPublicationSubmission`, `auditComplete`, `reviewPublication`. |
 
 ## Key Patterns
 
